@@ -379,7 +379,8 @@ function show() {
             // content += "    <input type='range' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
             content += "</div>";
         }
-        content += "<a href=\"javascript:setName('" + "');\" class='edit_icon'>&#9998</a>";
+        // transparent placeholder edit icon
+        content += "<div class='edit_group_icon'>&#9998</div>";
         content += "</div>";
         content += "<hr style=\"height:2px;border-width:0px;color:lightgray;background-color:lightgray\">";
 
@@ -507,10 +508,13 @@ function groupVolumeEnter(group_id: string) {
 function setVolume(id: string, mute: boolean) {
     console.log("setVolume id: " + id + ", mute: " + mute);
     let percent = (document.getElementById('vol_' + id) as HTMLInputElement).valueAsNumber;
+    let client = snapcontrol.getClient(id) as Client;
+    let needs_update = (mute != client.config.volume.muted);
     snapcontrol.setVolume(id, percent, mute);
     let group = snapcontrol.getGroupFromClient(id) as Group;
     updateGroupVolume(group);
-    // show()
+    if (needs_update)
+        show();
 }
 
 function setMuteGroup(id: string, mute: boolean) {
