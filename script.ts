@@ -185,7 +185,9 @@ class SnapControl {
     private action(answer: any) {
         switch (answer.method) {
             case 'Client.OnVolumeChanged':
-                (this.getClient(answer.params.id) as Client).config.volume = answer.params.volume;
+                let client = (this.getClient(answer.params.id) as Client)
+                client.config.volume = answer.params.volume;
+                updateGroupVolume(this.getGroupFromClient(client.id) as Group);
                 break;
             case 'Client.OnLatencyChanged':
                 (this.getClient(answer.params.id) as Client).config.latency = answer.params.latency;
@@ -222,6 +224,16 @@ class SnapControl {
         return this.server.getGroup(group_id);
     }
 
+    public getGroupVolume(group: Group): number {
+        if (group.clients.length == 0)
+            return 0;
+        let group_vol: number = 0;
+        for (let client of group.clients) {
+            group_vol += client.config.volume.percent;
+        }
+        return group_vol / group.clients.length;
+    }
+
     public getGroupFromClient(client_id: string): Group | null {
         for (let group of this.server.groups)
             for (let client of group.clients)
@@ -234,10 +246,13 @@ class SnapControl {
         return this.server.getStream(stream_id);
     }
 
-    public setVolume(client_id: string, percent: number, mute: boolean) {
+    public setVolume(client_id: string, percent: number, mute?: boolean) {
         percent = Math.max(0, Math.min(100, percent));
-        (this.getClient(client_id) as Client).config.volume = { muted: mute, percent: percent };
-        this.sendRequest('Client.SetVolume', '{"id":"' + client_id + '","volume":{"muted":' + (mute ? "true" : "false") + ',"percent":' + percent + '}}');
+        let client = (this.getClient(client_id) as Client);
+        client.config.volume.percent = percent;
+        if (mute != undefined)
+            client.config.volume.muted = mute;
+        this.sendRequest('Client.SetVolume', '{"id":"' + client_id + '","volume":{"muted":' + (client.config.volume.muted ? "true" : "false") + ',"percent":' + client.config.volume.percent + '}}');
     }
 
     public setClientName(client_id: string, name: string) {
@@ -300,6 +315,7 @@ class SnapControl {
             } else {
                 this.action(answer);
             }
+            show();
         }
     }
 
@@ -328,7 +344,7 @@ function show() {
         let muted: boolean;
         let mutetext;
         if (group.muted == true) {
-            classgroup = 'groupmuted';
+            classgroup = 'group muted';
             muted = true;
             mutetext = '&#x1F507';
         } else {
@@ -351,12 +367,21 @@ function show() {
         }
 
         streamselect += "</select>";
-        content += streamselect;
 
         // Group mute and refresh button
-        content += " <a href=\"javascript:setMuteGroup('" + group.id + "'," + !muted + ");\" class='mutebuttongroup'>" + mutetext + "</a>";
-        content += "<input type='button' value='Refresh' class='refreshbutton' onclick='javascript: location.reload()'>";
-        content += "<br/>";
+        content += "<div class='groupheader'>";
+        content += streamselect;
+        if (group.clients.length > 1) {
+            let volume = snapcontrol.getGroupVolume(group);
+            content += "<a href=\"javascript:setMuteGroup('" + group.id + "'," + !muted + ");\" class='mutebuttongroup'>" + mutetext + "</a>";
+            content += "<div class='slidergroupdiv'>";
+            content += "    <input type='range' draggable='false' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setGroupVolume(\"" + group.id + "\")' value=" + volume + " class='slider'>";
+            // content += "    <input type='range' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
+            content += "</div>";
+        }
+        content += "<a href=\"javascript:setName('" + "');\" class='edit_icon'>&#9998</a>";
+        content += "</div>";
+        content += "<hr style=\"height:2px;border-width:0px;color:lightgray;background-color:lightgray\">";
 
         // Create clients in group
         for (let client of group.clients) {
@@ -369,16 +394,16 @@ function show() {
                 name = client.host.name;
             }
             if (client.connected == false) {
-                clas = 'disconnected';
+                clas = 'client disconnected';
             }
-            content = content + "<div id='c_" + client.id + "' class='" + clas + "'>";
+            content += "<div id='c_" + client.id + "' class='" + clas + "'>";
 
             // Client mute status vars
             let muted: boolean;
             let sliderclass;
             if (client.config.volume.muted == true) {
                 muted = true;
-                sliderclass = 'slidermute';
+                sliderclass = 'slider muted';
                 mutetext = '&#128263';
             } else {
                 sliderclass = 'slider'
@@ -392,36 +417,100 @@ function show() {
             for (let ogroup of server.groups) {
                 groupselect = groupselect + "<option value='" + ogroup.id + "' " + ((ogroup == group) ? "selected" : "") + ">Group " + (group_num++) + " (" + ogroup.clients.length + " Clients)</option>";
             }
-
             groupselect = groupselect + "<option value='new'>new</option>";
             groupselect = groupselect + "</select>"
 
             // Populate client div
-            content = content + " <a href=\"javascript:setVolume('" + client.id + "'," + !muted + ");\" class='mutebutton'>" + mutetext + "</a>";
-            content = content + "<div class='sliders'><div class='sliderdiv'><input type='range' min=0 max=100 step=1 id='vol_" + client.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "' orient='vertical'></div>";
-            content = content + "<div class='finebg'>++<br>+<br>0<br>-<br>--</div><div class='sliderdiv_fine'><input type='range' min=0 max=10 step=1 id='vol_fine_" + client.id + "' onchange='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=5 class='" + sliderclass + "_fine' orient='vertical'></div></div>";
-            content = content + " <a href=\"javascript:setName('" + client.id + "');\" class='edit'>&#9998</a>";
-            content = content + name;
-            content = content + groupselect;
-            content = content + "</div>";
+            content += "<a href=\"javascript:setVolume('" + client.id + "'," + !muted + ");\" class='mutebutton'>" + mutetext + "</a>";
+            // content += "<div class='sliders'>";
+            content += "    <div class='sliderdiv'>";
+            content += "        <input type='range' min=0 max=100 step=1 id='vol_" + client.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
+            content += "    </div>";
+            // content += "    <div class='dropdown'>";
+            // content += "        <div class='edit_icon'>&#9998</div>";
+            // content += "        <div class='dropdown-content'>"
+            // content += "            <a href='#'>test 1</a>"
+            // content += "            <a href='#'>test 2</a>"
+            // content += "        </div>"
+            // content += "    </div>"
+            content += "    <a href=\"javascript:setName('" + client.id + "');\" class='edit_icon'>&#9998</a>";
+            content += "    <div class='name'>" + name + "</div>";
+            content += "</div>";
+            // content += groupselect;
         }
-
-        content = content + "</div>"
+        content += "</div>";
     }
 
     // Pad then update page
     content = content + "<br><br>";
     (document.getElementById('show') as HTMLInputElement).innerHTML = content;
+
+    for (let group of snapcontrol.server.groups) {
+        if (group.clients.length > 1) {
+            let slider = document.getElementById("vol_" + group.id) as HTMLInputElement;
+            slider.addEventListener('pointerdown', function (ev: PointerEvent) {
+                groupVolumeEnter(group.id);
+            });
+        }
+    }
+}
+
+function updateGroupVolume(group: Group) {
+    let group_vol = snapcontrol.getGroupVolume(group);
+    let slider = document.getElementById("vol_" + group.id) as HTMLInputElement;
+    if (slider == null)
+        return;
+    console.log("updateGroupVolume group: " + group.id + ", volume: " + group_vol + ", slider: " + (slider != null));
+    slider.value = String(group_vol);
+}
+
+let client_volumes: Array<number>;
+let group_volume: number;
+function setGroupVolume(group_id: string) {
+    let group = snapcontrol.getGroup(group_id) as Group;
+    let percent = (document.getElementById('vol_' + group.id) as HTMLInputElement).valueAsNumber;
+    console.log("setGroupVolume id: " + group.id + ", volume: " + percent);
+    // show()
+    let delta = percent - group_volume;
+    let ratio: number;
+    if (delta < 0)
+        ratio = (group_volume - percent) / group_volume;
+    else
+        ratio = (percent - group_volume) / (100 - group_volume);
+
+    for (let i = 0; i < group.clients.length; ++i) {
+        let new_volume = client_volumes[i];
+        if (delta < 0)
+            new_volume -= ratio * client_volumes[i];
+        else
+            new_volume += ratio * (100 - client_volumes[i]);
+        let client_id = group.clients[i].id;
+        // TODO: use batch request to update all client volumes at once
+        snapcontrol.setVolume(client_id, new_volume);
+        let slider = document.getElementById('vol_' + client_id) as HTMLInputElement;
+        slider.value = String(new_volume);
+    }
+}
+
+function groupVolumeEnter(group_id: string) {
+    let group = snapcontrol.getGroup(group_id) as Group;
+    let percent = (document.getElementById('vol_' + group.id) as HTMLInputElement).valueAsNumber;
+    console.log("groupVolumeEnter id: " + group.id + ", volume: " + percent);
+    group_volume = percent;
+    client_volumes = [];
+    for (let i = 0; i < group.clients.length; ++i) {
+        client_volumes.push(group.clients[i].config.volume.percent);
+    }
+    // show()
 }
 
 function setVolume(id: string, mute: boolean) {
     console.log("setVolume id: " + id + ", mute: " + mute);
-    let percent = Number((document.getElementById('vol_' + id) as HTMLInputElement).value);
-    let percent_fine = Number((document.getElementById('vol_fine_' + id) as HTMLInputElement).value);
-
-    // Take away 5 as it's the default of the fine slider. Only relevant if it has changed
-    snapcontrol.setVolume(id, Number(percent) + Number(percent_fine) - 5, mute);
-    //show()
+    let percent = (document.getElementById('vol_' + id) as HTMLInputElement).valueAsNumber;
+    snapcontrol.setVolume(id, percent, mute);
+    let group = snapcontrol.getGroupFromClient(id) as Group;
+    updateGroupVolume(group);
+    // show()
 }
 
 function setMuteGroup(id: string, mute: boolean) {
