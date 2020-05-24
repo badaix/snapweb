@@ -28,6 +28,21 @@ body {
     background: #555;
 }
 
+.navbar {
+    overflow: hidden;
+    background-color: #607d8b;
+    z-index: 1; /* Sit on top */
+    padding: 10px;
+    color: white;
+    position: fixed; /* Set the navbar to fixed position */
+    top: 0; /* Position the navbar at the top of the page */
+    width: 100%; /* Full width */
+}
+
+.content {
+    margin-top: 55px
+}
+
 .group {
     float: none;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
@@ -114,6 +129,7 @@ select {
 
 .name {
     color: #686868;
+    user-select: none;
     /* background: red; */
     padding-top: 5px;
     grid-row: 1;

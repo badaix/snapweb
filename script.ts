@@ -330,6 +330,9 @@ let snapcontrol = new SnapControl(window.location.hostname, 1780);
 function show() {
     // Render the page
     let content = "";
+    content += "<div class='navbar'>Snapcast";
+    content += "</div>";
+    content += "<div class='content'>";
 
     let server = snapcontrol.server;
     for (let group of server.groups) {
@@ -417,6 +420,7 @@ function show() {
         }
         content += "</div>";
     }
+    content += "</div>"; // content
 
     content += "<div id='client_settings' class='client_settings'>";
     content += "    <div class='client_setting_content'>";
