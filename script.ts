@@ -1,5 +1,3 @@
-// import { Server, Client, Group, Stream } from './types';
-
 class Host {
     constructor(json: any) {
         this.fromJson(json);
@@ -268,7 +266,7 @@ class SnapControl {
         let client = this.getClient(client_id) as Client;
         let current_latency: number = client.config.latency;
         if (latency != current_latency) {
-            this.sendRequest('Client.SetLatency', '{"id":"' + client_id + '","latency":"' + latency + '"}');
+            this.sendRequest('Client.SetLatency', '{"id":"' + client_id + '","latency":' + latency + '}');
             client.config.latency = latency;
         }
     }
@@ -287,7 +285,7 @@ class SnapControl {
         this.sendRequest('Group.SetMute', '{"id":"' + group_id + '","mute":' + (mute ? "true" : "false") + '}');
     }
 
-    public sendRequest(method: string, params?: string): number {
+    private sendRequest(method: string, params?: string): number {
         let msg = '{"id": ' + (++this.msg_id) + ',"jsonrpc":"2.0","method":"' + method + '"';
         if (params)
             msg += ',"params": ' + params;
@@ -326,11 +324,7 @@ class SnapControl {
 }
 
 
-//let connection = new WebSocket('ws://' + window.location.hostname + ':1780/jsonrpc');
-// let connection = new WebSocket('ws://127.0.0.1:1780/jsonrpc');
-// let server: Server;
-// let msg_id: number = 23;
-// let status_req_id: number = -1;
+//let snapcontrol = new SnapControl(window.location.hostname, 1780);
 let snapcontrol = new SnapControl("127.0.0.1", 1780);
 
 function show() {
@@ -350,7 +344,7 @@ function show() {
         } else {
             classgroup = 'group';
             muted = false;
-            mutetext = '&#128266';
+            mutetext = '&#x1F50A';
         }
 
         // Start group div
@@ -405,42 +399,39 @@ function show() {
             if (client.config.volume.muted == true) {
                 muted = true;
                 sliderclass = 'slider muted';
-                mutetext = '&#128263';
+                mutetext = '&#x1F507';
             } else {
                 sliderclass = 'slider'
                 muted = false;
-                mutetext = '&#128266';
+                mutetext = '&#x1F50A';
             }
-
-            // Client group selection vars
-            let groupselect = "<select id='group_" + client.id + "' onchange='setGroup(\"" + client.id + "\")'>";
-            let group_num = 0;
-            for (let ogroup of server.groups) {
-                groupselect = groupselect + "<option value='" + ogroup.id + "' " + ((ogroup == group) ? "selected" : "") + ">Group " + (group_num++) + " (" + ogroup.clients.length + " Clients)</option>";
-            }
-            groupselect = groupselect + "<option value='new'>new</option>";
-            groupselect = groupselect + "</select>"
 
             // Populate client div
             content += "<a href=\"javascript:setVolume('" + client.id + "'," + !muted + ");\" class='mutebutton'>" + mutetext + "</a>";
-            // content += "<div class='sliders'>";
             content += "    <div class='sliderdiv'>";
             content += "        <input type='range' min=0 max=100 step=1 id='vol_" + client.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
             content += "    </div>";
-            // content += "    <div class='dropdown'>";
-            // content += "        <div class='edit_icon'>&#9998</div>";
-            // content += "        <div class='dropdown-content'>"
-            // content += "            <a href='#'>test 1</a>"
-            // content += "            <a href='#'>test 2</a>"
-            // content += "        </div>"
-            // content += "    </div>"
-            content += "    <a href=\"javascript:setName('" + client.id + "');\" class='edit_icon'>&#9998</a>";
+            content += "    <a href=\"javascript:open_client_settings('" + client.id + "');\" class='edit_icon'>&#9998</a>";
             content += "    <div class='name'>" + name + "</div>";
             content += "</div>";
-            // content += groupselect;
         }
         content += "</div>";
     }
+
+    content += "<div id='client_settings' class='client_settings'>";
+    content += "    <div class='client_setting_content'>";
+    content += "        <form action='javascript:close_client_settings()'>";
+    content += "        <label for='client_name'>Name</label>";
+    content += "        <input type='text' class='client_input' id='client_name' name='client_name' placeholder='Client name..'>";
+    content += "        <label for='client_latency'>Latency</label>";
+    content += "        <input type='number' class='client_input' min='-1000' max='1000' id='client_latency' name='client_latency' placeholder='Latency in ms..'>";
+    content += "        <label for='country'>Country</label>";
+    content += "        <select id='client_group' class='client_input' name='client_group'>";
+    content += "        </select>";
+    content += "        <input type='submit' value='Submit'>";
+    content += "        </form>";
+    content += "    </div>";
+    content += "</div>";
 
     // Pad then update page
     content = content + "<br><br>";
@@ -527,13 +518,12 @@ function setStream(id: string) {
     show()
 }
 
-function setGroup(id: string) {
-    let group = (document.getElementById('group_' + id) as HTMLInputElement).value;
-    console.log("setGroup id: " + id + ", group: " + group);
+function setGroup(client_id: string, group_id: string) {
+    console.log("setGroup id: " + client_id + ", group: " + group_id);
 
     let server = snapcontrol.server;
     // Get client group id
-    let current_group = snapcontrol.getGroupFromClient(id) as Group;
+    let current_group = snapcontrol.getGroupFromClient(client_id) as Group;
 
     // Get
     //   List of target group's clients
@@ -541,9 +531,9 @@ function setGroup(id: string) {
     //   List of current group's other clients
     let send_clients = [];
     for (let i_group = 0; i_group < server.groups.length; i_group++) {
-        if (server.groups[i_group].id == group || (group == "new" && server.groups[i_group].id == current_group.id)) {
+        if (server.groups[i_group].id == group_id || (group_id == "new" && server.groups[i_group].id == current_group.id)) {
             for (let i_client = 0; i_client < server.groups[i_group].clients.length; i_client++) {
-                if (group == "new" && server.groups[i_group].clients[i_client].id == id) { }
+                if (group_id == "new" && server.groups[i_group].clients[i_client].id == client_id) { }
                 else {
                     send_clients[send_clients.length] = server.groups[i_group].clients[i_client].id;
                 }
@@ -551,12 +541,11 @@ function setGroup(id: string) {
         }
     }
 
-    if (group == "new")
-        group = current_group.id;
+    if (group_id == "new")
+        group_id = current_group.id;
     else
-        send_clients[send_clients.length] = id;
-
-    snapcontrol.setClients(group, send_clients);
+        send_clients[send_clients.length] = client_id;
+    snapcontrol.setClients(group_id, send_clients);
 }
 
 function setName(id: string) {
@@ -573,4 +562,64 @@ function setName(id: string) {
     if (new_latency != null)
         snapcontrol.setClientLatency(id, new_latency);
     show()
+}
+
+
+function open_client_settings(id: string) {
+    let modal = document.getElementById("client_settings") as HTMLElement;
+    let client = snapcontrol.getClient(id) as Client;
+    let current_name: string = (client.config.name != "") ? client.config.name : client.host.name;
+    let name = document.getElementById("client_name") as HTMLInputElement;
+    name.name = id;
+    name.value = current_name;
+    let latency = document.getElementById("client_latency") as HTMLInputElement;
+    latency.valueAsNumber = client.config.latency;
+
+    let group = snapcontrol.getGroupFromClient(id) as Group;
+    let group_input = document.getElementById("client_group") as HTMLSelectElement;
+    while (group_input.length > 0)
+        group_input.remove(0);
+    let group_num = 0;
+    for (let ogroup of snapcontrol.server.groups) {
+        let option = document.createElement('option');
+        option.value = ogroup.id;
+        option.text = "Group " + (group_num + 1) + " (" + ogroup.clients.length + " Clients)";
+        group_input.add(option);
+        if (ogroup == group) {
+            console.log("Selected: " + group_num);
+            group_input.selectedIndex = group_num;
+        }
+        ++group_num;
+    }
+    let option = document.createElement('option');
+    option.value = option.text = "new";
+    group_input.add(option);
+
+    modal.style.display = "block";
+}
+
+function close_client_settings() {
+    let name = document.getElementById("client_name") as HTMLInputElement;
+    let id = name.name;
+    console.log("onclose " + id + ", value: " + name.value);
+    snapcontrol.setClientName(id, name.value);
+
+    let latency = document.getElementById("client_latency") as HTMLInputElement;
+    snapcontrol.setClientLatency(id, latency.valueAsNumber);
+
+    let group_input = document.getElementById("client_group") as HTMLSelectElement;
+    let option = group_input.options[group_input.selectedIndex];
+    setGroup(id, option.value);
+
+    let modal = document.getElementById("client_settings") as HTMLElement;
+    modal.style.display = "none";
+    show();
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function (event: any) {
+    let modal = document.getElementById("client_settings") as HTMLElement;
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
 }

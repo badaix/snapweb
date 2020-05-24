@@ -192,8 +192,8 @@ select {
 }
 
 .slider::-moz-range-thumb {
-    height: 25px;
-    width: 25px;
+    height: 15px;
+    width: 15px;
     border-radius: 50%;
     background: #ff4081;
     cursor: pointer;
@@ -203,25 +203,57 @@ select {
     opacity: 0.27;
 }
 
-/* .dropdown {
-    position: relative;
-    display: inline-block;
+ .client_settings {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+  
+.client_setting_content {
+    background-color: #fefefe;
+    color: #686868;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
 }
 
-.dropdown:hover .dropdown-content {
+.client_input {
+    color: #686868;
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
     display: block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+  
+input[type=submit] {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
-.dropdown-content {
-    position: absolute;
-    display: none;
-    z-index: 1;
+input[type=submit]:hover {
+    background-color: #45a049;
 }
 
-.dropdown-content a {
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: black;
+div.container {
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    padding: 20px;
 }
- */
+
