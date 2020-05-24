@@ -10,6 +10,7 @@
       width: 100%;
       margin: 0;
       font-size: 20px;
+      overscroll-behavior: contain;
     }
 
     /* width */
@@ -30,6 +31,25 @@
     /* Handle on hover */
     ::-webkit-scrollbar-thumb:hover {
       background: #555;
+    }
+
+    .navbar {
+      overflow: hidden;
+      background-color: #607d8b;
+      z-index: 1;
+      /* Sit on top */
+      padding: 10px;
+      color: white;
+      position: fixed;
+      /* Set the navbar to fixed position */
+      top: 0;
+      /* Position the navbar at the top of the page */
+      width: 100%;
+      /* Full width */
+    }
+
+    .content {
+      margin-top: 55px
     }
 
     .group {
@@ -118,6 +138,7 @@
 
     .name {
       color: #686868;
+      user-select: none;
       /* background: red; */
       padding-top: 5px;
       grid-row: 1;
@@ -523,11 +544,14 @@
         }
       }
     }
-    let snapcontrol = new SnapControl(window.location.hostname, 1780);
-    //let snapcontrol = new SnapControl("127.0.0.1", 1780);
+    //let snapcontrol = new SnapControl(window.location.hostname, 1780);
+    let snapcontrol = new SnapControl("127.0.0.1", 1780);
     function show() {
       // Render the page
       let content = "";
+      content += "<div class='navbar'>Snapcast";
+      content += "</div>";
+      content += "<div class='content'>";
       let server = snapcontrol.server;
       for (let group of server.groups) {
         // Set mute variables
@@ -610,6 +634,7 @@
         }
         content += "</div>";
       }
+      content += "</div>"; // content
       content += "<div id='client_settings' class='client_settings'>";
       content += "    <div class='client_setting_content'>";
       content += "        <form action='javascript:close_client_settings()'>";
