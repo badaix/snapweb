@@ -429,7 +429,7 @@ function show() {
     content += "        <input type='text' class='client_input' id='client_name' name='client_name' placeholder='Client name..'>";
     content += "        <label for='client_latency'>Latency</label>";
     content += "        <input type='number' class='client_input' min='-1000' max='1000' id='client_latency' name='client_latency' placeholder='Latency in ms..'>";
-    content += "        <label for='country'>Country</label>";
+    content += "        <label for='client_group'>Group</label>";
     content += "        <select id='client_group' class='client_input' name='client_group'>";
     content += "        </select>";
     content += "        <input type='submit' value='Submit'>";
