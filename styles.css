@@ -45,12 +45,13 @@ body {
 
 .group {
     float: none;
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    box-shadow: 0px 3px 5px 0px rgba(0,0,0,0.2);
     clear: both;
-    padding: 10px;
-    margin: 20px 15px 10px 15px;
+    padding: 8px;
+    margin: 10px 15px 10px 15px;
     overflow: auto;
     width: auto;
+    border-radius: 3px;
 }
 
 .group.muted {
@@ -67,6 +68,13 @@ body {
     grid-template-columns: min-content auto min-content;
     grid-template-rows: min-content min-content;
     grid-gap: 0px;
+}
+
+.groupheader-separator {
+    height: 1px;
+    border-width: 0px;
+    color: lightgray;
+    background-color: lightgray;
 }
 
 .stream {
@@ -86,16 +94,6 @@ select {
     -moz-appearance: none;
     -webkit-appearance: none;
     appearance: none;
-}
-
-.mutebuttongroup {
-    /* background: yellow; */
-    color: #686868;
-    grid-row: 2;
-    grid-column: 1;
-    font-size: 25px;
-    /* padding: 3px; */
-    text-decoration: none;
 }
 
 .slidergroupdiv {
@@ -153,7 +151,7 @@ select {
     text-decoration: none;
 }
 
-.edit_group_icon {
+.edit-group-icon {
     display: flex;
     /* background: blue; */
     color: transparent;
@@ -163,13 +161,14 @@ select {
     text-decoration: none;
 }
 
-.mutebutton {
-    /* color: #444444; */
+.mute-button {
     color: #686868;
     grid-row: 2;
     grid-column: 1;
     font-size: 25px;
-    /* padding: 3px; */
+    height: 25px;
+    padding-left: 10px;
+    padding-right: 10px;
     text-decoration: none;
 }
 
@@ -194,23 +193,23 @@ select {
     opacity: 0.7;
     -webkit-transition: .2s;
     transition: opacity .2s;
-    height: 3px;
+    height: 2px;
     width: 90%;
 }
 
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    height: 15px;
-    width: 15px;
+    height: 12px;
+    width: 12px;
     border-radius: 50%;
     background: #ff4081;
     cursor: pointer;
 }
 
 .slider::-moz-range-thumb {
-    height: 15px;
-    width: 15px;
+    height: 12px;
+    width: 12px;
     border-radius: 50%;
     background: #ff4081;
     cursor: pointer;

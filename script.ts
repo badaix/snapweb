@@ -324,8 +324,8 @@ class SnapControl {
 }
 
 
-let snapcontrol = new SnapControl(window.location.hostname, 1780);
-//let snapcontrol = new SnapControl("127.0.0.1", 1780);
+//let snapcontrol = new SnapControl(window.location.hostname, 1780);
+let snapcontrol = new SnapControl("127.0.0.1", 1780);
 
 function show() {
     // Render the page
@@ -339,15 +339,15 @@ function show() {
         // Set mute variables
         let classgroup;
         let muted: boolean;
-        let mutetext;
+        let mute_img: string;
         if (group.muted == true) {
             classgroup = 'group muted';
             muted = true;
-            mutetext = '&#x1F507';
+            mute_img = 'mute_icon.png';
         } else {
             classgroup = 'group';
             muted = false;
-            mutetext = '&#x1F50A';
+            mute_img = 'speaker_icon.png';
         }
 
         // Start group div
@@ -370,16 +370,16 @@ function show() {
         content += streamselect;
         if (group.clients.length > 1) {
             let volume = snapcontrol.getGroupVolume(group);
-            content += "<a href=\"javascript:setMuteGroup('" + group.id + "'," + !muted + ");\" class='mutebuttongroup'>" + mutetext + "</a>";
+            content += "<a href=\"javascript:setMuteGroup('" + group.id + "'," + !muted + ");\"><img src='" + mute_img + "' class='mute-button'></a>";
             content += "<div class='slidergroupdiv'>";
             content += "    <input type='range' draggable='false' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setGroupVolume(\"" + group.id + "\")' value=" + volume + " class='slider'>";
             // content += "    <input type='range' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
             content += "</div>";
         }
         // transparent placeholder edit icon
-        content += "<div class='edit_group_icon'>&#9998</div>";
+        content += "<div class='edit-group-icon'>&#9998</div>";
         content += "</div>";
-        content += "<hr style=\"height:2px;border-width:0px;color:lightgray;background-color:lightgray\">";
+        content += "<hr class='groupheader-separator'>";
 
         // Create clients in group
         for (let client of group.clients) {
@@ -398,19 +398,20 @@ function show() {
 
             // Client mute status vars
             let muted: boolean;
+            let mute_img: string;
             let sliderclass;
             if (client.config.volume.muted == true) {
                 muted = true;
                 sliderclass = 'slider muted';
-                mutetext = '&#x1F507';
+                mute_img = 'mute_icon.png';
             } else {
                 sliderclass = 'slider'
                 muted = false;
-                mutetext = '&#x1F50A';
+                mute_img = 'speaker_icon.png';
             }
 
             // Populate client div
-            content += "<a href=\"javascript:setVolume('" + client.id + "'," + !muted + ");\" class='mutebutton'>" + mutetext + "</a>";
+            content += "<a href=\"javascript:setVolume('" + client.id + "'," + !muted + ");\"><img src='" + mute_img + "' class='mute-button'></a>";
             content += "    <div class='sliderdiv'>";
             content += "        <input type='range' min=0 max=100 step=1 id='vol_" + client.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
             content += "    </div>";
