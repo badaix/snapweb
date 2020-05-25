@@ -8,6 +8,6 @@
             "type": "image/png"
         }
     ],
-    "start_url": "/snapweb.html",
+    "start_url": "/index.html",
     "display": "standalone"
 }
