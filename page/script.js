@@ -247,8 +247,8 @@ class SnapControl {
         }
     }
 }
-//let snapcontrol = new SnapControl(window.location.hostname, 1780);
-let snapcontrol = new SnapControl("127.0.0.1", 1780);
+let snapcontrol = new SnapControl(window.location.hostname, 1780);
+//let snapcontrol = new SnapControl("127.0.0.1", 1780);
 function show() {
     // Render the page
     let content = "";
