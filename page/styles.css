@@ -189,9 +189,8 @@ select {
 .slider {
      writing-mode: bt-lr;
     -webkit-appearance: none;
-    background: #d3d3d3;
+    background: #dbdbdb;
     outline: none;
-    opacity: 0.7;
     -webkit-transition: .2s;
     transition: opacity .2s;
     height: 2px;
