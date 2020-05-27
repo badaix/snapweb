@@ -448,6 +448,9 @@ function show() {
             slider.addEventListener('pointerdown', function (ev: PointerEvent) {
                 groupVolumeEnter(group.id);
             });
+            slider.addEventListener('touchstart', function () {
+                groupVolumeEnter(group.id);
+            });
         }
     }
 }
