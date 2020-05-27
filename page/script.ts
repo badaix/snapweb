@@ -415,7 +415,7 @@ function show() {
             content += "    <div class='sliderdiv'>";
             content += "        <input type='range' min=0 max=100 step=1 id='vol_" + client.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
             content += "    </div>";
-            content += "    <a href=\"javascript:open_client_settings('" + client.id + "');\" class='edit_icon'>&#9998</a>";
+            content += "    <a href=\"javascript:openClientSettings('" + client.id + "');\" class='edit-icon'>&#9998</a>";
             content += "    <div class='name'>" + name + "</div>";
             content += "</div>";
         }
@@ -423,15 +423,15 @@ function show() {
     }
     content += "</div>"; // content
 
-    content += "<div id='client_settings' class='client_settings'>";
-    content += "    <div class='client_setting_content'>";
-    content += "        <form action='javascript:close_client_settings()'>";
-    content += "        <label for='client_name'>Name</label>";
-    content += "        <input type='text' class='client_input' id='client_name' name='client_name' placeholder='Client name..'>";
-    content += "        <label for='client_latency'>Latency</label>";
-    content += "        <input type='number' class='client_input' min='-1000' max='1000' id='client_latency' name='client_latency' placeholder='Latency in ms..'>";
-    content += "        <label for='client_group'>Group</label>";
-    content += "        <select id='client_group' class='client_input' name='client_group'>";
+    content += "<div id='client-settings' class='client-settings'>";
+    content += "    <div class='client-setting-content'>";
+    content += "        <form action='javascript:closeClientSettings()'>";
+    content += "        <label for='client-name'>Name</label>";
+    content += "        <input type='text' class='client-input' id='client-name' name='client-name' placeholder='Client name..'>";
+    content += "        <label for='client-latency'>Latency</label>";
+    content += "        <input type='number' class='client-input' min='-1000' max='1000' id='client-latency' name='client-latency' placeholder='Latency in ms..'>";
+    content += "        <label for='client-group'>Group</label>";
+    content += "        <select id='client-group' class='client-input' name='client-group'>";
     content += "        </select>";
     content += "        <input type='submit' value='Submit'>";
     content += "        </form>";
@@ -570,18 +570,18 @@ function setName(id: string) {
 }
 
 
-function open_client_settings(id: string) {
-    let modal = document.getElementById("client_settings") as HTMLElement;
+function openClientSettings(id: string) {
+    let modal = document.getElementById("client-settings") as HTMLElement;
     let client = snapcontrol.getClient(id) as Client;
     let current_name: string = (client.config.name != "") ? client.config.name : client.host.name;
-    let name = document.getElementById("client_name") as HTMLInputElement;
+    let name = document.getElementById("client-name") as HTMLInputElement;
     name.name = id;
     name.value = current_name;
-    let latency = document.getElementById("client_latency") as HTMLInputElement;
+    let latency = document.getElementById("client-latency") as HTMLInputElement;
     latency.valueAsNumber = client.config.latency;
 
     let group = snapcontrol.getGroupFromClient(id) as Group;
-    let group_input = document.getElementById("client_group") as HTMLSelectElement;
+    let group_input = document.getElementById("client-group") as HTMLSelectElement;
     while (group_input.length > 0)
         group_input.remove(0);
     let group_num = 0;
@@ -603,27 +603,27 @@ function open_client_settings(id: string) {
     modal.style.display = "block";
 }
 
-function close_client_settings() {
-    let name = document.getElementById("client_name") as HTMLInputElement;
+function closeClientSettings() {
+    let name = document.getElementById("client-name") as HTMLInputElement;
     let id = name.name;
     console.log("onclose " + id + ", value: " + name.value);
     snapcontrol.setClientName(id, name.value);
 
-    let latency = document.getElementById("client_latency") as HTMLInputElement;
+    let latency = document.getElementById("client-latency") as HTMLInputElement;
     snapcontrol.setClientLatency(id, latency.valueAsNumber);
 
-    let group_input = document.getElementById("client_group") as HTMLSelectElement;
+    let group_input = document.getElementById("client-group") as HTMLSelectElement;
     let option = group_input.options[group_input.selectedIndex];
     setGroup(id, option.value);
 
-    let modal = document.getElementById("client_settings") as HTMLElement;
+    let modal = document.getElementById("client-settings") as HTMLElement;
     modal.style.display = "none";
     show();
 }
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event: any) {
-    let modal = document.getElementById("client_settings") as HTMLElement;
+    let modal = document.getElementById("client-settings") as HTMLElement;
     if (event.target == modal) {
         modal.style.display = "none";
     }
