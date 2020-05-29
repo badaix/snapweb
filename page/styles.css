@@ -164,7 +164,6 @@ select {
     color: #686868;
     grid-row: 2;
     grid-column: 1;
-    font-size: 25px;
     height: 25px;
     width: 25px;
     padding-left: 10px;
@@ -193,6 +192,12 @@ select {
     transition: opacity .2s;
     height: 2px;
     width: 90%;
+}
+
+.slider::-moz-range-track {
+    padding: 6px;
+    background-color: transparent;
+    border: none;
 }
 
 .slider::-webkit-slider-thumb {
