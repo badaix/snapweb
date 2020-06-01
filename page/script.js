@@ -161,14 +161,20 @@ class SnapControl {
     getGroup(group_id) {
         return this.server.getGroup(group_id);
     }
-    getGroupVolume(group) {
+    getGroupVolume(group, online) {
         if (group.clients.length == 0)
             return 0;
         let group_vol = 0;
+        let client_count = 0;
         for (let client of group.clients) {
+            if (online && !client.connected)
+                continue;
             group_vol += client.config.volume.percent;
+            ++client_count;
         }
-        return group_vol / group.clients.length;
+        if (client_count == 0)
+            return 0;
+        return group_vol / client_count;
     }
     getGroupFromClient(client_id) {
         for (let group of this.server.groups)
@@ -248,7 +254,8 @@ class SnapControl {
     }
 }
 let snapcontrol = new SnapControl(window.location.hostname, 1780);
-//let snapcontrol = new SnapControl("127.0.0.1", 1780);
+//let snapcontrol = new SnapControl("192.168.0.3", 1780);
+let hide_offline = false;
 function show() {
     // Render the page
     let content = "";
@@ -257,6 +264,17 @@ function show() {
     content += "<div class='content'>";
     let server = snapcontrol.server;
     for (let group of server.groups) {
+        if (hide_offline) {
+            let groupActive = false;
+            for (let client of group.clients) {
+                if (client.connected) {
+                    groupActive = true;
+                    break;
+                }
+            }
+            if (!groupActive)
+                continue;
+        }
         // Set mute variables
         let classgroup;
         let muted;
@@ -287,7 +305,7 @@ function show() {
         content += "<div class='groupheader'>";
         content += streamselect;
         if (group.clients.length > 1) {
-            let volume = snapcontrol.getGroupVolume(group);
+            let volume = snapcontrol.getGroupVolume(group, hide_offline);
             content += "<a href=\"javascript:setMuteGroup('" + group.id + "'," + !muted + ");\"><img src='" + mute_img + "' class='mute-button'></a>";
             content += "<div class='slidergroupdiv'>";
             content += "    <input type='range' draggable='false' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setGroupVolume(\"" + group.id + "\")' value=" + volume + " class='slider'>";
@@ -300,6 +318,8 @@ function show() {
         content += "<hr class='groupheader-separator'>";
         // Create clients in group
         for (let client of group.clients) {
+            if (!client.connected && hide_offline)
+                continue;
             // Set name and connection state vars, start client div
             let name;
             let clas = 'client';
@@ -369,7 +389,7 @@ function show() {
     }
 }
 function updateGroupVolume(group) {
-    let group_vol = snapcontrol.getGroupVolume(group);
+    let group_vol = snapcontrol.getGroupVolume(group, hide_offline);
     let slider = document.getElementById("vol_" + group.id);
     if (slider == null)
         return;
