@@ -466,6 +466,8 @@ function show() {
     for (let group of snapcontrol.server.groups) {
         if (group.clients.length > 1) {
             let slider = document.getElementById("vol_" + group.id) as HTMLInputElement;
+            if (slider == null)
+                continue;
             slider.addEventListener('pointerdown', function (ev: PointerEvent) {
                 groupVolumeEnter(group.id);
             });
