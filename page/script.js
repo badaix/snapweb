@@ -249,6 +249,8 @@ class SnapControl {
             else {
                 this.action(answer);
             }
+            // TODO: don't update everything, but only the changed, 
+            // e.g. update the values for the volume sliders
             show();
         }
     }
@@ -421,7 +423,8 @@ function setGroupVolume(group_id) {
         // TODO: use batch request to update all client volumes at once
         snapcontrol.setVolume(client_id, new_volume);
         let slider = document.getElementById('vol_' + client_id);
-        slider.value = String(new_volume);
+        if (slider)
+            slider.value = String(new_volume);
     }
 }
 function groupVolumeEnter(group_id) {
