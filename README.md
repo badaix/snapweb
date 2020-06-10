@@ -1,6 +1,6 @@
 # Snapweb
 
-Webclient for [Snapcast](https://github.com/badaix/snapcast), optimized for mobile devices, with the look and feel of [Snapdroid](https://github.com/badaix/snapdroid)
+Web client for [Snapcast](https://github.com/badaix/snapcast), optimized for mobile devices, with the look and feel of [Snapdroid](https://github.com/badaix/snapdroid)
 
 ## Setup
 
