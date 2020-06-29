@@ -256,12 +256,20 @@ class SnapControl {
     }
 }
 let snapcontrol = new SnapControl(window.location.hostname, 1780);
-//let snapcontrol = new SnapControl("192.168.0.3", 1780);
-let hide_offline = false;
+let snapstream = null;
+let hide_offline = true;
 function show() {
     // Render the page
+    let play_img;
+    if (snapstream) {
+        play_img = 'stop.png';
+    }
+    else {
+        play_img = 'play.png';
+    }
     let content = "";
     content += "<div class='navbar'>Snapcast";
+    content += "    <a href=\"javascript:play();\"><img src='" + play_img + "' class='play-button'></a>";
     content += "</div>";
     content += "<div class='content'>";
     let server = snapcontrol.server;
@@ -449,6 +457,16 @@ function setVolume(id, mute) {
     if (needs_update)
         show();
 }
+function play() {
+    if (snapstream) {
+        snapstream.stop();
+        snapstream = null;
+    }
+    else {
+        snapstream = new SnapStream(window.location.hostname, 1780);
+    }
+    show();
+}
 function setMuteGroup(id, mute) {
     snapcontrol.muteGroup(id, mute);
     show();
@@ -547,4 +565,4 @@ window.onclick = function (event) {
         modal.style.display = "none";
     }
 };
-//# sourceMappingURL=script.js.map
+//# sourceMappingURL=snapcontrol.js.map
