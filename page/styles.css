@@ -41,6 +41,15 @@ body {
     font-weight: 500;
 }
 
+.play-button {
+    display: block;
+    position: absolute;
+    right: 20px;
+    top: 0;
+    height: 45px;
+    width: 45px;
+}
+
 .content {
     margin-top: 55px
 }
