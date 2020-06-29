@@ -66,6 +66,7 @@ class BaseMessage {
 class CodecMessage extends BaseMessage {
     constructor(buffer?: ArrayBuffer) {
         super(buffer);
+        this.payload = new ArrayBuffer(0);
         if (buffer) {
             this.deserialize(buffer);
         }
@@ -75,15 +76,17 @@ class CodecMessage extends BaseMessage {
     deserialize(buffer: ArrayBuffer) {
         super.deserialize(buffer);
         let view = new DataView(buffer);
-        let size = view.getInt32(26, true);
+        let codecSize = view.getInt32(26, true);
         let decoder = new TextDecoder("utf-8");
-        this.codec = decoder.decode(buffer.slice(30, 30 + size));
-        size = view.getInt32(30 + size, true);
-        this.payload = buffer.slice(34 + size);
+        this.codec = decoder.decode(buffer.slice(30, 30 + codecSize));
+        let payloadSize = view.getInt32(30 + codecSize, true);
+        console.log("payload size: " + payloadSize);
+        this.payload = buffer.slice(34 + codecSize, 34 + codecSize + payloadSize);
+        console.log("payload: " + this.payload);
     }
 
     codec: string = "";
-    payload: ArrayBuffer = new ArrayBuffer(0);
+    payload: ArrayBuffer;
 }
 
 
@@ -226,11 +229,10 @@ class ServerSettingsMessage extends JsonMessage {
 
 
 class PcmChunkMessage extends BaseMessage {
-    constructor(buffer?: ArrayBuffer) {
+    constructor(buffer: ArrayBuffer, sampleFormat: SampleFormat) {
         super(buffer);
-        if (buffer) {
-            this.deserialize(buffer);
-        }
+        this.deserialize(buffer);
+        this.sampleFormat = sampleFormat;
         this.type = 2;
     }
 
@@ -262,13 +264,14 @@ class PcmChunkMessage extends BaseMessage {
     }
 
     start(): number {
-        return this.timestamp.getMilliseconds() + 1000 * (this.idx / 48000);
+        return this.timestamp.getMilliseconds() + 1000 * (this.idx / this.sampleFormat.rate);
     }
 
     timestamp: Tv = new Tv(0, 0);
     payloadSize: number = 0;
     payload: ArrayBuffer = new ArrayBuffer(0);
     idx: number = 0;
+    sampleFormat: SampleFormat;
 }
 
 
@@ -281,7 +284,7 @@ class AudioStream {
 
     setVolume(percent: number, muted: boolean) {
         let base = 10;
-        this.volume = (Math.pow(base, percent / 100) - 1) / (base - 1);
+        this.volume = percent / 100; // (Math.pow(base, percent / 100) - 1) / (base - 1);
         console.log("setVolume: " + percent + " => " + this.volume + ", muted: " + this.muted);
         this.muted = muted;
     }
@@ -389,10 +392,33 @@ class TimeProvider {
     ctx: AudioContext;
 }
 
-class Decoder {
+class SampleFormat {
+    rate: number = 48000;
+    channels: number = 2;
+    bits: number = 16;
+
+    public toString() {
+        return this.rate + ":" + this.bits + ":" + this.channels;
+    }
 }
 
+
+class Decoder {
+    setHeader(buffer: ArrayBuffer): SampleFormat {
+        return new SampleFormat();
+    }
+}
+
+
 class PcmDecoder extends Decoder {
+    setHeader(buffer: ArrayBuffer): SampleFormat {
+        let sampleFormat = new SampleFormat();
+        let view = new DataView(buffer);
+        sampleFormat.channels = view.getUint16(22, true);
+        sampleFormat.rate = view.getUint32(24, true);
+        sampleFormat.bits = view.getUint16(34, true);
+        return sampleFormat;
+    }
 }
 
 
@@ -407,21 +433,29 @@ class SnapStream {
                 // todo: decoder, extract sampleformat
                 let codec = new CodecMessage(msg.data);
                 console.log("Codec: " + codec.codec);
+                if (codec.codec == "pcm") {
+                    let decoder = new PcmDecoder();
+                    this.sampleFormat = decoder.setHeader(codec.payload);
+                    console.log("Sampleformat: " + this.sampleFormat.toString());
+                }
                 this.play();
             } else if (type == 2) {
-                let pcmChunk = new PcmChunkMessage(msg.data);
-                this.stream.addChunk(pcmChunk);
+                if (this.sampleFormat) {
+                    let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat as SampleFormat);
+                    this.stream.addChunk(pcmChunk);
+                }
             } else if (type == 3) {
                 let serverSettings = new JsonMessage(msg.data);
                 let json = serverSettings.json;
-                this.stream.setVolume(json["volume"] as number, json["muted"] as boolean);
+                this.gainNode.gain.value = (json["muted"] as boolean) ? 0 : (json["volume"] as number) / 100;
+                // this.stream.setVolume(json["volume"] as number, json["muted"] as boolean);
                 console.log("json: " + JSON.stringify(json) + ", bufferMs: " + json["bufferMs"] + ", latency: " + json["latency"] + ", volume: " + json["volume"] + ", muted: " + json["muted"]);
             } else if (type == 4) {
                 let time = new TimeMessage(msg.data);
                 this.timeProvider.setDiff(time.latency.getMilliseconds(), this.timeProvider.now() - time.sent.getMilliseconds());
                 // console.log("Time sec: " + time.latency.sec + ", usec: " + time.latency.usec + ", diff: " + this.timeProvider.diff);
             } else {
-                console.log("onmessage: " + type);
+                console.log("Message not handled, type: " + type);
             }
         }
 
@@ -441,6 +475,9 @@ class SnapStream {
         this.ctx = new AudioContext();
         this.timeProvider = new TimeProvider(this.ctx);
         this.stream = new AudioStream(this.timeProvider);
+        this.gainNode = this.ctx.createGain();
+        this.gainNode.connect(this.ctx.destination);
+        this.gainNode.gain.value = 1;
     }
 
 
@@ -463,7 +500,7 @@ class SnapStream {
         // if (this.freeBuffers.length) {
         //     buffer = this.freeBuffers.pop() as AudioBuffer;
         // } else {
-        buffer = this.ctx.createBuffer(2, this.bufferSize, 48000);
+        buffer = this.ctx.createBuffer(2, this.bufferSize, (this.sampleFormat as SampleFormat).rate);
         // }
         let startMs = this.stream.getNextBuffer(buffer, this.playTime * 1000);
         let age = this.timeProvider.serverTime(this.playTime * 1000) - startMs;
@@ -475,7 +512,7 @@ class SnapStream {
         // let median = sorted[Math.floor(sorted.length / 2)];
         console.log("prepareSource age: " + age); // + ", median: " + median);
         source.buffer = buffer;
-        source.connect(this.ctx.destination);
+        source.connect(this.gainNode);// this.ctx.destination);
         return source;
     }
 
@@ -489,6 +526,7 @@ class SnapStream {
         this.playTime = this.ctx.currentTime;
         this.playNext();
         this.playNext();
+        this.playNext();
     }
 
     public playNext() {
@@ -499,11 +537,12 @@ class SnapStream {
             // this.freeBuffers.push(source.buffer as AudioBuffer);
             this.playNext();
         }
-        this.playTime += this.bufferSize / 48000;
+        this.playTime += this.bufferSize / (this.sampleFormat as SampleFormat).rate;
     }
 
     streamsocket: WebSocket;
     stream: AudioStream;
+    gainNode: GainNode;
     ctx: AudioContext;
     playTime: number = 0;
     msgId: number = 0;
@@ -511,6 +550,7 @@ class SnapStream {
     timeProvider: TimeProvider;
     syncHandle: number = -1;
     ageBuffer: Array<number>;
+    sampleFormat: SampleFormat | null = null;
 }
 
 
