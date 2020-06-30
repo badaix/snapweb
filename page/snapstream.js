@@ -1,4 +1,31 @@
 "use strict";
+function setCookie(key, value, exdays = -1) {
+    let d = new Date();
+    if (exdays < 0)
+        exdays = 10 * 365;
+    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+    let expires = "expires=" + d.toUTCString();
+    document.cookie = key + "=" + value + ";" + expires + ";sameSite=Strict;path=/";
+}
+function getCookie(key, defaultValue = "") {
+    let name = key + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for (let c of ca) {
+        c = c.trimLeft();
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    setCookie(key, defaultValue);
+    return defaultValue;
+}
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
 class Tv {
     constructor(sec, usec) {
         this.sec = 0;
@@ -138,7 +165,7 @@ class HelloMessage extends JsonMessage {
         super(buffer);
         this.mac = "";
         this.hostname = "";
-        this.version = "";
+        this.version = "0.1.0";
         this.clientName = "Snapweb";
         this.os = "";
         this.arch = "web";
@@ -271,7 +298,7 @@ class AudioStream {
         let startMs = 0;
         if (this.chunk) {
             startMs = this.chunk.start();
-            while (read < frames) {
+            while (read < frames && this.chunk) {
                 let pcmChunk = this.chunk;
                 let pcmBuffer = pcmChunk.readFrames(frames - read);
                 let payload = new Int16Array(pcmBuffer);
@@ -315,10 +342,12 @@ class TimeProvider {
         let sorted = [...this.diffBuffer];
         sorted.sort();
         this.diff = sorted[Math.floor(sorted.length / 2)];
-        console.log("c2s: " + c2s + ", s2c: " + s2c + ", diff: " + this.diff + ", now: " + this.now() + ", win.now: " + window.performance.now());
+        // console.log("c2s: " + c2s + ", s2c: " + s2c + ", diff: " + this.diff + ", now: " + this.now() + ", win.now: " + window.performance.now());
+        // console.log("now: " + this.now() + "\t" + this.now() + "\t" + this.now());
     }
     now() {
-        return this.ctx.currentTime * 1000;
+        // return this.ctx.currentTime * 1000;
+        return this.ctx.getOutputTimestamp().contextTime * 1000;
         // return window.performance.now();
     }
     serverNow() {
@@ -342,6 +371,9 @@ class Decoder {
     setHeader(buffer) {
         return new SampleFormat();
     }
+    decode(buffer) {
+        return null;
+    }
 }
 class PcmDecoder extends Decoder {
     setHeader(buffer) {
@@ -352,14 +384,21 @@ class PcmDecoder extends Decoder {
         sampleFormat.bits = view.getUint16(34, true);
         return sampleFormat;
     }
+    decode(buffer) {
+        return buffer;
+    }
 }
 class SnapStream {
     constructor(host, port) {
         this.playTime = 0;
+        // endTime: number = 0;
         this.msgId = 0;
         this.bufferSize = 2400; // 9600; // 2400;//8192;
         this.syncHandle = -1;
+        this.decoder = null;
         this.sampleFormat = null;
+        this.median = 0;
+        this.audioBuffers = 3;
         this.streamsocket = new WebSocket('ws://' + host + ':' + port + '/stream');
         this.streamsocket.binaryType = "arraybuffer";
         this.streamsocket.onmessage = (msg) => {
@@ -370,15 +409,16 @@ class SnapStream {
                 let codec = new CodecMessage(msg.data);
                 console.log("Codec: " + codec.codec);
                 if (codec.codec == "pcm") {
-                    let decoder = new PcmDecoder();
-                    this.sampleFormat = decoder.setHeader(codec.payload);
+                    this.decoder = new PcmDecoder();
+                    this.sampleFormat = this.decoder.setHeader(codec.payload);
                     console.log("Sampleformat: " + this.sampleFormat.toString());
                 }
                 this.play();
             }
             else if (type == 2) {
-                if (this.sampleFormat) {
-                    let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat);
+                let decoded = this.decoder?.decode(msg.data);
+                if (decoded) {
+                    let pcmChunk = new PcmChunkMessage(decoded, this.sampleFormat);
                     this.stream.addChunk(pcmChunk);
                 }
             }
@@ -395,23 +435,25 @@ class SnapStream {
                 // console.log("Time sec: " + time.latency.sec + ", usec: " + time.latency.usec + ", diff: " + this.timeProvider.diff);
             }
             else {
-                console.log("onmessage: " + type);
+                console.log("Message not handled, type: " + type);
             }
         };
         this.streamsocket.onopen = (ev) => {
             console.log("on open");
             let hello = new HelloMessage();
+            hello.mac = "00:00:00:00:00:00";
             hello.arch = "web";
-            // let loc = new Location();
-            hello.hostname = location.hostname; // "T405";
-            hello.uniqueId = "1234";
+            hello.os = navigator.platform;
+            hello.hostname = location.hostname;
+            hello.uniqueId = getCookie("uniqueId", uuidv4());
             this.sendMessage(hello);
             this.syncTime();
             this.syncHandle = window.setInterval(() => this.syncTime(), 1000);
         };
         this.streamsocket.onerror = (ev) => { alert("error: " + ev.type); }; //this.onError(ev);
         this.ageBuffer = new Array();
-        this.ctx = new AudioContext();
+        this.ctx = new AudioContext({ latencyHint: "playback", sampleRate: 48000 });
+        console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency);
         this.timeProvider = new TimeProvider(this.ctx);
         this.stream = new AudioStream(this.timeProvider);
         this.gainNode = this.ctx.createGain();
@@ -428,6 +470,7 @@ class SnapStream {
         let t = new TimeMessage();
         t.latency.setMilliseconds(this.timeProvider.now());
         this.sendMessage(t);
+        console.log("prepareSource median: " + Math.round(this.median * 10) / 10);
     }
     prepareSource() {
         let source = this.ctx.createBufferSource();
@@ -439,13 +482,14 @@ class SnapStream {
         // }
         let startMs = this.stream.getNextBuffer(buffer, this.playTime * 1000);
         let age = this.timeProvider.serverTime(this.playTime * 1000) - startMs;
-        // this.ageBuffer.push(age);
-        // if (this.ageBuffer.length > 200)
-        //     this.ageBuffer.shift();
-        // let sorted = [...this.ageBuffer];
-        // sorted.sort()
-        // let median = sorted[Math.floor(sorted.length / 2)];
-        console.log("prepareSource age: " + age); // + ", median: " + median);
+        // let age = this.timeProvider.serverTime(this.endTime) - startMs;
+        this.ageBuffer.push(age);
+        if (this.ageBuffer.length > 100)
+            this.ageBuffer.shift();
+        let sorted = [...this.ageBuffer];
+        sorted.sort();
+        this.median = sorted[Math.floor(sorted.length / 2)];
+        // console.log("prepareSource age: " + age + ", median: " + this.median);
         source.buffer = buffer;
         source.connect(this.gainNode); // this.ctx.destination);
         return source;
@@ -457,14 +501,19 @@ class SnapStream {
     }
     play() {
         this.playTime = this.ctx.currentTime;
-        this.playNext();
-        this.playNext();
-        this.playNext();
+        // let sampleLen = (this.bufferSize / (this.sampleFormat as SampleFormat).rate) * 1000;
+        for (let i = 1; i <= this.audioBuffers; ++i) {
+            // this.endTime = window.performance.now() + i * sampleLen;
+            this.playNext();
+        }
     }
     playNext() {
         let source = this.prepareSource();
         source.start(this.playTime);
         source.onended = (ev) => {
+            // this.endTime = window.performance.now() + (this.audioBuffers - 1) * (this.bufferSize / (this.sampleFormat as SampleFormat).rate) * 1000;
+            // console.log("Perf: " + this.ctx.getOutputTimestamp().performanceTime);
+            // console.log("onended: " + window.performance.now());
             // console.log("onended: " + this.ctx.currentTime * 1000);
             // this.freeBuffers.push(source.buffer as AudioBuffer);
             this.playNext();
