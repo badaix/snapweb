@@ -339,12 +339,11 @@ class AudioStream {
         }
     }
 
-    getNextBuffer(buffer: AudioBuffer, playTimeMs: number): number {
+    getNextBuffer(buffer: AudioBuffer, playTimeMs: number) : { chunkTime: number, success: boolean } {
         if (!this.chunk) {
             this.chunk = this.chunks.shift()
         }
         // let age = this.timeProvider.serverTime(this.playTime * 1000) - startMs;
-
         let frames = buffer.length;
         let read = 0;
         let left = new Float32Array(frames);
@@ -353,23 +352,39 @@ class AudioStream {
         let volume = this.muted ? 0 : this.volume;
         let startMs: number = 0;
         if (this.chunk) {
-            startMs = this.chunk.start();
-            while (read < frames && this.chunk) {
-                let pcmChunk = this.chunk as PcmChunkMessage;
-                let pcmBuffer = pcmChunk.readFrames(frames - read);
-                let payload = new Int16Array(pcmBuffer);
-                // console.log("readFrames: " + (frames - read) + ", read: " + pcmBuffer.byteLength + ", payload: " + payload.length);
-                read += (pcmBuffer.byteLength / 4);
-                for (let i = 0; i < payload.length; i += 2) {
-                    left[pos] = (payload[i] / 32768) * volume;
-                    right[pos] = (payload[i + 1] / 32768) * volume;
-                    pos++;
-                }
-                if (pcmChunk.isEndOfChunk()) {
+            let age = this.timeProvider.serverTime(playTimeMs) - (this.chunk as PcmChunkMessage).timestamp.getMilliseconds();// - 500;
+            let reqChunkDuration = ((buffer.length / 4) / 48000) * 1000;
+            console.log("age: " + age + ", req: " + reqChunkDuration);
+            if (age < -reqChunkDuration) {
+                console.log("Chunk too young, returning silence");
+                startMs = this.chunk.start();
+            } else {
+                while (age > reqChunkDuration) {
+                    console.log("Chunk too old, dropping");
                     this.chunk = this.chunks.shift();
-                    if (this.chunk) {
-                        let age = this.timeProvider.serverNow() - (this.chunk as PcmChunkMessage).timestamp.getMilliseconds();
-                        // console.log("Age: " + age + ", server now: " + this.timeProvider.serverNow() + ", chunk: " + (this.chunk as PcmChunkMessage).timestamp.getMilliseconds());
+                    if (!this.chunk)
+                        break;
+                    age = this.timeProvider.serverTime(playTimeMs) - (this.chunk as PcmChunkMessage).timestamp.getMilliseconds();
+                }
+                if (this.chunk)
+                    startMs = this.chunk.start();
+                while (read < frames && this.chunk) {
+                    let pcmChunk = this.chunk as PcmChunkMessage;
+                    let pcmBuffer = pcmChunk.readFrames(frames - read);
+                    let payload = new Int16Array(pcmBuffer);
+                    // console.log("readFrames: " + (frames - read) + ", read: " + pcmBuffer.byteLength + ", payload: " + payload.length);
+                    read += (pcmBuffer.byteLength / 4);
+                    for (let i = 0; i < payload.length; i += 2) {
+                        left[pos] = (payload[i] / 32768) * volume;
+                        right[pos] = (payload[i + 1] / 32768) * volume;
+                        pos++;
+                    }
+                    if (pcmChunk.isEndOfChunk()) {
+                        this.chunk = this.chunks.shift();
+                        if (this.chunk) {
+                            let age = this.timeProvider.serverNow() - (this.chunk as PcmChunkMessage).timestamp.getMilliseconds();
+                            // console.log("Age: " + age + ", server now: " + this.timeProvider.serverNow() + ", chunk: " + (this.chunk as PcmChunkMessage).timestamp.getMilliseconds());
+                        }
                     }
                 }
             }
@@ -383,7 +398,7 @@ class AudioStream {
 
         buffer.copyToChannel(left, 0, 0);
         buffer.copyToChannel(right, 1, 0);
-        return startMs;
+        return { chunkTime: startMs, success: true };
     }
 
     chunk?: PcmChunkMessage = undefined;
@@ -495,6 +510,8 @@ class SnapStream {
                 let serverSettings = new JsonMessage(msg.data);
                 let json = serverSettings.json;
                 this.gainNode.gain.value = (json["muted"] as boolean) ? 0 : (json["volume"] as number) / 100;
+                this.bufferMs = json["bufferMs"];
+                this.bufferMs -= json["latency"];
                 // this.stream.setVolume(json["volume"] as number, json["muted"] as boolean);
                 console.log("json: " + JSON.stringify(json) + ", bufferMs: " + json["bufferMs"] + ", latency: " + json["latency"] + ", volume: " + json["volume"] + ", muted: " + json["muted"]);
             } else if (type == 4) {
@@ -553,16 +570,20 @@ class SnapStream {
         // } else {
         buffer = this.ctx.createBuffer(2, this.bufferSize, (this.sampleFormat as SampleFormat).rate);
         // }
-        let startMs = this.stream.getNextBuffer(buffer, this.playTime * 1000);
-        let age = this.timeProvider.serverTime(this.playTime * 1000) - startMs;
-        // let age = this.timeProvider.serverTime(this.endTime) - startMs;
 
-        this.ageBuffer.push(age);
-        if (this.ageBuffer.length > 100)
-            this.ageBuffer.shift();
-        let sorted = [...this.ageBuffer];
-        sorted.sort()
-        this.median = sorted[Math.floor(sorted.length / 2)];
+        let playTimeMs = (this.playTime + this.ctx.baseLatency) * 1000 - this.bufferMs;
+        let nextBuffer = this.stream.getNextBuffer(buffer, playTimeMs);
+        if (nextBuffer.success) {
+            let age = this.timeProvider.serverTime(playTimeMs) - nextBuffer.chunkTime;
+            // let age = this.timeProvider.serverTime(this.endTime) - startMs;
+
+            this.ageBuffer.push(age);
+            if (this.ageBuffer.length > 100)
+                this.ageBuffer.shift();
+            let sorted = [...this.ageBuffer];
+            sorted.sort()
+            this.median = sorted[Math.floor(sorted.length / 2)];
+        }
 
         // console.log("prepareSource age: " + age + ", median: " + this.median);
         source.buffer = buffer;
@@ -615,6 +636,7 @@ class SnapStream {
     sampleFormat: SampleFormat | null = null;
     median: number = 0;
     audioBuffers: number = 3;
+    bufferMs: number = 1000;
 }
 
 
