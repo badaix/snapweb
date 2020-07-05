@@ -413,10 +413,10 @@ class AudioStream {
                     for (let i = 0; i < payload.length; i += 2) {
                         left[pos] = (payload[i] / 32768) * volume;
                         right[pos] = (payload[i + 1] / 32768) * volume;
-                        if ((everyN != 0) && (i > 0) && (i % everyN == 0)) {
-                            if (addFrames > 0)
+                        if ((everyN != 0) && (i > 0) && (i % (2 * everyN) == 0)) {
+                            if (addFrames > 0) {
                                 pos--;
-                            else {
+                            } else {
                                 left[pos + 1] = left[pos];
                                 right[pos + 1] = right[pos];
                                 pos++;
@@ -428,6 +428,7 @@ class AudioStream {
                         this.chunk = this.chunks.shift();
                     }
                 }
+                // console.log("Pos: " + pos + ", frames: " + frames + ", add: " + addFrames + ", everyN: " + everyN);
                 if (read == readFrames)
                     read = frames;
             }
