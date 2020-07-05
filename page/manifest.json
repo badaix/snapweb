@@ -9,5 +9,8 @@
         }
     ],
     "start_url": "/index.html",
-    "display": "standalone"
+    "display": "standalone",
+    "categories": ["music"],
+    "description": "Snapcast web client",
+    "theme_color": "#455A64"
 }
