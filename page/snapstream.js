@@ -591,6 +591,9 @@ class SnapStream {
                 else if (codec.codec == "pcm") {
                     this.decoder = new PcmDecoder();
                 }
+                else {
+                    alert("Codec not supported: " + codec.codec);
+                }
                 if (this.decoder) {
                     this.sampleFormat = this.decoder.setHeader(codec.payload);
                     console.log("Sampleformat: " + this.sampleFormat.toString());
@@ -610,7 +613,6 @@ class SnapStream {
                 let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat);
                 let decoded = this.decoder?.decode(pcmChunk);
                 if (decoded) {
-                    //let pcmChunk = new PcmChunkMessage(decoded, this.sampleFormat as SampleFormat);
                     this.stream.addChunk(decoded);
                 }
             }
