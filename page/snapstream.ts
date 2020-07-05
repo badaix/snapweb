@@ -435,7 +435,7 @@ class AudioStream {
         }
 
         if (read < frames) {
-            console.log("Failed to get chunk");
+            console.log("Failed to get chunk, read: " + read + "/" + frames);
             left.fill(0, pos);
             right.fill(0, pos);
         }
@@ -553,7 +553,7 @@ class FlacDecoder extends Decoder {
         this.decoder = Flac.create_libflac_decoder(true);
         if (this.decoder) {
             let init_status = Flac.init_decoder_stream(this.decoder, this.read_callback_fn.bind(this), this.write_callback_fn.bind(this), this.error_callback_fn.bind(this), this.metadata_callback_fn.bind(this), false);
-            console.log("Flac init: " + init_status);
+            console.error("Flac init: " + init_status);
             Flac.setOptions(this.decoder, { analyseSubframes: true, analyseResiduals: true });
         }
         this.sampleFormat = new SampleFormat();
@@ -726,7 +726,7 @@ class SnapStream {
                 }
                 // console.log("Time sec: " + time.latency.sec + ", usec: " + time.latency.usec + ", diff: " + this.timeProvider.diff);
             } else {
-                console.log("Message not handled, type: " + type);
+                console.info("Message not handled, type: " + type);
             }
         }
 
@@ -794,7 +794,7 @@ class SnapStream {
         //     this.median = sorted[Math.floor(sorted.length / 2)];
         // }
 
-        // console.log("prepareSource age: " + age + ", median: " + this.median);
+        console.debug("prepareSource age: " + playTimeMs);// + ", median: " + this.median);
         source.buffer = buffer;
         source.connect(this.gainNode!);// this.ctx.destination);
         return source;
@@ -834,7 +834,7 @@ class SnapStream {
     streamsocket: WebSocket;
     playTime: number = 0;
     msgId: number = 0;
-    bufferDurationMs: number = 0; //50;
+    bufferDurationMs: number = 100; // 0;
     bufferFrameCount: number = 3844; // 9600; // 2400;//8192;
     syncHandle: number = -1;
     // ageBuffer: Array<number>;
@@ -848,7 +848,7 @@ class SnapStream {
     sampleFormat: SampleFormat | undefined;
 
     // median: number = 0;
-    audioBuffers: number = 3;
+    audioBuffers: number = 2;
     bufferMs: number = 1000;
 }
 
