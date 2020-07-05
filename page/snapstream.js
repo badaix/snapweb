@@ -49,10 +49,6 @@ class BaseMessage {
         this.received = new Tv(0, 0);
         this.sent = new Tv(0, 0);
         this.size = 0;
-        if (buffer) {
-            this.deserialize(buffer);
-        }
-        // console.log("Type: " + this.type + " id: " + this.id + ", refers to: " + this.refersTo + ", sent: " + this.sent.sec + " " + this.sent.usec + ", size: " + this.size);
     }
     deserialize(buffer) {
         let view = new DataView(buffer);
@@ -222,7 +218,7 @@ class PcmChunkMessage extends BaseMessage {
     constructor(buffer, sampleFormat) {
         super(buffer);
         this.timestamp = new Tv(0, 0);
-        this.payloadSize = 0;
+        // payloadSize: number = 0;
         this.payload = new ArrayBuffer(0);
         this.idx = 0;
         this.deserialize(buffer);
@@ -230,17 +226,18 @@ class PcmChunkMessage extends BaseMessage {
         this.type = 2;
     }
     deserialize(buffer) {
+        super.deserialize(buffer);
         let view = new DataView(buffer);
         this.timestamp = new Tv(view.getInt32(26, true), view.getInt32(30, true));
-        this.payloadSize = view.getUint32(34, true);
+        // this.payloadSize = view.getUint32(34, true);
         this.payload = buffer.slice(38); //, this.payloadSize + 38));// , this.payloadSize);
         // console.log("ts: " + this.timestamp.sec + " " + this.timestamp.usec + ", payload: " + this.payloadSize + ", len: " + this.payload.byteLength);
     }
     readFrames(frames) {
         let frameCnt = frames;
         let frameSize = this.sampleFormat.frameSize();
-        if (this.idx + frames > this.payloadSize / frameSize)
-            frameCnt = (this.payloadSize / frameSize) - this.idx;
+        if (this.idx + frames > this.payloadSize() / frameSize)
+            frameCnt = (this.payloadSize() / frameSize) - this.idx;
         let begin = this.idx * frameSize;
         this.idx += frameCnt;
         let end = begin + frameCnt * frameSize;
@@ -248,13 +245,32 @@ class PcmChunkMessage extends BaseMessage {
         return this.payload.slice(begin, end);
     }
     getFrameCount() {
-        return (this.payloadSize / this.sampleFormat.frameSize());
+        return (this.payloadSize() / this.sampleFormat.frameSize());
     }
     isEndOfChunk() {
         return this.idx >= this.getFrameCount();
     }
     startMs() {
         return this.timestamp.getMilliseconds() + 1000 * (this.idx / this.sampleFormat.rate);
+    }
+    payloadSize() {
+        return this.payload.byteLength;
+    }
+    clearPayload() {
+        this.payload = new ArrayBuffer(0);
+    }
+    addPayload(buffer) {
+        let payload = new ArrayBuffer(this.payload.byteLength + buffer.byteLength);
+        let view = new DataView(payload);
+        let viewOld = new DataView(this.payload);
+        let viewNew = new DataView(buffer);
+        for (let i = 0; i < viewOld.byteLength; ++i) {
+            view.setInt8(i, viewOld.getInt8(i));
+        }
+        for (let i = 0; i < viewNew.byteLength; ++i) {
+            view.setInt8(i + viewOld.byteLength, viewNew.getInt8(i));
+        }
+        this.payload = payload;
     }
 }
 class AudioStream {
@@ -343,8 +359,11 @@ class AudioStream {
                         if ((everyN != 0) && (i > 0) && (i % everyN == 0)) {
                             if (addFrames > 0)
                                 pos--;
-                            else
+                            else {
+                                left[pos + 1] = left[pos];
+                                right[pos + 1] = right[pos];
                                 pos++;
+                            }
                         }
                         pos++;
                     }
@@ -439,8 +458,100 @@ class Decoder {
     setHeader(buffer) {
         return new SampleFormat();
     }
-    decode(buffer) {
+    decode(chunk) {
         return null;
+    }
+}
+class FlacDecoder extends Decoder {
+    constructor() {
+        super();
+        this.header = null;
+        this.cacheInfo = { isCachedChunk: false, cachedBlocks: 0 };
+        this.decoder = Flac.create_libflac_decoder(true);
+        if (this.decoder) {
+            let init_status = Flac.init_decoder_stream(this.decoder, this.read_callback_fn.bind(this), this.write_callback_fn.bind(this), this.error_callback_fn.bind(this), this.metadata_callback_fn.bind(this), false);
+            console.log("Flac init: " + init_status);
+            Flac.setOptions(this.decoder, { analyseSubframes: true, analyseResiduals: true });
+        }
+        this.sampleFormat = new SampleFormat();
+        this.flacChunk = new ArrayBuffer(0);
+        // this.pcmChunk  = new PcmChunkMessage();
+        // Flac.setOptions(this.decoder, {analyseSubframes: analyse_frames, analyseResiduals: analyse_residuals});
+        // flac_ok &= init_status == 0;
+        // console.log("flac init     : " + flac_ok);//DEBUG
+    }
+    decode(chunk) {
+        // console.log("Flac decode: " + chunk.payload.byteLength);
+        this.flacChunk = chunk.payload.slice(0);
+        this.pcmChunk = chunk;
+        this.pcmChunk.clearPayload();
+        this.cacheInfo = { cachedBlocks: 0, isCachedChunk: true };
+        // console.log("Flac len: " + this.flacChunk.byteLength);
+        while (this.flacChunk.byteLength && Flac.FLAC__stream_decoder_process_single(this.decoder)) {
+            let state = Flac.FLAC__stream_decoder_get_state(this.decoder);
+            // console.log("State: " + state);
+        }
+        // console.log("Pcm payload: " + this.pcmChunk!.payloadSize());
+        if (this.cacheInfo.cachedBlocks > 0) {
+            let diffMs = this.cacheInfo.cachedBlocks / this.sampleFormat.msRate();
+            // console.log("Cached: " + this.cacheInfo.cachedBlocks + ", " + diffMs + "ms");
+            this.pcmChunk.timestamp.setMilliseconds(this.pcmChunk.timestamp.getMilliseconds() - diffMs);
+        }
+        return this.pcmChunk;
+    }
+    read_callback_fn(bufferSize) {
+        // console.log('  decode read callback, buffer bytes max=', bufferSize);
+        if (this.header) {
+            console.log("  header: " + this.header.byteLength);
+            let data = new Uint8Array(this.header);
+            this.header = null;
+            return { buffer: data, readDataLength: data.byteLength, error: false };
+        }
+        else if (this.flacChunk) {
+            // console.log("  flacChunk: " + this.flacChunk.byteLength);
+            // a fresh read => next call to write will not be from cached data
+            this.cacheInfo.isCachedChunk = false;
+            let data = new Uint8Array(this.flacChunk.slice(0, Math.min(bufferSize, this.flacChunk.byteLength)));
+            this.flacChunk = this.flacChunk.slice(data.byteLength);
+            return { buffer: data, readDataLength: data.byteLength, error: false };
+        }
+        return { buffer: new Uint8Array(0), readDataLength: 0, error: false };
+    }
+    write_callback_fn(data, frameInfo) {
+        // console.log("  write frame metadata: " + frameInfo + ", len: " + data.length);
+        if (this.cacheInfo.isCachedChunk) {
+            // there was no call to read, so it's some cached data
+            this.cacheInfo.cachedBlocks += frameInfo.blocksize;
+        }
+        let payload = new ArrayBuffer((frameInfo.bitsPerSample / 8) * frameInfo.channels * frameInfo.blocksize);
+        let view = new DataView(payload);
+        for (let channel = 0; channel < frameInfo.channels; ++channel) {
+            let channelData = new DataView(data[channel].buffer, 0, data[channel].buffer.byteLength);
+            // console.log("channelData: " + channelData.byteLength + ", blocksize: " + frameInfo.blocksize);
+            for (let i = 0; i < frameInfo.blocksize; ++i) {
+                view.setInt16(2 * (frameInfo.channels * i + channel), channelData.getInt16(2 * i, true), true);
+            }
+        }
+        this.pcmChunk.addPayload(payload);
+        // console.log("write: " + payload.byteLength + ", len: " + this.pcmChunk!.payloadSize());
+    }
+    /** @memberOf decode */
+    metadata_callback_fn(data) {
+        console.info('meta data: ', data);
+        // let view = new DataView(data);
+        this.sampleFormat.rate = data.sampleRate;
+        this.sampleFormat.channels = data.channels;
+        this.sampleFormat.bits = data.bitsPerSample;
+        console.log("metadata_callback_fn, sampleformat: " + this.sampleFormat.toString());
+    }
+    /** @memberOf decode */
+    error_callback_fn(err, errMsg) {
+        console.error('decode error callback', err, errMsg);
+    }
+    setHeader(buffer) {
+        this.header = buffer.slice(0);
+        Flac.FLAC__stream_decoder_process_until_end_of_metadata(this.decoder);
+        return this.sampleFormat;
     }
 }
 class PcmDecoder extends Decoder {
@@ -452,8 +563,8 @@ class PcmDecoder extends Decoder {
         sampleFormat.bits = view.getUint16(34, true);
         return sampleFormat;
     }
-    decode(buffer) {
-        return buffer;
+    decode(chunk) {
+        return chunk;
     }
 }
 class SnapStream {
@@ -474,8 +585,13 @@ class SnapStream {
             if (type == 1) {
                 let codec = new CodecMessage(msg.data);
                 console.log("Codec: " + codec.codec);
-                if (codec.codec == "pcm") {
+                if (codec.codec == "flac") {
+                    this.decoder = new FlacDecoder();
+                }
+                else if (codec.codec == "pcm") {
                     this.decoder = new PcmDecoder();
+                }
+                if (this.decoder) {
                     this.sampleFormat = this.decoder.setHeader(codec.payload);
                     console.log("Sampleformat: " + this.sampleFormat.toString());
                     this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
@@ -491,10 +607,11 @@ class SnapStream {
                 this.play();
             }
             else if (type == 2) {
-                let decoded = this.decoder?.decode(msg.data);
+                let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat);
+                let decoded = this.decoder?.decode(pcmChunk);
                 if (decoded) {
-                    let pcmChunk = new PcmChunkMessage(decoded, this.sampleFormat);
-                    this.stream.addChunk(pcmChunk);
+                    //let pcmChunk = new PcmChunkMessage(decoded, this.sampleFormat as SampleFormat);
+                    this.stream.addChunk(decoded);
                 }
             }
             else if (type == 3) {
@@ -550,7 +667,7 @@ class SnapStream {
         // if (this.freeBuffers.length) {
         //     buffer = this.freeBuffers.pop() as AudioBuffer;
         // } else {
-        buffer = this.ctx.createBuffer(2, this.bufferFrameCount, this.sampleFormat.rate);
+        buffer = this.ctx.createBuffer(this.sampleFormat.channels, this.bufferFrameCount, this.sampleFormat.rate);
         // }
         let playTimeMs = (this.playTime + this.ctx.baseLatency) * 1000 - this.bufferMs;
         // let nextBuffer = 
