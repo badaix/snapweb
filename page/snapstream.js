@@ -573,8 +573,8 @@ class SnapStream {
     constructor(host, port) {
         this.playTime = 0;
         this.msgId = 0;
-        this.bufferDurationMs = 50;
-        this.bufferFrameCount = 4800; // 9600; // 2400;//8192;
+        this.bufferDurationMs = 0; //50;
+        this.bufferFrameCount = 3844; // 9600; // 2400;//8192;
         this.syncHandle = -1;
         // median: number = 0;
         this.audioBuffers = 3;
@@ -603,7 +603,9 @@ class SnapStream {
                         alert("Stream must be stereo with 16 bit depth, actual format: " + this.sampleFormat.toString());
                     }
                     else {
-                        this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
+                        if (this.bufferDurationMs != 0) {
+                            this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
+                        }
                         this.ctx = new AudioContext({ latencyHint: "playback", sampleRate: this.sampleFormat.rate });
                         this.timeProvider.setAudioContext(this.ctx);
                         this.gainNode = this.ctx.createGain();

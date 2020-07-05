@@ -692,7 +692,9 @@ class SnapStream {
                     if ((this.sampleFormat.channels != 2) || (this.sampleFormat.bits != 16)) {
                         alert("Stream must be stereo with 16 bit depth, actual format: " + this.sampleFormat.toString());
                     } else {
-                        this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
+                        if (this.bufferDurationMs != 0) {
+                            this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
+                        }
                         this.ctx = new AudioContext({ latencyHint: "playback", sampleRate: this.sampleFormat.rate });
                         this.timeProvider.setAudioContext(this.ctx);
                         this.gainNode = this.ctx.createGain();
@@ -832,8 +834,8 @@ class SnapStream {
     streamsocket: WebSocket;
     playTime: number = 0;
     msgId: number = 0;
-    bufferDurationMs: number = 50;
-    bufferFrameCount: number = 4800; // 9600; // 2400;//8192;
+    bufferDurationMs: number = 0; //50;
+    bufferFrameCount: number = 3844; // 9600; // 2400;//8192;
     syncHandle: number = -1;
     // ageBuffer: Array<number>;
 
