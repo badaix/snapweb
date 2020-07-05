@@ -32,7 +32,7 @@ body {
     overflow: hidden;
     background-color: #607d8b;
     z-index: 1; /* Sit on top */
-    padding: 10px;
+    padding: 13px;
     color: white;
     position: fixed; /* Set the navbar to fixed position */
     top: 0; /* Position the navbar at the top of the page */
@@ -44,14 +44,14 @@ body {
 .play-button {
     display: block;
     position: absolute;
-    right: 20px;
-    top: 0;
-    height: 45px;
-    width: 45px;
+    right: 34px;
+    top: 5px;
+    height: 40px;
+    width: 40px;
 }
 
 .content {
-    margin-top: 55px
+    margin-top: 62px
 }
 
 .group {
