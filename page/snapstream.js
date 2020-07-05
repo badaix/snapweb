@@ -356,9 +356,10 @@ class AudioStream {
                     for (let i = 0; i < payload.length; i += 2) {
                         left[pos] = (payload[i] / 32768) * volume;
                         right[pos] = (payload[i + 1] / 32768) * volume;
-                        if ((everyN != 0) && (i > 0) && (i % everyN == 0)) {
-                            if (addFrames > 0)
+                        if ((everyN != 0) && (i > 0) && (i % (2 * everyN) == 0)) {
+                            if (addFrames > 0) {
                                 pos--;
+                            }
                             else {
                                 left[pos + 1] = left[pos];
                                 right[pos + 1] = right[pos];
@@ -371,6 +372,7 @@ class AudioStream {
                         this.chunk = this.chunks.shift();
                     }
                 }
+                // console.log("Pos: " + pos + ", frames: " + frames + ", add: " + addFrames + ", everyN: " + everyN);
                 if (read == readFrames)
                     read = frames;
             }
@@ -597,17 +599,22 @@ class SnapStream {
                 if (this.decoder) {
                     this.sampleFormat = this.decoder.setHeader(codec.payload);
                     console.log("Sampleformat: " + this.sampleFormat.toString());
-                    this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
-                    this.ctx = new AudioContext({ latencyHint: "playback", sampleRate: this.sampleFormat.rate });
-                    this.timeProvider.setAudioContext(this.ctx);
-                    this.gainNode = this.ctx.createGain();
-                    this.gainNode.connect(this.ctx.destination);
-                    this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
-                    this.timeProvider = new TimeProvider(this.ctx);
-                    this.stream = new AudioStream(this.timeProvider, this.sampleFormat);
-                    console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency);
+                    if ((this.sampleFormat.channels != 2) || (this.sampleFormat.bits != 16)) {
+                        alert("Stream must be stereo with 16 bit depth, actual format: " + this.sampleFormat.toString());
+                    }
+                    else {
+                        this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
+                        this.ctx = new AudioContext({ latencyHint: "playback", sampleRate: this.sampleFormat.rate });
+                        this.timeProvider.setAudioContext(this.ctx);
+                        this.gainNode = this.ctx.createGain();
+                        this.gainNode.connect(this.ctx.destination);
+                        this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
+                        this.timeProvider = new TimeProvider(this.ctx);
+                        this.stream = new AudioStream(this.timeProvider, this.sampleFormat);
+                        console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency);
+                        this.play();
+                    }
                 }
-                this.play();
             }
             else if (type == 2) {
                 let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat);
@@ -648,6 +655,9 @@ class SnapStream {
             this.syncHandle = window.setInterval(() => this.syncTime(), 1000);
         };
         this.streamsocket.onerror = (ev) => { alert("error: " + ev.type); }; //this.onError(ev);
+        this.streamsocket.onclose = (ev) => {
+            stop();
+        };
         // this.ageBuffer = new Array<number>();
         this.timeProvider = new TimeProvider();
     }
@@ -655,7 +665,12 @@ class SnapStream {
         msg.sent = new Tv(0, 0);
         msg.sent.setMilliseconds(this.timeProvider.now());
         msg.id = ++this.msgId;
-        this.streamsocket.send(msg.serialize());
+        if (this.streamsocket.readyState != this.streamsocket.OPEN) {
+            stop();
+        }
+        else {
+            this.streamsocket.send(msg.serialize());
+        }
     }
     syncTime() {
         let t = new TimeMessage();
@@ -694,7 +709,9 @@ class SnapStream {
         if (this.ctx) {
             this.ctx.close();
         }
-        this.streamsocket.close();
+        if ([WebSocket.OPEN, WebSocket.CONNECTING].includes(this.streamsocket.readyState)) {
+            this.streamsocket.close();
+        }
     }
     play() {
         this.playTime = this.ctx.currentTime;
