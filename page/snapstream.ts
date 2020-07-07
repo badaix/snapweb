@@ -834,7 +834,7 @@ class SnapStream {
     streamsocket: WebSocket;
     playTime: number = 0;
     msgId: number = 0;
-    bufferDurationMs: number = 50; // 0;
+    bufferDurationMs: number = 80; // 0;
     bufferFrameCount: number = 3844; // 9600; // 2400;//8192;
     syncHandle: number = -1;
     // ageBuffer: Array<number>;
