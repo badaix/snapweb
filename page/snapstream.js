@@ -274,14 +274,15 @@ class PcmChunkMessage extends BaseMessage {
     }
 }
 class AudioStream {
-    constructor(timeProvider, sampleFormat) {
+    constructor(timeProvider, sampleFormat, bufferMs) {
+        this.timeProvider = timeProvider;
+        this.sampleFormat = sampleFormat;
+        this.bufferMs = bufferMs;
         this.chunks = new Array();
         this.chunk = undefined;
         this.volume = 1;
         this.muted = false;
         this.lastLog = 0;
-        this.timeProvider = timeProvider;
-        this.sampleFormat = sampleFormat;
     }
     setVolume(percent, muted) {
         let base = 10;
@@ -291,13 +292,15 @@ class AudioStream {
     }
     addChunk(chunk) {
         this.chunks.push(chunk);
-        // console.log("chunks: " + this.chunks.length);
+        // let oldest = this.timeProvider.serverNow() - this.chunks[0].timestamp.getMilliseconds();
+        // let newest = this.timeProvider.serverNow() - this.chunks[this.chunks.length - 1].timestamp.getMilliseconds();
+        // console.debug("chunks: " + this.chunks.length + ", oldest: " + oldest.toFixed(2) + ", newest: " + newest.toFixed(2));
         while (this.chunks.length > 0) {
             let age = this.timeProvider.serverNow() - this.chunks[0].timestamp.getMilliseconds();
             // todo: consider buffer ms
-            if (age > 1500) {
+            if (age > 5000 + this.bufferMs) {
                 this.chunks.shift();
-                // console.log("Dropping old chunk: " + age + ", left: " + this.chunks.length);
+                console.log("Dropping old chunk: " + age.toFixed(2) + ", left: " + this.chunks.length);
             }
             else
                 break;
@@ -321,9 +324,10 @@ class AudioStream {
             let secs = Math.floor(Date.now() / 1000);
             if (this.lastLog != secs) {
                 this.lastLog = secs;
-                console.log("age: " + Math.round(age * 10) / 10 + ", req: " + reqChunkDuration);
+                console.log("age: " + age.toFixed(2) + ", req: " + reqChunkDuration);
             }
             if (age < -reqChunkDuration) {
+                console.log("age: " + age.toFixed(2) + " < req: " + reqChunkDuration * -1 + ", chunk.startMs: " + this.chunk.startMs().toFixed(2) + ", timestamp: " + this.chunk.timestamp.getMilliseconds().toFixed(2));
                 console.log("Chunk too young, returning silence");
             }
             else {
@@ -378,7 +382,7 @@ class AudioStream {
             }
         }
         if (read < frames) {
-            console.log("Failed to get chunk, read: " + read + "/" + frames);
+            console.log("Failed to get chunk, read: " + read + "/" + frames + ", chunks left: " + this.chunks.length);
             left.fill(0, pos);
             right.fill(0, pos);
         }
@@ -413,7 +417,7 @@ class TimeProvider {
             sorted.sort();
             this.diff = sorted[Math.floor(sorted.length / 2)];
         }
-        // console.log("c2s: " + c2s + ", s2c: " + s2c + ", diff: " + this.diff + ", now: " + this.now() + ", win.now: " + window.performance.now());
+        // console.debug("c2s: " + c2s.toFixed(2) + ", s2c: " + s2c.toFixed(2) + ", diff: " + this.diff.toFixed(2) + ", now: " + this.now().toFixed(2) + ", server.now: " + this.serverNow().toFixed(2) + ", win.now: " + window.performance.now().toFixed(2));
         // console.log("now: " + this.now() + "\t" + this.now() + "\t" + this.now());
     }
     now() {
@@ -472,7 +476,7 @@ class FlacDecoder extends Decoder {
         this.decoder = Flac.create_libflac_decoder(true);
         if (this.decoder) {
             let init_status = Flac.init_decoder_stream(this.decoder, this.read_callback_fn.bind(this), this.write_callback_fn.bind(this), this.error_callback_fn.bind(this), this.metadata_callback_fn.bind(this), false);
-            console.error("Flac init: " + init_status);
+            console.log("Flac init: " + init_status);
             Flac.setOptions(this.decoder, { analyseSubframes: true, analyseResiduals: true });
         }
         this.sampleFormat = new SampleFormat();
@@ -556,6 +560,23 @@ class FlacDecoder extends Decoder {
         return this.sampleFormat;
     }
 }
+class PlayBuffer {
+    constructor(buffer, playTime, source, destination) {
+        this.num = 0;
+        this.buffer = buffer;
+        this.playTime = playTime;
+        this.source = source;
+        this.source.buffer = this.buffer;
+        this.source.connect(destination);
+        this.onended = (playBuffer) => { };
+    }
+    start() {
+        this.source.onended = (ev) => {
+            this.onended(this);
+        };
+        this.source.start(this.playTime);
+    }
+}
 class PcmDecoder extends Decoder {
     setHeader(buffer) {
         let sampleFormat = new SampleFormat();
@@ -573,12 +594,16 @@ class SnapStream {
     constructor(host, port) {
         this.playTime = 0;
         this.msgId = 0;
-        this.bufferDurationMs = 100; // 0;
+        this.bufferDurationMs = 50; // 0;
         this.bufferFrameCount = 3844; // 9600; // 2400;//8192;
         this.syncHandle = -1;
+        // ageBuffer: Array<number>;
+        this.audioBuffers = new Array();
+        this.freeBuffers = new Array();
         // median: number = 0;
-        this.audioBuffers = 2;
+        this.audioBufferCount = 3;
         this.bufferMs = 1000;
+        this.bufferNum = 0;
         this.streamsocket = new WebSocket('ws://' + host + ':' + port + '/stream');
         this.streamsocket.binaryType = "arraybuffer";
         this.streamsocket.onmessage = (msg) => {
@@ -612,7 +637,7 @@ class SnapStream {
                         this.gainNode.connect(this.ctx.destination);
                         this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
                         this.timeProvider = new TimeProvider(this.ctx);
-                        this.stream = new AudioStream(this.timeProvider, this.sampleFormat);
+                        this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
                         console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency);
                         this.play();
                     }
@@ -680,32 +705,6 @@ class SnapStream {
         this.sendMessage(t);
         // console.log("prepareSource median: " + Math.round(this.median * 10) / 10);
     }
-    prepareSource() {
-        let source = this.ctx.createBufferSource();
-        let buffer;
-        // if (this.freeBuffers.length) {
-        //     buffer = this.freeBuffers.pop() as AudioBuffer;
-        // } else {
-        buffer = this.ctx.createBuffer(this.sampleFormat.channels, this.bufferFrameCount, this.sampleFormat.rate);
-        // }
-        let playTimeMs = (this.playTime + this.ctx.baseLatency) * 1000 - this.bufferMs;
-        // let nextBuffer = 
-        this.stream.getNextBuffer(buffer, playTimeMs);
-        // if (nextBuffer.success) {
-        //     let age = this.timeProvider!.serverTime(playTimeMs) - nextBuffer.chunkTime;
-        //     // let age = this.timeProvider.serverTime(this.endTime) - startMs;
-        //     this.ageBuffer.push(age);
-        //     if (this.ageBuffer.length > 100)
-        //         this.ageBuffer.shift();
-        //     let sorted = [...this.ageBuffer];
-        //     sorted.sort()
-        //     this.median = sorted[Math.floor(sorted.length / 2)];
-        // }
-        console.debug("prepareSource age: " + playTimeMs); // + ", median: " + this.median);
-        source.buffer = buffer;
-        source.connect(this.gainNode); // this.ctx.destination);
-        return source;
-    }
     stop() {
         window.clearInterval(this.syncHandle);
         if (this.ctx) {
@@ -716,22 +715,26 @@ class SnapStream {
         }
     }
     play() {
-        this.playTime = this.ctx.currentTime;
-        for (let i = 1; i <= this.audioBuffers; ++i) {
+        this.playTime = this.ctx.getOutputTimestamp().contextTime + 0.1;
+        for (let i = 1; i <= this.audioBufferCount; ++i) {
             this.playNext();
         }
     }
     playNext() {
-        let source = this.prepareSource();
-        source.start(this.playTime);
-        source.onended = (ev) => {
-            // this.endTime = window.performance.now() + (this.audioBuffers - 1) * (this.bufferSize / (this.sampleFormat as SampleFormat).rate) * 1000;
-            // console.log("Perf: " + this.ctx.getOutputTimestamp().performanceTime);
-            // console.log("onended: " + window.performance.now());
-            // console.log("onended: " + this.ctx.currentTime * 1000);
-            // this.freeBuffers.push(source.buffer as AudioBuffer);
+        let buffer = this.freeBuffers.length ? this.freeBuffers.pop() : this.ctx.createBuffer(this.sampleFormat.channels, this.bufferFrameCount, this.sampleFormat.rate);
+        let playTimeMs = (this.playTime + this.ctx.baseLatency) * 1000 - this.bufferMs;
+        this.stream.getNextBuffer(buffer, playTimeMs);
+        let source = this.ctx.createBufferSource();
+        let playBuffer = new PlayBuffer(buffer, this.playTime, source, this.gainNode);
+        this.audioBuffers.push(playBuffer);
+        playBuffer.num = ++this.bufferNum;
+        playBuffer.onended = (buffer) => {
+            let diff = this.ctx.getOutputTimestamp().contextTime - buffer.playTime;
+            this.freeBuffers.push(this.audioBuffers.splice(this.audioBuffers.indexOf(buffer), 1)[0].buffer);
+            console.debug("PlayBuffer " + playBuffer.num + " ended after: " + (diff * 1000) + ", in flight: " + this.audioBuffers.length);
             this.playNext();
         };
+        playBuffer.start();
         this.playTime += this.bufferFrameCount / this.sampleFormat.rate;
     }
 }
