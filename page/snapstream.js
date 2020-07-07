@@ -594,7 +594,7 @@ class SnapStream {
     constructor(host, port) {
         this.playTime = 0;
         this.msgId = 0;
-        this.bufferDurationMs = 50; // 0;
+        this.bufferDurationMs = 80; // 0;
         this.bufferFrameCount = 3844; // 9600; // 2400;//8192;
         this.syncHandle = -1;
         // ageBuffer: Array<number>;
