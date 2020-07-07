@@ -652,6 +652,32 @@ class FlacDecoder extends Decoder {
 }
 
 
+class PlayBuffer {
+    constructor(buffer: AudioBuffer, playTime: number, source: AudioBufferSourceNode, destination: AudioNode) {
+        this.buffer = buffer;
+        this.playTime = playTime;
+        this.source = source;
+        this.source.buffer = this.buffer;
+        this.source.connect(destination);
+        this.onended = (playBuffer: PlayBuffer) => { };
+    }
+
+    public onended: (playBuffer: PlayBuffer) => void
+
+    start() {
+        this.source.onended = (ev: Event) => {
+            this.onended(this);
+        }
+        this.source.start(this.playTime);
+    }
+
+    buffer: AudioBuffer;
+    playTime: number;
+    source: AudioBufferSourceNode;
+    num: number = 0;
+}
+
+
 class PcmDecoder extends Decoder {
     setHeader(buffer: ArrayBuffer): SampleFormat {
         let sampleFormat = new SampleFormat();
@@ -769,36 +795,6 @@ class SnapStream {
         // console.log("prepareSource median: " + Math.round(this.median * 10) / 10);
     }
 
-    private prepareSource(): AudioBufferSourceNode {
-        let source = this.ctx!.createBufferSource();
-        let buffer: AudioBuffer;
-        // if (this.freeBuffers.length) {
-        //     buffer = this.freeBuffers.pop() as AudioBuffer;
-        // } else {
-        buffer = this.ctx!.createBuffer(this.sampleFormat!.channels, this.bufferFrameCount, this.sampleFormat!.rate);
-        // }
-
-        let playTimeMs = (this.playTime + this.ctx!.baseLatency) * 1000 - this.bufferMs;
-        // console.debug("prepareSource playTimeMs: " + playTimeMs.toFixed(2) + ", playTime: " + this.playTime.toFixed(3) + ", baseLatency: " + this.ctx!.baseLatency.toFixed(3) + ", bufferMs: " + this.bufferMs + ", now: " + this.timeProvider.now().toFixed(2) + ", server.now: " + this.timeProvider.serverNow().toFixed(2));// + ", median: " + this.median);
-        // let nextBuffer = 
-        this.stream!.getNextBuffer(buffer, playTimeMs);
-        // if (nextBuffer.success) {
-        //     let age = this.timeProvider!.serverTime(playTimeMs) - nextBuffer.chunkTime;
-        //     // let age = this.timeProvider.serverTime(this.endTime) - startMs;
-
-        //     this.ageBuffer.push(age);
-        //     if (this.ageBuffer.length > 100)
-        //         this.ageBuffer.shift();
-        //     let sorted = [...this.ageBuffer];
-        //     sorted.sort()
-        //     this.median = sorted[Math.floor(sorted.length / 2)];
-        // }
-
-        source.buffer = buffer;
-        source.connect(this.gainNode!);// this.ctx.destination);
-        return source;
-    }
-
     public stop() {
         window.clearInterval(this.syncHandle);
         if (this.ctx) {
@@ -810,37 +806,40 @@ class SnapStream {
     }
 
     public play() {
-        this.playTime = this.ctx!.currentTime;
-        for (let i = 1; i <= this.audioBuffers; ++i) {
+        this.playTime = this.ctx!.getOutputTimestamp().contextTime! + 0.1;
+        for (let i = 1; i <= this.audioBufferCount; ++i) {
             this.playNext();
         }
     }
 
     public playNext() {
-        let source = this.prepareSource();
-        if (this.playTime * 1000 < this.timeProvider.now()) {
-            console.log("play in: " + (this.playTime * 1000 - this.timeProvider.now()).toFixed(2));
-            this.playTime = this.timeProvider.now() / 1000;
-        }
-        source.start(this.playTime);
-        source.onended = (ev: Event) => {
-            // this.endTime = window.performance.now() + (this.audioBuffers - 1) * (this.bufferSize / (this.sampleFormat as SampleFormat).rate) * 1000;
-            // console.log("Perf: " + this.ctx.getOutputTimestamp().performanceTime);
-            // console.log("onended: " + window.performance.now());
-            // console.log("onended: " + this.ctx.currentTime * 1000);
-            // this.freeBuffers.push(source.buffer as AudioBuffer);
+        let buffer = this.freeBuffers.length ? this.freeBuffers.pop()! : this.ctx!.createBuffer(this.sampleFormat!.channels, this.bufferFrameCount, this.sampleFormat!.rate);
+        let playTimeMs = (this.playTime + this.ctx!.baseLatency) * 1000 - this.bufferMs;
+        this.stream!.getNextBuffer(buffer, playTimeMs);
+
+        let source = this.ctx!.createBufferSource();
+        let playBuffer = new PlayBuffer(buffer, this.playTime, source, this.gainNode!);
+        this.audioBuffers.push(playBuffer);
+        playBuffer.num = ++this.bufferNum;
+        playBuffer.onended = (buffer: PlayBuffer) => {
+            let diff = this.ctx!.getOutputTimestamp().contextTime! - buffer.playTime;
+            this.freeBuffers.push(this.audioBuffers.splice(this.audioBuffers.indexOf(buffer), 1)[0].buffer);
+            console.debug("PlayBuffer " + playBuffer.num + " ended after: " + (diff * 1000) + ", in flight: " + this.audioBuffers.length);
             this.playNext();
         }
+        playBuffer.start();
         this.playTime += this.bufferFrameCount / (this.sampleFormat as SampleFormat).rate;
     }
 
     streamsocket: WebSocket;
     playTime: number = 0;
     msgId: number = 0;
-    bufferDurationMs: number = 0; // 0;
+    bufferDurationMs: number = 50; // 0;
     bufferFrameCount: number = 3844; // 9600; // 2400;//8192;
     syncHandle: number = -1;
     // ageBuffer: Array<number>;
+    audioBuffers: Array<PlayBuffer> = new Array<PlayBuffer>();
+    freeBuffers: Array<AudioBuffer> = new Array<AudioBuffer>();
 
     timeProvider: TimeProvider;
     stream: AudioStream | undefined;
@@ -851,8 +850,9 @@ class SnapStream {
     sampleFormat: SampleFormat | undefined;
 
     // median: number = 0;
-    audioBuffers: number = 3;
+    audioBufferCount: number = 3;
     bufferMs: number = 1000;
+    bufferNum: number = 0;
 }
 
 
