@@ -397,6 +397,8 @@ class TimeProvider {
         if (ctx) {
             this.setAudioContext(ctx);
         }
+        let userAgent = navigator.userAgent.toLowerCase();
+        this.isFirefoxMobile = (userAgent.indexOf('firefox') > -1) && (userAgent.indexOf('android') > -1);
     }
     setAudioContext(ctx) {
         this.ctx = ctx;
@@ -425,8 +427,16 @@ class TimeProvider {
             return window.performance.now();
         }
         else {
-            return this.ctx.getOutputTimestamp().contextTime * 1000;
+            if (this.isFirefoxMobile) {
+                return this.ctx.currentTime * 1000;
+            }
+            else {
+                return (this.ctx.getOutputTimestamp().contextTime || this.ctx.currentTime) * 1000;
+            }
         }
+    }
+    nowSec() {
+        return this.now() / 1000;
     }
     serverNow() {
         return this.serverTime(this.now());
@@ -631,12 +641,13 @@ class SnapStream {
                         if (this.bufferDurationMs != 0) {
                             this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
                         }
+                        this.stopAudio();
                         this.ctx = new AudioContext({ latencyHint: "playback", sampleRate: this.sampleFormat.rate });
                         this.timeProvider.setAudioContext(this.ctx);
                         this.gainNode = this.ctx.createGain();
                         this.gainNode.connect(this.ctx.destination);
                         this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
-                        this.timeProvider = new TimeProvider(this.ctx);
+                        // this.timeProvider = new TimeProvider(this.ctx);
                         this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
                         console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency);
                         this.play();
@@ -645,9 +656,11 @@ class SnapStream {
             }
             else if (type == 2) {
                 let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat);
-                let decoded = this.decoder?.decode(pcmChunk);
-                if (decoded) {
-                    this.stream.addChunk(decoded);
+                if (this.decoder) {
+                    let decoded = this.decoder.decode(pcmChunk);
+                    if (decoded) {
+                        this.stream.addChunk(decoded);
+                    }
                 }
             }
             else if (type == 3) {
@@ -705,23 +718,33 @@ class SnapStream {
         this.sendMessage(t);
         // console.log("prepareSource median: " + Math.round(this.median * 10) / 10);
     }
-    stop() {
-        window.clearInterval(this.syncHandle);
+    stopAudio() {
         if (this.ctx) {
             this.ctx.close();
         }
+        while (this.audioBuffers.length > 0) {
+            let buffer = this.audioBuffers.pop();
+            buffer.source.stop();
+        }
+        while (this.freeBuffers.length > 0) {
+            this.freeBuffers.pop();
+        }
+    }
+    stop() {
+        window.clearInterval(this.syncHandle);
+        this.stopAudio();
         if ([WebSocket.OPEN, WebSocket.CONNECTING].includes(this.streamsocket.readyState)) {
             this.streamsocket.close();
         }
     }
     play() {
-        this.playTime = this.ctx.getOutputTimestamp().contextTime + 0.1;
+        this.playTime = this.timeProvider.nowSec() + 0.1;
         for (let i = 1; i <= this.audioBufferCount; ++i) {
             this.playNext();
         }
     }
     playNext() {
-        let buffer = this.freeBuffers.length ? this.freeBuffers.pop() : this.ctx.createBuffer(this.sampleFormat.channels, this.bufferFrameCount, this.sampleFormat.rate);
+        let buffer = this.freeBuffers.pop() || this.ctx.createBuffer(this.sampleFormat.channels, this.bufferFrameCount, this.sampleFormat.rate);
         let playTimeMs = (this.playTime + this.ctx.baseLatency) * 1000 - this.bufferMs;
         this.stream.getNextBuffer(buffer, playTimeMs);
         let source = this.ctx.createBufferSource();
@@ -729,7 +752,7 @@ class SnapStream {
         this.audioBuffers.push(playBuffer);
         playBuffer.num = ++this.bufferNum;
         playBuffer.onended = (buffer) => {
-            let diff = this.ctx.getOutputTimestamp().contextTime - buffer.playTime;
+            let diff = this.timeProvider.nowSec() - buffer.playTime;
             this.freeBuffers.push(this.audioBuffers.splice(this.audioBuffers.indexOf(buffer), 1)[0].buffer);
             console.debug("PlayBuffer " + playBuffer.num + " ended after: " + (diff * 1000) + ", in flight: " + this.audioBuffers.length);
             this.playNext();
