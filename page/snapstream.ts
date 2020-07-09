@@ -731,6 +731,7 @@ class SnapStream {
                         if (this.bufferDurationMs != 0) {
                             this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
                         }
+                        this.stopAudio();
                         this.ctx = new AudioContext({ latencyHint: "playback", sampleRate: this.sampleFormat.rate });
                         this.timeProvider.setAudioContext(this.ctx);
                         this.gainNode = this.ctx.createGain();
@@ -808,11 +809,22 @@ class SnapStream {
         // console.log("prepareSource median: " + Math.round(this.median * 10) / 10);
     }
 
-    public stop() {
-        window.clearInterval(this.syncHandle);
+    private stopAudio() {
         if (this.ctx) {
             this.ctx.close();
         }
+        while (this.audioBuffers.length > 0) {
+            let buffer = this.audioBuffers.pop();
+            buffer!.source.stop();
+        }
+        while (this.freeBuffers.length > 0) {
+            this.freeBuffers.pop();
+        }
+    }
+
+    public stop() {
+        window.clearInterval(this.syncHandle);
+        this.stopAudio();
         if ([WebSocket.OPEN, WebSocket.CONNECTING].includes(this.streamsocket.readyState)) {
             this.streamsocket.close();
         }
