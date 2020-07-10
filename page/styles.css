@@ -39,6 +39,7 @@ body {
     width: 100%; /* Full width */
     font-size: 21px;
     font-weight: 500;
+    user-select: none;
 }
 
 .play-button {
@@ -64,6 +65,7 @@ body {
     overflow: auto;
     width: auto;
     border-radius: 3px;
+    user-select: none;
 }
 
 .group.muted {
