@@ -776,7 +776,7 @@ class SnapStream {
             hello.mac = "00:00:00:00:00:00";
             hello.arch = "web";
             hello.os = navigator.platform;
-            hello.hostname = location.hostname;
+            hello.hostname = "Snapweb client";
             hello.uniqueId = getCookie("uniqueId", uuidv4());
             this.sendMessage(hello);
             this.syncTime();
@@ -815,6 +815,7 @@ class SnapStream {
         }
         while (this.audioBuffers.length > 0) {
             let buffer = this.audioBuffers.pop();
+            buffer!.onended = (playBuffer: PlayBuffer) => { };
             buffer!.source.stop();
         }
         while (this.freeBuffers.length > 0) {
