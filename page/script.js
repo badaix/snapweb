@@ -20,6 +20,7 @@ class Client {
     constructor(json) {
         this.id = "";
         this.connected = false;
+        this.deleted = false;
         this.fromJson(json);
     }
     fromJson(json) {
@@ -210,6 +211,12 @@ class SnapControl {
             client.config.latency = latency;
         }
     }
+    deleteClient(client_id) {
+        let client = this.getClient(client_id);
+        this.sendRequest('Server.DeleteClient', '{"id": "'+ client_id +'"}');
+        client.deleted = true;	
+        show();
+    }
     setStream(group_id, stream_id) {
         this.getGroup(group_id).stream_id = stream_id;
         this.sendRequest('Group.SetStream', '{"id":"' + group_id + '","stream_id":"' + stream_id + '"}');
@@ -266,6 +273,15 @@ function show() {
     content += "<div class='content'>";
     let server = snapcontrol.server;
     for (let group of server.groups) {
+        let groupDead = true;
+        for (let client of group.clients) {
+            if (!client.deleted) {
+                groupDead = false;
+                break;
+            }
+        }
+        if (groupDead)
+            continue;
         if (hide_offline) {
             let groupActive = false;
             for (let client of group.clients) {
@@ -320,7 +336,7 @@ function show() {
         content += "<hr class='groupheader-separator'>";
         // Create clients in group
         for (let client of group.clients) {
-            if (!client.connected && hide_offline)
+            if (client.deleted || (!client.connected && hide_offline))
                 continue;
             // Set name and connection state vars, start client div
             let name;
@@ -354,7 +370,14 @@ function show() {
             content += "    <div class='sliderdiv'>";
             content += "        <input type='range' min=0 max=100 step=1 id='vol_" + client.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
             content += "    </div>";
-            content += "    <a href=\"javascript:openClientSettings('" + client.id + "');\" class='edit-icon'>&#9998</a>";
+            content += "    <span class='edit-icons'>";
+            content += "        <a href=\"javascript:openClientSettings('" + client.id + "');\" class='edit-icon'>&#9998</a>";
+            if (client.connected == false) {
+              content += "      <a href=\"javascript:deleteClient('"+ client.id+"');\" class='delete-icon'>&#128465</a>";
+            content += "   </span>";
+            } else {
+              content += "</span>";
+            }
             content += "    <div class='name'>" + name + "</div>";
             content += "</div>";
         }
@@ -540,6 +563,11 @@ function closeClientSettings() {
     modal.style.display = "none";
     show();
 }
+function deleteClient(id) {
+    if (confirm('Are you sure?')) {
+      snapcontrol.deleteClient(id);
+    }
+}
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
     let modal = document.getElementById("client-settings");
@@ -548,3 +576,4 @@ window.onclick = function (event) {
     }
 };
 //# sourceMappingURL=script.js.map
+
