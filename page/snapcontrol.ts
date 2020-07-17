@@ -124,7 +124,7 @@ class Server {
         this.groups = []
         for (let jgroup of json.groups)
             this.groups.push(new Group(jgroup));
-        let jsnapserver: any = json.server.host;
+        let jsnapserver: any = json.server.snapserver;
         this.server = { host: new Host(json.server.host), snapserver: { controlProtocolVersion: jsnapserver.controlProtocolVersion, name: jsnapserver.name, protocolVersion: jsnapserver.protocolVersion, version: jsnapserver.version } };
         this.streams = []
         for (let jstream of json.streams) {
@@ -368,7 +368,10 @@ function show() {
 
     let content = "";
     content += "<div class='navbar'>Snapcast";
-    content += "    <a href=\"javascript:play();\"><img src='" + play_img + "' class='play-button'></a>";
+    let serverVersion = snapcontrol.server.server.snapserver.version.split('.');
+    if ((serverVersion.length >= 2) && (+serverVersion[1] >= 21)) {
+        content += "    <a href=\"javascript:play();\"><img src='" + play_img + "' class='play-button'></a>";
+    }
     content += "</div>";
     content += "<div class='content'>";
 
