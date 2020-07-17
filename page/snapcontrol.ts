@@ -176,6 +176,7 @@ class SnapControl {
         this.connection = new WebSocket('ws://' + host + ':' + port + '/jsonrpc');
         this.msg_id = 0;
         this.status_req_id = -1;
+        // console.log(navigator);
 
         this.connection.onmessage = (msg: MessageEvent) => this.onMessage(msg.data);
         this.connection.onopen = (ev: Event) => { this.status_req_id = this.sendRequest('Server.GetStatus'); }
@@ -334,7 +335,7 @@ class SnapControl {
 }
 
 
-let snapcontrol = new SnapControl(window.location.hostname, 1780);
+let snapcontrol!: SnapControl;
 let snapstream: SnapStream | null = null;
 let hide_offline: boolean = true;
 
@@ -402,7 +403,11 @@ function show() {
         // Group mute and refresh button
         content += "<div class='groupheader'>";
         content += streamselect;
-        if (group.clients.length > 1) {
+        let clientCount = 0;
+        for (let client of group.clients)
+            if (!hide_offline || client.connected)
+                clientCount++;
+        if (clientCount > 1) {
             let volume = snapcontrol.getGroupVolume(group, hide_offline);
             content += "<a href=\"javascript:setMuteGroup('" + group.id + "'," + !muted + ");\"><img src='" + mute_img + "' class='mute-button'></a>";
             content += "<div class='slidergroupdiv'>";
@@ -672,6 +677,10 @@ function closeClientSettings() {
     let modal = document.getElementById("client-settings") as HTMLElement;
     modal.style.display = "none";
     show();
+}
+
+window.onload = function (event: any) {
+    snapcontrol = new SnapControl(window.location.hostname, 1780);
 }
 
 // When the user clicks anywhere outside of the modal, close it
