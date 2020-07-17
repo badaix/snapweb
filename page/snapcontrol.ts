@@ -176,6 +176,7 @@ class SnapControl {
         this.connection = new WebSocket('ws://' + host + ':' + port + '/jsonrpc');
         this.msg_id = 0;
         this.status_req_id = -1;
+        // console.log(navigator);
 
         this.connection.onmessage = (msg: MessageEvent) => this.onMessage(msg.data);
         this.connection.onopen = (ev: Event) => { this.status_req_id = this.sendRequest('Server.GetStatus'); }
@@ -280,19 +281,19 @@ class SnapControl {
     }
 
     public deleteClient(client_id: string) {
-    let client = this.getClient(client_id);
-        this.sendRequest('Server.DeleteClient', '{"id": "'+ client_id +'"}');
+        let client = this.getClient(client_id);
+        this.sendRequest('Server.DeleteClient', '{"id": "' + client_id + '"}');
         this.server.groups.forEach((g: Group, gi: number) => {
-        g.clients.forEach((c: Client, ci: number) => {
-            if (c.id == client_id) {
-                this.server.groups[gi].clients.splice(ci,1);
-            }
+            g.clients.forEach((c: Client, ci: number) => {
+                if (c.id == client_id) {
+                    this.server.groups[gi].clients.splice(ci, 1);
+                }
+            })
         })
-    })
 
-    this.server.groups.forEach((g: Group, gi: number) => {
-	    if (g.clients.length == 0) {
-                this.server.groups.splice(gi,1);
+        this.server.groups.forEach((g: Group, gi: number) => {
+            if (g.clients.length == 0) {
+                this.server.groups.splice(gi, 1);
             }
         });
         show();
@@ -353,7 +354,7 @@ class SnapControl {
 }
 
 
-let snapcontrol = new SnapControl(window.location.hostname, 1780);
+let snapcontrol!: SnapControl;
 let snapstream: SnapStream | null = null;
 let hide_offline: boolean = true;
 
@@ -421,7 +422,11 @@ function show() {
         // Group mute and refresh button
         content += "<div class='groupheader'>";
         content += streamselect;
-        if (group.clients.length > 1) {
+        let clientCount = 0;
+        for (let client of group.clients)
+            if (!hide_offline || client.connected)
+                clientCount++;
+        if (clientCount > 1) {
             let volume = snapcontrol.getGroupVolume(group, hide_offline);
             content += "<a href=\"javascript:setMuteGroup('" + group.id + "'," + !muted + ");\"><img src='" + mute_img + "' class='mute-button'></a>";
             content += "<div class='slidergroupdiv'>";
@@ -473,10 +478,10 @@ function show() {
             content += "    <span class='edit-icons'>";
             content += "        <a href=\"javascript:openClientSettings('" + client.id + "');\" class='edit-icon'>&#9998</a>";
             if (client.connected == false) {
-              content += "      <a href=\"javascript:deleteClient('"+ client.id+"');\" class='delete-icon'>&#128465</a>";
-            content += "   </span>";
+                content += "      <a href=\"javascript:deleteClient('" + client.id + "');\" class='delete-icon'>&#128465</a>";
+                content += "   </span>";
             } else {
-              content += "</span>";
+                content += "</span>";
             }
             content += "    <div class='name'>" + name + "</div>";
             content += "</div>";
@@ -702,9 +707,12 @@ function closeClientSettings() {
 
 function deleteClient(id: string) {
     if (confirm('Are you sure?')) {
-      snapcontrol.deleteClient(id);
-
+        snapcontrol.deleteClient(id);
     }
+}
+
+window.onload = function (event: any) {
+    snapcontrol = new SnapControl(window.location.hostname, 1780);
 }
 
 // When the user clicks anywhere outside of the modal, close it
