@@ -280,16 +280,16 @@ class SnapControl {
     public deleteClient(client_id: string) {
     let client = this.getClient(client_id);
         this.sendRequest('Server.DeleteClient', '{"id": "'+ client_id +'"}');
-        this.server.groups.forEach((g: object, gi: number) => {
-        this.server.groups[gi].clients.forEach((c: object, ci: number) => {
-            if (this.server.groups[gi].clients[ci].id == client_id) {
+        this.server.groups.forEach((g: Group, gi: number) => {
+        g.clients.forEach((c: Client, ci: number) => {
+            if (c.id == client_id) {
                 this.server.groups[gi].clients.splice(ci,1);
             }
         })
     })
 
-    this.server.groups.forEach((g: object, gi: number) => {
-	    if (this.server.groups[gi].clients.length == 0) {
+    this.server.groups.forEach((g: Group, gi: number) => {
+	    if (g.clients.length == 0) {
                 this.server.groups.splice(gi,1);
             }
         });
