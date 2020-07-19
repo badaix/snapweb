@@ -338,7 +338,8 @@ function show() {
         content += "<hr class='groupheader-separator'>";
         // Create clients in group
         for (let client of group.clients) {
-            if (!client.connected && hide_offline);
+            if (!client.connected && hide_offline)
+                continue;
             // Set name and connection state vars, start client div
             let name;
             let clas = 'client';
