@@ -20,7 +20,6 @@ class Client {
     constructor(json) {
         this.id = "";
         this.connected = false;
-        this.deleted = false;
         this.fromJson(json);
     }
     fromJson(json) {
@@ -213,9 +212,21 @@ class SnapControl {
     }
     deleteClient(client_id) {
         let client = this.getClient(client_id);
-        this.sendRequest('Server.DeleteClient', '{"id": "'+ client_id +'"}');
-        client.deleted = true;	
-        show();
+    this.sendRequest('Server.DeleteClient', '{"id": "'+ client_id +'"}');
+    this.server.groups.forEach((function(group, gi) {
+        group.clients.forEach((function(client, ci) {
+        if (client.id == client_id) {
+            group.clients.splice(ci,1);
+                    this.server.groups[gi].clients = group.clients;
+        }
+        }).bind(this))
+    }).bind(this))
+    this.server.groups.forEach((function(groups, gi) {
+        if (groups.clients.length == 0) {
+            this.server.groups.splice(gi,1);
+        }
+    }).bind(this));
+    show();
     }
     setStream(group_id, stream_id) {
         this.getGroup(group_id).stream_id = stream_id;
@@ -273,15 +284,6 @@ function show() {
     content += "<div class='content'>";
     let server = snapcontrol.server;
     for (let group of server.groups) {
-        let groupDead = true;
-        for (let client of group.clients) {
-            if (!client.deleted) {
-                groupDead = false;
-                break;
-            }
-        }
-        if (groupDead)
-            continue;
         if (hide_offline) {
             let groupActive = false;
             for (let client of group.clients) {
@@ -336,8 +338,7 @@ function show() {
         content += "<hr class='groupheader-separator'>";
         // Create clients in group
         for (let client of group.clients) {
-            if (client.deleted || (!client.connected && hide_offline))
-                continue;
+            if (!client.connected && hide_offline);
             // Set name and connection state vars, start client div
             let name;
             let clas = 'client';
