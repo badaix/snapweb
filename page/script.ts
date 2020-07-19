@@ -277,6 +277,25 @@ class SnapControl {
         }
     }
 
+    public deleteClient(client_id: string) {
+    let client = this.getClient(client_id);
+        this.sendRequest('Server.DeleteClient', '{"id": "'+ client_id +'"}');
+        this.server.groups.forEach((g: object, gi: number) => {
+        this.server.groups[gi].clients.forEach((c: object, ci: number) => {
+            if (this.server.groups[gi].clients[ci].id == client_id) {
+                this.server.groups[gi].clients.splice(ci,1);
+            }
+        })
+    })
+
+    this.server.groups.forEach((g: object, gi: number) => {
+	    if (this.server.groups[gi].clients.length == 0) {
+                this.server.groups.splice(gi,1);
+            }
+        });
+        show();
+    }
+
     public setStream(group_id: string, stream_id: string) {
         (this.getGroup(group_id) as Group).stream_id = stream_id;
         this.sendRequest('Group.SetStream', '{"id":"' + group_id + '","stream_id":"' + stream_id + '"}');
@@ -438,7 +457,14 @@ function show() {
             content += "    <div class='sliderdiv'>";
             content += "        <input type='range' min=0 max=100 step=1 id='vol_" + client.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
             content += "    </div>";
-            content += "    <a href=\"javascript:openClientSettings('" + client.id + "');\" class='edit-icon'>&#9998</a>";
+            content += "    <span class='edit-icons'>";
+            content += "        <a href=\"javascript:openClientSettings('" + client.id + "');\" class='edit-icon'>&#9998</a>";
+            if (client.connected == false) {
+              content += "      <a href=\"javascript:deleteClient('"+ client.id+"');\" class='delete-icon'>&#128465</a>";
+            content += "   </span>";
+            } else {
+              content += "</span>";
+            }
             content += "    <div class='name'>" + name + "</div>";
             content += "</div>";
         }
@@ -648,6 +674,13 @@ function closeClientSettings() {
     let modal = document.getElementById("client-settings") as HTMLElement;
     modal.style.display = "none";
     show();
+}
+
+function deleteClient(id: string) {
+    if (confirm('Are you sure?')) {
+      snapcontrol.deleteClient(id);
+
+    }
 }
 
 // When the user clicks anywhere outside of the modal, close it
