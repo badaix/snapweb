@@ -300,6 +300,10 @@ class PcmChunkMessage extends BaseMessage {
         return this.timestamp.getMilliseconds() + 1000 * (this.idx / this.sampleFormat.rate);
     }
 
+    duration(): number {
+        return 1000 * ((this.getFrameCount() - this.idx) / this.sampleFormat.rate);
+    }
+
     payloadSize(): number {
         return this.payload.byteLength;
     }
@@ -367,11 +371,12 @@ class AudioStream {
         }
         // let age = this.timeProvider.serverTime(this.playTime * 1000) - startMs;
         let frames = buffer.length;
-        let read = 0;
+        console.debug("getNextBuffer: " + frames + ", play time: " + playTimeMs.toFixed(2));
         let left = new Float32Array(frames);
         let right = new Float32Array(frames);
+        let read = 0;
         let pos = 0;
-        let volume = this.muted ? 0 : this.volume;
+        // let volume = this.muted ? 0 : this.volume;
         let serverPlayTimeMs = this.timeProvider.serverTime(playTimeMs);
         if (this.chunk) {
             let age = serverPlayTimeMs - this.chunk.startMs();// - 500;
@@ -385,12 +390,31 @@ class AudioStream {
                 console.log("age: " + age.toFixed(2) + " < req: " + reqChunkDuration * -1 + ", chunk.startMs: " + this.chunk.startMs().toFixed(2) + ", timestamp: " + this.chunk.timestamp.getMilliseconds().toFixed(2));
                 console.log("Chunk too young, returning silence");
             } else {
-                while (age > reqChunkDuration) {
-                    console.log("Chunk too old, dropping");
-                    this.chunk = this.chunks.shift();
-                    if (!this.chunk)
-                        break;
-                    age = serverPlayTimeMs - (this.chunk as PcmChunkMessage).startMs();
+                if (Math.abs(age) > 5) {
+                    // We are 5ms apart, do a hard sync, i.e. don't play faster/slower, 
+                    // but seek to the desired position instead
+                    while (this.chunk && age > this.chunk.duration()) {
+                        console.log("Chunk too old, dropping (age: " + age.toFixed(2) + " > " + this.chunk.duration().toFixed(2) + ")");
+                        this.chunk = this.chunks.shift();
+                        if (!this.chunk)
+                            break;
+                        age = serverPlayTimeMs - (this.chunk as PcmChunkMessage).startMs();
+                    }
+                    if (this.chunk) {
+                        if (age > 0) {
+                            console.log("Fast forwarding " + age.toFixed(2) + "ms");
+                            this.chunk.readFrames(Math.floor(age * this.chunk.sampleFormat.msRate()));
+                        }
+                        else if (age < 0) {
+                            console.log("Playing silence " + -age.toFixed(2) + "ms");
+                            let silentFrames = Math.floor(-age * this.chunk.sampleFormat.msRate());
+                            left.fill(0, 0, silentFrames);
+                            right.fill(0, 0, silentFrames);
+                            read = silentFrames;
+                            pos = silentFrames;
+                        }
+                        age = 0;
+                    }
                 }
 
                 let addFrames = 0;
@@ -400,27 +424,30 @@ class AudioStream {
                 } else if (age < 1) {
                     addFrames = Math.floor(age / 5);
                 }
-                let readFrames = frames + addFrames;
+                // addFrames = -2;
+                let readFrames = frames + addFrames - read;
                 if (addFrames != 0)
-                    everyN = Math.floor((frames + addFrames) / (Math.abs(addFrames) + 1));
+                    everyN = Math.ceil((frames + addFrames - read) / (Math.abs(addFrames) + 1));
                 // addFrames = 0;
-                // console.log("frames: " + frames + ", readFrames: " + readFrames + ", everyN: " + everyN);
+                // console.debug("frames: " + frames + ", readFrames: " + readFrames + ", everyN: " + everyN);
                 while ((read < readFrames) && this.chunk) {
                     let pcmChunk = this.chunk as PcmChunkMessage;
                     let pcmBuffer = pcmChunk.readFrames(readFrames - read);
                     let payload = new Int16Array(pcmBuffer);
-                    // console.log("readFrames: " + (frames - read) + ", read: " + pcmBuffer.byteLength + ", payload: " + payload.length);
-                    read += (pcmBuffer.byteLength / this.sampleFormat.frameSize());
+                    // console.debug("readFrames: " + (frames - read) + ", read: " + pcmBuffer.byteLength + ", payload: " + payload.length);
+                    // read += (pcmBuffer.byteLength / this.sampleFormat.frameSize());
                     for (let i = 0; i < payload.length; i += 2) {
-                        left[pos] = (payload[i] / 32768) * volume;
-                        right[pos] = (payload[i + 1] / 32768) * volume;
-                        if ((everyN != 0) && (i > 0) && (i % (2 * everyN) == 0)) {
+                        read++;
+                        left[pos] = (payload[i] / 32768); // * volume;
+                        right[pos] = (payload[i + 1] / 32768); // * volume;
+                        if ((everyN != 0) && (read % everyN == 0)) {
                             if (addFrames > 0) {
                                 pos--;
                             } else {
                                 left[pos + 1] = left[pos];
                                 right[pos + 1] = right[pos];
                                 pos++;
+                                // console.log("Add: " + pos);
                             }
                         }
                         pos++;
@@ -429,7 +456,8 @@ class AudioStream {
                         this.chunk = this.chunks.shift();
                     }
                 }
-                // console.log("Pos: " + pos + ", frames: " + frames + ", add: " + addFrames + ", everyN: " + everyN);
+                if (addFrames != 0)
+                    console.log("Pos: " + pos + ", frames: " + frames + ", add: " + addFrames + ", everyN: " + everyN);
                 if (read == readFrames)
                     read = frames;
             }
@@ -789,7 +817,6 @@ class SnapStream {
         // this.ageBuffer = new Array<number>();
         this.timeProvider = new TimeProvider();
     }
-
 
     private sendMessage(msg: BaseMessage) {
         msg.sent = new Tv(0, 0);
