@@ -371,7 +371,7 @@ class AudioStream {
         }
         // let age = this.timeProvider.serverTime(this.playTime * 1000) - startMs;
         let frames = buffer.length;
-        console.debug("getNextBuffer: " + frames + ", play time: " + playTimeMs.toFixed(2));
+        // console.debug("getNextBuffer: " + frames + ", play time: " + playTimeMs.toFixed(2));
         let left = new Float32Array(frames);
         let right = new Float32Array(frames);
         let read = 0;
@@ -416,20 +416,41 @@ class AudioStream {
                         age = 0;
                     }
                 }
+                // else if (age > 0.1) {
+                //     let rate = age * 0.0005;
+                //     rate = 1.0 - Math.min(rate, 0.0005);
+                //     console.debug("Age > 0, rate: " + rate);
+                //     // we are late (age > 0), this means we are not playing fast enough
+                //     // => the real sample rate seems to be lower, we have to drop some frames
+                //     this.setRealSampleRate(this.sampleFormat.rate * rate); // 0.9999);    
+                // }
+                // else if (age < -0.1) {
+                //     let rate = -age * 0.0005;
+                //     rate = 1.0 + Math.min(rate, 0.0005);
+                //     console.debug("Age < 0, rate: " + rate);
+                //     // we are early (age > 0), this means we are playing too fast
+                //     // => the real sample rate seems to be higher, we have to insert some frames
+                //     this.setRealSampleRate(this.sampleFormat.rate * rate); // 0.9999);    
+                // }
+                // else {
+                //     this.setRealSampleRate(this.sampleFormat.rate);
+                // }
+
 
                 let addFrames = 0;
                 let everyN = 0;
-                if (age > 1) {
-                    addFrames = Math.ceil(age / 5);
-                } else if (age < 1) {
-                    addFrames = Math.floor(age / 5);
+                if (age > 0.1) {
+                    addFrames = Math.ceil(age); // / 5);
+                } else if (age < -0.1) {
+                    addFrames = Math.floor(age); // / 5);
                 }
                 // addFrames = -2;
                 let readFrames = frames + addFrames - read;
                 if (addFrames != 0)
                     everyN = Math.ceil((frames + addFrames - read) / (Math.abs(addFrames) + 1));
+
                 // addFrames = 0;
-                // console.debug("frames: " + frames + ", readFrames: " + readFrames + ", everyN: " + everyN);
+                // console.debug("frames: " + frames + ", readFrames: " + readFrames + ", addFrames: " + addFrames + ", everyN: " + everyN);
                 while ((read < readFrames) && this.chunk) {
                     let pcmChunk = this.chunk as PcmChunkMessage;
                     let pcmBuffer = pcmChunk.readFrames(readFrames - read);
@@ -457,7 +478,7 @@ class AudioStream {
                     }
                 }
                 if (addFrames != 0)
-                    console.log("Pos: " + pos + ", frames: " + frames + ", add: " + addFrames + ", everyN: " + everyN);
+                    console.debug("Pos: " + pos + ", frames: " + frames + ", add: " + addFrames + ", everyN: " + everyN);
                 if (read == readFrames)
                     read = frames;
             }
@@ -473,10 +494,23 @@ class AudioStream {
         buffer.copyToChannel(right, 1, 0);
     }
 
+
+    // setRealSampleRate(sampleRate: number) {
+    //     if (sampleRate == this.sampleFormat.rate) {
+    //         this.correctAfterXFrames = 0;
+    //     }
+    //     else {
+    //         this.correctAfterXFrames = Math.ceil((this.sampleFormat.rate / sampleRate) / (this.sampleFormat.rate / sampleRate - 1.));
+    //         console.debug("setRealSampleRate: " + sampleRate + ", correct after X: " + this.correctAfterXFrames);
+    //     }
+    // }
+
+
     chunk?: PcmChunkMessage = undefined;
     volume: number = 1;
     muted: boolean = false;
     lastLog: number = 0;
+    // correctAfterXFrames: number = 0;
 }
 
 
@@ -877,7 +911,7 @@ class SnapStream {
         playBuffer.onended = (buffer: PlayBuffer) => {
             let diff = this.timeProvider.nowSec() - buffer.playTime;
             this.freeBuffers.push(this.audioBuffers.splice(this.audioBuffers.indexOf(buffer), 1)[0].buffer);
-            console.debug("PlayBuffer " + playBuffer.num + " ended after: " + (diff * 1000) + ", in flight: " + this.audioBuffers.length);
+            // console.debug("PlayBuffer " + playBuffer.num + " ended after: " + (diff * 1000) + ", in flight: " + this.audioBuffers.length);
             this.playNext();
         }
         playBuffer.start();
