@@ -609,8 +609,38 @@ class SampleFormat {
 
 
 class Decoder {
-    setHeader(buffer: ArrayBuffer): SampleFormat {
+    setHeader(buffer: ArrayBuffer): SampleFormat | null {
         return new SampleFormat();
+    }
+
+    decode(chunk: PcmChunkMessage): PcmChunkMessage | null {
+        return null;
+    }
+}
+
+
+class OpusDecoder extends Decoder {
+    constructor() {
+        super();
+    }
+
+    setHeader(buffer: ArrayBuffer): SampleFormat | null {
+        let view = new DataView(buffer);
+        let ID_OPUS = 0x4F505553;
+        if (buffer.byteLength < 12) {
+            console.error("Opus header too small: " + buffer.byteLength);
+            return null;
+        } else if (view.getUint32(0, true) != ID_OPUS) {
+            console.error("Opus header too small: " + buffer.byteLength);
+            return null;
+        }
+
+        let format = new SampleFormat();
+        format.rate = view.getUint32(4, true);
+        format.bits = view.getUint16(8, true);
+        format.channels = view.getUint16(10, true);
+        console.log("Opus samplerate: " + format.toString());
+        return format;
     }
 
     decode(chunk: PcmChunkMessage): PcmChunkMessage | null {
@@ -709,7 +739,7 @@ class FlacDecoder extends Decoder {
         console.error('decode error callback', err, errMsg);
     }
 
-    setHeader(buffer: ArrayBuffer): SampleFormat {
+    setHeader(buffer: ArrayBuffer): SampleFormat | null {
         this.header = buffer.slice(0);
         Flac.FLAC__stream_decoder_process_until_end_of_metadata(this.decoder);
         return this.sampleFormat;
@@ -752,7 +782,7 @@ class PlayBuffer {
 
 
 class PcmDecoder extends Decoder {
-    setHeader(buffer: ArrayBuffer): SampleFormat {
+    setHeader(buffer: ArrayBuffer): SampleFormat | null {
         let sampleFormat = new SampleFormat();
         let view = new DataView(buffer);
         sampleFormat.channels = view.getUint16(22, true);
@@ -781,11 +811,14 @@ class SnapStream {
                     this.decoder = new FlacDecoder();
                 } else if (codec.codec == "pcm") {
                     this.decoder = new PcmDecoder();
+                } else if (codec.codec == "opus") {
+                    this.decoder = new OpusDecoder();
+                    alert("Codec not supported: " + codec.codec);
                 } else {
                     alert("Codec not supported: " + codec.codec);
                 }
                 if (this.decoder) {
-                    this.sampleFormat = this.decoder.setHeader(codec.payload);
+                    this.sampleFormat = this.decoder.setHeader(codec.payload)!;
                     console.log("Sampleformat: " + this.sampleFormat.toString());
                     if ((this.sampleFormat.channels != 2) || (this.sampleFormat.bits != 16)) {
                         alert("Stream must be stereo with 16 bit depth, actual format: " + this.sampleFormat.toString());
