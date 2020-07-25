@@ -622,6 +622,10 @@ class Decoder {
 class OpusDecoder extends Decoder {
     constructor() {
         super();
+        this.bufPtr = Module._malloc(4096);
+        this.pcmPtr = Module._malloc(4096);
+        this.buf = Module.HEAPU8.subarray(this.bufPtr, this.bufPtr + 4096);
+        this.pcm = Module.HEAP16.subarray(this.pcmPtr, this.pcmPtr + 4096);
     }
 
     setHeader(buffer: ArrayBuffer): SampleFormat | null {
@@ -640,12 +644,34 @@ class OpusDecoder extends Decoder {
         format.bits = view.getUint16(8, true);
         format.channels = view.getUint16(10, true);
         console.log("Opus samplerate: " + format.toString());
+
+        const err = Module._malloc(4);
+        
+        this.decoder = Module.ccall('opus_decoder_create', 'number', ['number', 'number', 'number'], [format.rate, format.channels, err]);
+        const errNum = Module.getValue(err, 'i32');
+        Module._free(err);
+        console.log("decoder: " + this.decoder + ", error: " + errNum);
         return format;
     }
 
     decode(chunk: PcmChunkMessage): PcmChunkMessage | null {
+        this.buf.set(new Uint8Array(chunk.payload));
+        let frameSize = Module.ccall('opus_decode', 'number', ['number', 'number', 'number', 'number', 'number', 'number'], this.decoder + 1, this.bufPtr, chunk.payloadSize(), this.pcmPtr, 120, 0);
+        console.log("decode " + chunk.payloadSize() + " bytes: " + frameSize);
+        // _opus_decode(
+        //     handle: number, data: number, len: number,
+        //     pcm: number, frameSize: number, decodeFec: number): number;
+
+        //     while ((frame_size = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(),
+        // static_cast<int>(pcm_.size()) / sample_format_.channels(), 0)) == OPUS_BUFFER_TOO_SMALL)
         return null;
     }
+
+    bufPtr: number;
+    pcmPtr: number;
+    buf: Uint8Array;
+    pcm: Int16Array;
+    decoder: number = 0;
 }
 
 
@@ -813,7 +839,7 @@ class SnapStream {
                     this.decoder = new PcmDecoder();
                 } else if (codec.codec == "opus") {
                     this.decoder = new OpusDecoder();
-                    alert("Codec not supported: " + codec.codec);
+                    // alert("Codec not supported: " + codec.codec);
                 } else {
                     alert("Codec not supported: " + codec.codec);
                 }
