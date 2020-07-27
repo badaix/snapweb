@@ -390,7 +390,7 @@ class AudioStream {
                 console.log("age: " + age.toFixed(2) + " < req: " + reqChunkDuration * -1 + ", chunk.startMs: " + this.chunk.startMs().toFixed(2) + ", timestamp: " + this.chunk.timestamp.getMilliseconds().toFixed(2));
                 console.log("Chunk too young, returning silence");
             } else {
-                if (Math.abs(age) > 5) {
+                if (Math.abs(age) > 25) {
                     // We are 5ms apart, do a hard sync, i.e. don't play faster/slower, 
                     // but seek to the desired position instead
                     while (this.chunk && age > this.chunk.duration()) {
@@ -622,10 +622,12 @@ class Decoder {
 class OpusDecoder extends Decoder {
     constructor() {
         super();
+        this.sampleFormat = new SampleFormat();
         this.bufPtr = Module._malloc(4096);
-        this.pcmPtr = Module._malloc(4096);
+        this.pcmPtr = Module._malloc(2 * 2048);
         this.buf = Module.HEAPU8.subarray(this.bufPtr, this.bufPtr + 4096);
-        this.pcm = Module.HEAP16.subarray(this.pcmPtr, this.pcmPtr + 4096);
+        this.pcm = Module.HEAP16.subarray(this.pcmPtr / 2, this.pcmPtr / 2 + 2048);
+        // this.pcm = Module.HEAP16.subarray(this.pcmPtr / 2, this.pcmPtr / 2 + 2048);
     }
 
     setHeader(buffer: ArrayBuffer): SampleFormat | null {
@@ -639,34 +641,32 @@ class OpusDecoder extends Decoder {
             return null;
         }
 
-        let format = new SampleFormat();
-        format.rate = view.getUint32(4, true);
-        format.bits = view.getUint16(8, true);
-        format.channels = view.getUint16(10, true);
-        console.log("Opus samplerate: " + format.toString());
+        this.sampleFormat.rate = view.getUint32(4, true);
+        this.sampleFormat.bits = view.getUint16(8, true);
+        this.sampleFormat.channels = view.getUint16(10, true);
+        console.log("Opus samplerate: " + this.sampleFormat.toString());
 
         const err = Module._malloc(4);
-        
-        this.decoder = Module.ccall('opus_decoder_create', 'number', ['number', 'number', 'number'], [format.rate, format.channels, err]);
+
+        this.decoder = Module.ccall('opus_decoder_create', 'number', ['number', 'number', 'number'], [this.sampleFormat.rate, this.sampleFormat.channels, err]);
         const errNum = Module.getValue(err, 'i32');
         Module._free(err);
         console.log("decoder: " + this.decoder + ", error: " + errNum);
-        return format;
+        return this.sampleFormat;
     }
 
     decode(chunk: PcmChunkMessage): PcmChunkMessage | null {
         this.buf.set(new Uint8Array(chunk.payload));
-        let frameSize = Module.ccall('opus_decode', 'number', ['number', 'number', 'number', 'number', 'number', 'number'], this.decoder + 1, this.bufPtr, chunk.payloadSize(), this.pcmPtr, 120, 0);
-        console.log("decode " + chunk.payloadSize() + " bytes: " + frameSize);
-        // _opus_decode(
-        //     handle: number, data: number, len: number,
-        //     pcm: number, frameSize: number, decodeFec: number): number;
+        let frameSize = this.opus_decode(this.decoder, this.bufPtr, chunk.payloadSize(), this.pcmPtr, 1024, 0);
+        // Module.ccall('opus_decode', 'number', ['number', 'number', 'number', 'number', 'number', 'number'], [this.decoder, this.bufPtr, chunk.payloadSize(), this.pcmPtr, 1024, 0]);
 
-        //     while ((frame_size = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(),
-        // static_cast<int>(pcm_.size()) / sample_format_.channels(), 0)) == OPUS_BUFFER_TOO_SMALL)
-        return null;
+        chunk.payload = this.pcm.slice(0, frameSize * 2);// new ArrayBuffer(frameSize * this.sampleFormat.frameSize());
+        // console.log("decode " + chunk.payloadSize() + " frames: " + frameSize + ", duration: " + frameSize / this.sampleFormat.msRate() + ", payload: " + chunk.payloadSize() + " - " + frameSize * this.sampleFormat.frameSize());
+        return chunk;
     }
 
+    opus_decode: any = Module.cwrap('opus_decode', 'number', ['number', 'number', 'number', 'number', 'number', 'number']);
+    sampleFormat: SampleFormat;
     bufPtr: number;
     pcmPtr: number;
     buf: Uint8Array;

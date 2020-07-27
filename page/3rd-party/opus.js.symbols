@@ -263,11 +263,3 @@
 262:stackAlloc
 263:__growWasmMemory
 264:dynCall_viiiiiii
-265:wasm2js_scratch_load_i32
-266:wasm2js_scratch_store_i32
-267:wasm2js_scratch_load_f64
-268:wasm2js_scratch_store_f64
-269:_ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE
-270:__wasm_i64_mul
-271:__wasm_nearest_f32
-272:__wasm_rotl_i32
