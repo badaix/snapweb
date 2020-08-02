@@ -1,0 +1,20 @@
+name: Ubuntu
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: dependencies
+      run: sudo npm install -g typescript@latest
+    - name: build
+      run: make
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: develop_snapshot
+        path: /home/runner/work/snapweb/snapweb/dist
