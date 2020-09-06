@@ -16,8 +16,10 @@ dist:
 	cp page/manifest.json dist
 	cp page/mute_icon.png dist
 	cp page/play.png dist
-	cp page/snapcontrol.js dist
-	cp page/snapstream.js dist
+	mv page/snapcontrol.js dist
+	mv page/snapcontrol.js.map dist
+	mv page/snapstream.js dist
+	mv page/snapstream.js.map dist
 	cp page/speaker_icon.png dist
 	cp page/stop.png dist
 	cp page/styles.css dist
