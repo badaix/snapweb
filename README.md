@@ -4,7 +4,7 @@ Web client for [Snapcast](https://github.com/badaix/snapcast), optimized for mob
 
 ## Setup
 
-1. Copy the `page` directory to some path on your snapserver host and let the `[http] doc_root` in your `snapserver.conf` point to it
+1. Run `make` (requires [TypeScript](https://www.typescriptlang.org/)) and copy the created `dist` directory to some path on your snapserver host and let the `[http] doc_root` in your `snapserver.conf` point to it
 2. Restart `snapserver` and navigate with a browser to `http://<snapserver host>:1780`
 3. Enjoy :)
 
