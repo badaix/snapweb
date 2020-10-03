@@ -357,6 +357,11 @@ class SnapControl {
 let snapcontrol!: SnapControl;
 let snapstream: SnapStream | null = null;
 let hide_offline: boolean = true;
+let autoplay_done: boolean = false;
+
+function autoplayRequested():boolean {
+    return document.location.hash.match(/autoplay/) !== null;
+}
 
 function show() {
     // Render the page
@@ -372,6 +377,11 @@ function show() {
     let serverVersion = snapcontrol.server.server.snapserver.version.split('.');
     if ((serverVersion.length >= 2) && (+serverVersion[1] >= 21)) {
         content += "    <a href=\"javascript:play();\"><img src='" + play_img + "' class='play-button'></a>";
+        // Stream became ready and was not playing. If autoplay is requested, start playing.
+        if (!snapstream && !autoplay_done && autoplayRequested()) {
+            autoplay_done = true;
+            play();
+        }
     }
     content += "</div>";
     content += "<div class='content'>";
