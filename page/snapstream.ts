@@ -176,9 +176,9 @@ class JsonMessage extends BaseMessage {
     deserialize(buffer: ArrayBuffer) {
         super.deserialize(buffer);
         let view = new DataView(buffer);
-        let size = view.getInt32(26, true);
+        let size = view.getUint32(26, true);
         let decoder = new TextDecoder();
-        this.json = JSON.parse(decoder.decode(buffer.slice(30)));
+        this.json = JSON.parse(decoder.decode(buffer.slice(30, 30 + size)));
     }
 
     serialize(): ArrayBuffer {
