@@ -153,7 +153,7 @@ class TimeMessage extends BaseMessage {
         let buffer = super.serialize();
         let view = new DataView(buffer);
         view.setInt32(26, this.latency.sec, true);
-        view.setInt32(30, this.latency.sec, true);
+        view.setInt32(30, this.latency.usec, true);
         return buffer;
     }
 
