@@ -26,7 +26,6 @@ This web client is the author's first JavaScript/TypeScript project and is rathe
 - Missing "About" dialog showing the version number and license [#15](https://github.com/badaix/snapweb/issues/15)
 - Missing version number [#15](https://github.com/badaix/snapweb/issues/15)
 - I don't know if SnapWeb works on iOS or macOS
-- Since some Android WebView update the volume sliders became jerky, seems to be caused by `.slider::-webkit-slider-thumb { -webkit-appearance: none; }`
 
 Pull Requests are highly appreciated!  
 Please consider that one of the design goals is to keep the client small and simple, i.e. to use plain TypeScript/CSS without any frameworks.
