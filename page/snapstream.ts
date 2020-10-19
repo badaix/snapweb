@@ -859,7 +859,8 @@ class SnapStream {
                             this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
                             // this.timeProvider = new TimeProvider(this.ctx);
                             this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
-                            console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency);
+                            this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx.outputLatency : 0) 
+                            console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency + ", latency: " + this.latency);
                             this.play();
                         } else {
                             // Web Audio API is not supported
@@ -964,7 +965,7 @@ class SnapStream {
 
     public playNext() {
         let buffer = this.freeBuffers.pop() || this.ctx!.createBuffer(this.sampleFormat!.channels, this.bufferFrameCount, this.sampleFormat!.rate);
-        let playTimeMs = (this.playTime + this.ctx!.baseLatency) * 1000 - this.bufferMs;
+        let playTimeMs = (this.playTime + this.latency) * 1000 - this.bufferMs;
         this.stream!.getNextBuffer(buffer, playTimeMs);
 
         let source = this.ctx!.createBufferSource();
@@ -1003,6 +1004,8 @@ class SnapStream {
     audioBufferCount: number = 3;
     bufferMs: number = 1000;
     bufferNum: number = 0;
+
+    latency: number = 0;
 }
 
 
