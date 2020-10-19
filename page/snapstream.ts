@@ -1,4 +1,9 @@
 
+// declare window.webkitAudioContext for the ts compiler
+interface Window {
+    webkitAudioContext: typeof AudioContext
+}
+
 function setCookie(key: string, value: string, exdays: number = -1) {
     let d = new Date();
     if (exdays < 0)
@@ -835,21 +840,31 @@ class SnapStream {
                             this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
                         }
                         this.stopAudio();
-                        let options: object | undefined = {latencyHint: "playback", sampleRate: this.sampleFormat.rate};
+                        let options: object | undefined = { latencyHint: "playback", sampleRate: this.sampleFormat.rate };
                         const chromeVersion = getChromeVersion();
                         if (chromeVersion !== null && chromeVersion < 55) {
                             // Some older browsers won't decode the stream if options are provided.
                             options = undefined;
                         }
-                        this.ctx = new AudioContext(options);
-                        this.timeProvider.setAudioContext(this.ctx);
-                        this.gainNode = this.ctx.createGain();
-                        this.gainNode.connect(this.ctx.destination);
-                        this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
-                        // this.timeProvider = new TimeProvider(this.ctx);
-                        this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
-                        console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency);
-                        this.play();
+                        let AudioContext = window.AudioContext // Default
+                            || window.webkitAudioContext // Safari and old versions of Chrome
+                            || false;
+
+                        if (AudioContext) {
+                            this.ctx = new AudioContext(options);
+                            this.timeProvider.setAudioContext(this.ctx);
+                            this.gainNode = this.ctx.createGain();
+                            this.gainNode.connect(this.ctx.destination);
+                            this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
+                            // this.timeProvider = new TimeProvider(this.ctx);
+                            this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
+                            console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency);
+                            this.play();
+                        } else {
+                            // Web Audio API is not supported
+                            // Alert the user
+                            alert("Sorry, but the Web Audio API is not supported by your browser");
+                        }
                     }
                 }
             } else if (type == 2) {
