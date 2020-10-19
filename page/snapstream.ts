@@ -782,9 +782,13 @@ class PlayBuffer {
     public onended: (playBuffer: PlayBuffer) => void
 
     start() {
-        this.source.onended = (ev: Event) => {
+        this.source.addEventListener('ended', () => {
+            console.log("ended");
             this.onended(this);
-        }
+        });
+        // this.source.onended = (ev: Event) => {
+        //     this.onended(this);
+        // }
         this.source.start(this.playTime);
     }
 
@@ -859,7 +863,7 @@ class SnapStream {
                             this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
                             // this.timeProvider = new TimeProvider(this.ctx);
                             this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
-                            this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx.outputLatency : 0) 
+                            this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx.outputLatency : 0)
                             console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency + ", latency: " + this.latency);
                             this.play();
                         } else {
