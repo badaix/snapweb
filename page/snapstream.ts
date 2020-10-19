@@ -508,8 +508,9 @@ class AudioStream {
             right.fill(0, pos);
         }
 
-        buffer.copyToChannel(left, 0, 0);
-        buffer.copyToChannel(right, 1, 0);
+        // copyToChannel is not supported by Safari
+        buffer.getChannelData(0).set(left);
+        buffer.getChannelData(1).set(right);
     }
 
 
