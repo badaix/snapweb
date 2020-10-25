@@ -782,13 +782,9 @@ class PlayBuffer {
     public onended: (playBuffer: PlayBuffer) => void
 
     start() {
-        this.source.addEventListener('ended', () => {
-            console.log("ended");
+        this.source.onended = (ev: Event) => {
             this.onended(this);
-        });
-        // this.source.onended = (ev: Event) => {
-        //     this.onended(this);
-        // }
+        }
         this.source.start(this.playTime);
     }
 
