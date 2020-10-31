@@ -812,8 +812,8 @@ class PcmDecoder extends Decoder {
 
 
 class SnapStream {
-    constructor(host: string, port: number) {
-        this.streamsocket = new WebSocket('ws://' + host + ':' + port + '/stream');
+    constructor(baseUrl: string) {
+        this.streamsocket = new WebSocket(baseUrl + '/stream');
         this.streamsocket.binaryType = "arraybuffer";
         this.streamsocket.onmessage = (msg: MessageEvent) => {
             let view = new DataView(msg.data);
