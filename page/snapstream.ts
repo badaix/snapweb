@@ -813,87 +813,15 @@ class PcmDecoder extends Decoder {
 
 class SnapStream {
     constructor(baseUrl: string) {
-        this.streamsocket = new WebSocket(baseUrl + '/stream');
-        this.streamsocket.binaryType = "arraybuffer";
-        this.streamsocket.onmessage = (msg: MessageEvent) => {
-            let view = new DataView(msg.data);
-            let type = view.getUint16(0, true);
-            if (type == 1) {
-                let codec = new CodecMessage(msg.data);
-                console.log("Codec: " + codec.codec);
-                if (codec.codec == "flac") {
-                    this.decoder = new FlacDecoder();
-                } else if (codec.codec == "pcm") {
-                    this.decoder = new PcmDecoder();
-                } else if (codec.codec == "opus") {
-                    this.decoder = new OpusDecoder();
-                    alert("Codec not supported: " + codec.codec);
-                } else {
-                    alert("Codec not supported: " + codec.codec);
-                }
-                if (this.decoder) {
-                    this.sampleFormat = this.decoder.setHeader(codec.payload)!;
-                    console.log("Sampleformat: " + this.sampleFormat.toString());
-                    if ((this.sampleFormat.channels != 2) || (this.sampleFormat.bits != 16)) {
-                        alert("Stream must be stereo with 16 bit depth, actual format: " + this.sampleFormat.toString());
-                    } else {
-                        if (this.bufferDurationMs != 0) {
-                            this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
-                        }
-                        this.stopAudio();
-                        let options: object | undefined = { latencyHint: "playback", sampleRate: this.sampleFormat.rate };
-                        const chromeVersion = getChromeVersion();
-                        if (chromeVersion !== null && chromeVersion < 55) {
-                            // Some older browsers won't decode the stream if options are provided.
-                            options = undefined;
-                        }
-                        let AudioContext = window.AudioContext // Default
-                            || window.webkitAudioContext // Safari and old versions of Chrome
-                            || false;
+        this.baseUrl = baseUrl;
+        this.connect();
+        this.timeProvider = new TimeProvider();
+    }
 
-                        if (AudioContext) {
-                            this.ctx = new AudioContext(options);
-                            this.timeProvider.setAudioContext(this.ctx);
-                            this.gainNode = this.ctx.createGain();
-                            this.gainNode.connect(this.ctx.destination);
-                            this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
-                            // this.timeProvider = new TimeProvider(this.ctx);
-                            this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
-                            this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx.outputLatency : 0)
-                            console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency + ", latency: " + this.latency);
-                            this.play();
-                        } else {
-                            // Web Audio API is not supported
-                            // Alert the user
-                            alert("Sorry, but the Web Audio API is not supported by your browser");
-                        }
-                    }
-                }
-            } else if (type == 2) {
-                let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat as SampleFormat);
-                if (this.decoder) {
-                    let decoded = this.decoder.decode(pcmChunk);
-                    if (decoded) {
-                        this.stream!.addChunk(decoded);
-                    }
-                }
-            } else if (type == 3) {
-                this.serverSettings = new ServerSettingsMessage(msg.data);
-                if (this.gainNode) {
-                    this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
-                }
-                this.bufferMs = this.serverSettings.bufferMs - this.serverSettings.latency;
-                console.log("ServerSettings bufferMs: " + this.serverSettings.bufferMs + ", latency: " + this.serverSettings.latency + ", volume: " + this.serverSettings.volumePercent + ", muted: " + this.serverSettings.muted);
-            } else if (type == 4) {
-                if (this.timeProvider) {
-                    let time = new TimeMessage(msg.data);
-                    this.timeProvider.setDiff(time.latency.getMilliseconds(), this.timeProvider.now() - time.sent.getMilliseconds());
-                }
-                // console.log("Time sec: " + time.latency.sec + ", usec: " + time.latency.usec + ", diff: " + this.timeProvider.diff);
-            } else {
-                console.info("Message not handled, type: " + type);
-            }
-        }
+    private connect(){
+        this.streamsocket = new WebSocket(this.baseUrl + '/stream');
+        this.streamsocket.binaryType = "arraybuffer";
+        this.streamsocket.onmessage = (ev) => this.onMessage(ev);
 
         this.streamsocket.onopen = (ev) => {
             console.log("on open");
@@ -908,12 +836,92 @@ class SnapStream {
             this.syncTime();
             this.syncHandle = window.setInterval(() => this.syncTime(), 1000);
         }
-        this.streamsocket.onerror = (ev) => { alert("error: " + ev.type); }; //this.onError(ev);
+        this.streamsocket.onerror = (ev) => { console.error('error:', ev); };
         this.streamsocket.onclose = (ev) => {
-            stop();
+            window.clearInterval(this.syncHandle);
+            console.info('connection lost, reconnecting in 1s'); 
+            setTimeout(() => this.connect(), 1000);
         }
-        // this.ageBuffer = new Array<number>();
-        this.timeProvider = new TimeProvider();
+    }
+
+    private onMessage(msg: MessageEvent) {
+        let view = new DataView(msg.data);
+        let type = view.getUint16(0, true);
+        if (type == 1) {
+            let codec = new CodecMessage(msg.data);
+            console.log("Codec: " + codec.codec);
+            if (codec.codec == "flac") {
+                this.decoder = new FlacDecoder();
+            } else if (codec.codec == "pcm") {
+                this.decoder = new PcmDecoder();
+            } else if (codec.codec == "opus") {
+                this.decoder = new OpusDecoder();
+                alert("Codec not supported: " + codec.codec);
+            } else {
+                alert("Codec not supported: " + codec.codec);
+            }
+            if (this.decoder) {
+                this.sampleFormat = this.decoder.setHeader(codec.payload)!;
+                console.log("Sampleformat: " + this.sampleFormat.toString());
+                if ((this.sampleFormat.channels != 2) || (this.sampleFormat.bits != 16)) {
+                    alert("Stream must be stereo with 16 bit depth, actual format: " + this.sampleFormat.toString());
+                } else {
+                    if (this.bufferDurationMs != 0) {
+                        this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
+                    }
+                    this.stopAudio();
+                    let options: object | undefined = { latencyHint: "playback", sampleRate: this.sampleFormat.rate };
+                    const chromeVersion = getChromeVersion();
+                    if (chromeVersion !== null && chromeVersion < 55) {
+                        // Some older browsers won't decode the stream if options are provided.
+                        options = undefined;
+                    }
+                    let AudioContext = window.AudioContext // Default
+                        || window.webkitAudioContext // Safari and old versions of Chrome
+                        || false;
+
+                    if (AudioContext) {
+                        this.ctx = new AudioContext(options);
+                        this.timeProvider.setAudioContext(this.ctx);
+                        this.gainNode = this.ctx.createGain();
+                        this.gainNode.connect(this.ctx.destination);
+                        this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
+                        // this.timeProvider = new TimeProvider(this.ctx);
+                        this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
+                        this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx.outputLatency : 0)
+                        console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency + ", latency: " + this.latency);
+                        this.play();
+                    } else {
+                        // Web Audio API is not supported
+                        // Alert the user
+                        alert("Sorry, but the Web Audio API is not supported by your browser");
+                    }
+                }
+            }
+        } else if (type == 2) {
+            let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat as SampleFormat);
+            if (this.decoder) {
+                let decoded = this.decoder.decode(pcmChunk);
+                if (decoded) {
+                    this.stream!.addChunk(decoded);
+                }
+            }
+        } else if (type == 3) {
+            this.serverSettings = new ServerSettingsMessage(msg.data);
+            if (this.gainNode) {
+                this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
+            }
+            this.bufferMs = this.serverSettings.bufferMs - this.serverSettings.latency;
+            console.log("ServerSettings bufferMs: " + this.serverSettings.bufferMs + ", latency: " + this.serverSettings.latency + ", volume: " + this.serverSettings.volumePercent + ", muted: " + this.serverSettings.muted);
+        } else if (type == 4) {
+            if (this.timeProvider) {
+                let time = new TimeMessage(msg.data);
+                this.timeProvider.setDiff(time.latency.getMilliseconds(), this.timeProvider.now() - time.sent.getMilliseconds());
+            }
+            // console.log("Time sec: " + time.latency.sec + ", usec: " + time.latency.usec + ", diff: " + this.timeProvider.diff);
+        } else {
+            console.info("Message not handled, type: " + type);
+        }
     }
 
     private sendMessage(msg: BaseMessage) {
@@ -982,7 +990,8 @@ class SnapStream {
         this.playTime += this.bufferFrameCount / (this.sampleFormat as SampleFormat).rate;
     }
 
-    streamsocket: WebSocket;
+    baseUrl: string;
+    streamsocket!: WebSocket;
     playTime: number = 0;
     msgId: number = 0;
     bufferDurationMs: number = 80; // 0;
@@ -1007,5 +1016,3 @@ class SnapStream {
 
     latency: number = 0;
 }
-
-
