@@ -173,14 +173,21 @@ class Server {
 class SnapControl {
     constructor(baseUrl: string) {
         this.server = new Server();
-        this.connection = new WebSocket(baseUrl + '/jsonrpc');
+        this.baseUrl = baseUrl;
         this.msg_id = 0;
         this.status_req_id = -1;
-        // console.log(navigator);
+        this.connect();
+    }
 
+    private connect(){
+        this.connection = new WebSocket(this.baseUrl + '/jsonrpc');
         this.connection.onmessage = (msg: MessageEvent) => this.onMessage(msg.data);
-        this.connection.onopen = (ev: Event) => { this.status_req_id = this.sendRequest('Server.GetStatus'); }
-        this.connection.onerror = (ev: Event) => { alert("error: " + ev.type); }//this.onError(ev);
+        this.connection.onopen = (ev: Event) => { this.status_req_id = this.sendRequest('Server.GetStatus'); };
+        this.connection.onerror = (ev: Event) => { console.error('error:', ev); };
+        this.connection.onclose = (ev: Event) => {
+            console.info('connection lost, reconnecting in 1s'); 
+            setTimeout(() => this.connect(), 1000);
+        };
     }
 
     private action(answer: any) {
@@ -347,7 +354,8 @@ class SnapControl {
         }
     }
 
-    connection: WebSocket;
+    baseUrl: string;
+    connection!: WebSocket;
     server: Server;
     msg_id: number;
     status_req_id: number;
