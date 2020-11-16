@@ -186,28 +186,28 @@ class SnapControl {
     private action(answer: any) {
         switch (answer.method) {
             case 'Client.OnVolumeChanged':
-                let client = (this.getClient(answer.params.id) as Client)
+                let client = this.getClient(answer.params.id);
                 client.config.volume = answer.params.volume;
-                updateGroupVolume(this.getGroupFromClient(client.id) as Group);
+                updateGroupVolume(this.getGroupFromClient(client.id));
                 break;
             case 'Client.OnLatencyChanged':
-                (this.getClient(answer.params.id) as Client).config.latency = answer.params.latency;
+                this.getClient(answer.params.id).config.latency = answer.params.latency;
                 break;
             case 'Client.OnNameChanged':
-                (this.getClient(answer.params.id) as Client).config.name = answer.params.name;
+                this.getClient(answer.params.id).config.name = answer.params.name;
                 break;
             case 'Client.OnConnect':
             case 'Client.OnDisconnect':
-                (this.getClient(answer.params.client.id) as Client).fromJson(answer.params.client);
+                this.getClient(answer.params.client.id).fromJson(answer.params.client);
                 break;
             case 'Group.OnMute':
-                (this.getGroup(answer.params.id) as Group).muted = Boolean(answer.params.mute);
+                this.getGroup(answer.params.id).muted = Boolean(answer.params.mute);
                 break;
             case 'Group.OnStreamChanged':
-                (this.getGroup(answer.params.id) as Group).stream_id = answer.params.stream_id;
+                this.getGroup(answer.params.id).stream_id = answer.params.stream_id;
                 break;
             case 'Stream.OnUpdate':
-                (this.getStream(answer.params.id) as Stream).fromJson(answer.params.stream);
+                this.getStream(answer.params.id).fromJson(answer.params.stream);
                 break;
             case 'Server.OnUpdate':
                 this.server.fromJson(answer.params.server);
@@ -217,12 +217,20 @@ class SnapControl {
         }
     }
 
-    public getClient(client_id: string): Client | null {
-        return this.server.getClient(client_id);
+    public getClient(client_id: string): Client {
+        let client = this.server.getClient(client_id);
+        if (client == null) {
+            throw new Error(`client ${client_id} was null`);
+        }
+        return client;
     }
 
-    public getGroup(group_id: string): Group | null {
-        return this.server.getGroup(group_id);
+    public getGroup(group_id: string): Group {
+        let group = this.server.getGroup(group_id);
+        if (group == null) {
+            throw new Error(`group ${group_id} was null`);
+        }
+        return group;
     }
 
     public getGroupVolume(group: Group, online: boolean): number {
@@ -241,48 +249,51 @@ class SnapControl {
         return group_vol / client_count;
     }
 
-    public getGroupFromClient(client_id: string): Group | null {
+    public getGroupFromClient(client_id: string): Group {
         for (let group of this.server.groups)
             for (let client of group.clients)
                 if (client.id == client_id)
                     return group;
-        return null;
+        throw new Error(`group for client ${client_id} was null`);
     }
 
-    public getStream(stream_id: string): Stream | null {
-        return this.server.getStream(stream_id);
+    public getStream(stream_id: string): Stream {
+        let stream = this.server.getStream(stream_id);
+        if (stream == null) {
+            throw new Error(`stream ${stream_id} was null`);
+        }
+        return stream;
     }
 
     public setVolume(client_id: string, percent: number, mute?: boolean) {
         percent = Math.max(0, Math.min(100, percent));
-        let client = (this.getClient(client_id) as Client);
+        let client = this.getClient(client_id);
         client.config.volume.percent = percent;
         if (mute != undefined)
             client.config.volume.muted = mute;
-        this.sendRequest('Client.SetVolume', '{"id":"' + client_id + '","volume":{"muted":' + (client.config.volume.muted ? "true" : "false") + ',"percent":' + client.config.volume.percent + '}}');
+        this.sendRequest('Client.SetVolume',{id: client_id, volume: {muted: client.config.volume.muted, percent: client.config.volume.percent}});
     }
 
     public setClientName(client_id: string, name: string) {
-        let client = this.getClient(client_id) as Client;
+        let client = this.getClient(client_id);
         let current_name: string = (client.config.name != "") ? client.config.name : client.host.name;
         if (name != current_name) {
-            this.sendRequest('Client.SetName', '{"id":"' + client_id + '","name":"' + name + '"}');
+            this.sendRequest('Client.SetName', {id: client_id, name: name});
             client.config.name = name;
         }
     }
 
     public setClientLatency(client_id: string, latency: number) {
-        let client = this.getClient(client_id) as Client;
+        let client = this.getClient(client_id);
         let current_latency: number = client.config.latency;
         if (latency != current_latency) {
-            this.sendRequest('Client.SetLatency', '{"id":"' + client_id + '","latency":' + latency + '}');
+            this.sendRequest('Client.SetLatency', {id: client_id, latency: latency});
             client.config.latency = latency;
         }
     }
 
     public deleteClient(client_id: string) {
-        let client = this.getClient(client_id);
-        this.sendRequest('Server.DeleteClient', '{"id": "' + client_id + '"}');
+        this.sendRequest('Server.DeleteClient', {id: client_id});
         this.server.groups.forEach((g: Group, gi: number) => {
             g.clients.forEach((c: Client, ci: number) => {
                 if (c.id == client_id) {
@@ -300,26 +311,31 @@ class SnapControl {
     }
 
     public setStream(group_id: string, stream_id: string) {
-        (this.getGroup(group_id) as Group).stream_id = stream_id;
-        this.sendRequest('Group.SetStream', '{"id":"' + group_id + '","stream_id":"' + stream_id + '"}');
+        this.getGroup(group_id).stream_id = stream_id;
+        this.sendRequest('Group.SetStream', {id: group_id, stream_id: stream_id});
     }
 
     public setClients(group_id: string, clients: string[]) {
-        this.status_req_id = this.sendRequest('Group.SetClients', '{"clients":' + JSON.stringify(clients) + ',"id":"' + group_id + '"}');
+        this.status_req_id = this.sendRequest('Group.SetClients', {id: group_id, clients: clients});
     }
 
     public muteGroup(group_id: string, mute: boolean) {
-        (this.getGroup(group_id) as Group).muted = mute;
-        this.sendRequest('Group.SetMute', '{"id":"' + group_id + '","mute":' + (mute ? "true" : "false") + '}');
+        this.getGroup(group_id).muted = mute;
+        this.sendRequest('Group.SetMute', {id: group_id, mute: mute});
     }
 
-    private sendRequest(method: string, params?: string): number {
-        let msg = '{"id": ' + (++this.msg_id) + ',"jsonrpc":"2.0","method":"' + method + '"';
-        if (params)
-            msg += ',"params": ' + params;
-        msg += '}';
-        console.log("Sending: " + msg);
-        this.connection.send(msg);
+    private sendRequest(method: string, params?: any): number {
+        let msg: any = {
+            id: ++this.msg_id,
+            jsonrpc: '2.0',
+            method: method
+        };
+        if(params)
+            msg.params = params;
+
+        let msgJson = JSON.stringify(msg);
+        console.log("Sending: " + msgJson);
+        this.connection.send(msgJson);
         return this.msg_id;
     }
 
@@ -548,7 +564,7 @@ function updateGroupVolume(group: Group) {
 let client_volumes: Array<number>;
 let group_volume: number;
 function setGroupVolume(group_id: string) {
-    let group = snapcontrol.getGroup(group_id) as Group;
+    let group = snapcontrol.getGroup(group_id);
     let percent = (document.getElementById('vol_' + group.id) as HTMLInputElement).valueAsNumber;
     console.log("setGroupVolume id: " + group.id + ", volume: " + percent);
     // show()
@@ -575,7 +591,7 @@ function setGroupVolume(group_id: string) {
 }
 
 function groupVolumeEnter(group_id: string) {
-    let group = snapcontrol.getGroup(group_id) as Group;
+    let group = snapcontrol.getGroup(group_id);
     let percent = (document.getElementById('vol_' + group.id) as HTMLInputElement).valueAsNumber;
     console.log("groupVolumeEnter id: " + group.id + ", volume: " + percent);
     group_volume = percent;
@@ -589,10 +605,10 @@ function groupVolumeEnter(group_id: string) {
 function setVolume(id: string, mute: boolean) {
     console.log("setVolume id: " + id + ", mute: " + mute);
     let percent = (document.getElementById('vol_' + id) as HTMLInputElement).valueAsNumber;
-    let client = snapcontrol.getClient(id) as Client;
+    let client = snapcontrol.getClient(id);
     let needs_update = (mute != client.config.volume.muted);
     snapcontrol.setVolume(id, percent, mute);
-    let group = snapcontrol.getGroupFromClient(id) as Group;
+    let group = snapcontrol.getGroupFromClient(id);
     updateGroupVolume(group);
     if (needs_update)
         show();
@@ -624,7 +640,7 @@ function setGroup(client_id: string, group_id: string) {
 
     let server = snapcontrol.server;
     // Get client group id
-    let current_group = snapcontrol.getGroupFromClient(client_id) as Group;
+    let current_group = snapcontrol.getGroupFromClient(client_id);
 
     // Get
     //   List of target group's clients
@@ -651,7 +667,7 @@ function setGroup(client_id: string, group_id: string) {
 
 function setName(id: string) {
     // Get current name and lacency
-    let client = snapcontrol.getClient(id) as Client;
+    let client = snapcontrol.getClient(id);
     let current_name: string = (client.config.name != "") ? client.config.name : client.host.name;
     let current_latency: number = client.config.latency;
 
@@ -668,7 +684,7 @@ function setName(id: string) {
 
 function openClientSettings(id: string) {
     let modal = document.getElementById("client-settings") as HTMLElement;
-    let client = snapcontrol.getClient(id) as Client;
+    let client = snapcontrol.getClient(id);
     let current_name: string = (client.config.name != "") ? client.config.name : client.host.name;
     let name = document.getElementById("client-name") as HTMLInputElement;
     name.name = id;
@@ -676,7 +692,7 @@ function openClientSettings(id: string) {
     let latency = document.getElementById("client-latency") as HTMLInputElement;
     latency.valueAsNumber = client.config.latency;
 
-    let group = snapcontrol.getGroupFromClient(id) as Group;
+    let group = snapcontrol.getGroupFromClient(id);
     let group_input = document.getElementById("client-group") as HTMLSelectElement;
     while (group_input.length > 0)
         group_input.remove(0);
