@@ -16,6 +16,7 @@ dist:
 	cp page/manifest.json dist
 	cp page/mute_icon.png dist
 	cp page/play.png dist
+	mv page/config.js dist
 	mv page/snapcontrol.js dist
 	mv page/snapcontrol.js.map dist
 	mv page/snapstream.js dist

@@ -1,8 +1,8 @@
 class SnapWebConfig {
     constructor(snapServerUrl?:string, debug?:boolean) {
         if (snapServerUrl) {
-            this.snapServerUrl = new URL(snapServerUrl);
-            let snapServerWSUrl = new URL(snapServerUrl);
+            this.snapServerUrl = new URL(snapServerUrl.split('?')[0]);
+            let snapServerWSUrl = new URL(snapServerUrl.split('?')[0]);
             
             // we only change protocol
             // this should allow compatibility with other case such as
@@ -23,6 +23,8 @@ class SnapWebConfig {
 
     snapServerUrl: URL = new URL("http://localhost:1780")
     snapServerWSUrl: URL = new URL("ws://localhost:1780")
+
+
     debug: boolean = false
 }
 
@@ -201,7 +203,7 @@ class Server {
 class SnapControl {
 
     constructor(snapconfig: SnapWebConfig) {
-        this.connection = new WebSocket(snapconfig.snapServerWSUrl.toString())
+        this.connection = new WebSocket(snapconfig.snapServerWSUrl.toString() + "/jsonrpc")
         this.server = new Server();
         this.msg_id = 0;
         this.status_req_id = -1;
@@ -388,7 +390,7 @@ let snapstream: SnapStream | null = null;
 let hide_offline: boolean = true;
 let autoplay_done: boolean = false;
 
-function autoplayRequested():boolean {
+function autoplayRequested(): boolean {
     return document.location.hash.match(/autoplay/) !== null;
 }
 
@@ -405,7 +407,7 @@ function show() {
     content += "<div class='navbar'>Snapcast";
     let serverVersion = snapcontrol.server.server.snapserver.version.split('.');
     if ((serverVersion.length >= 2) && (+serverVersion[1] >= 21)) {
-        content += "    <a href=\"javascript:play();\"><img src='" + play_img + "' class='play-button'></a>";
+        content += "    <img src='" + play_img + "' class='play-button' id='play-button'></a>";
         // Stream became ready and was not playing. If autoplay is requested, start playing.
         if (!snapstream && !autoplay_done && autoplayRequested()) {
             autoplay_done = true;
@@ -547,6 +549,8 @@ function show() {
     // Pad then update page
     content = content + "<br><br>";
     (document.getElementById('show') as HTMLInputElement).innerHTML = content;
+    let playElem = (document.getElementById('play-button') as HTMLElement);
+    playElem.addEventListener('click', function () { play(); }, false);
 
     for (let group of snapcontrol.server.groups) {
         if (group.clients.length > 1) {
@@ -631,16 +635,8 @@ function play() {
         snapstream = null;
     }
     else {
-        let secure = false;
-        let port = 80;
-        if (window.location.protocol == "https:") {
-            secure = true;
-            port = 443;
-        }
-        if (window.location.port != "") {
-            port = parseInt(window.location.port);
-        }
-        snapstream = new SnapStream(window.location.hostname, port, secure);
+        let snapconfig = new SnapWebConfig(window.location.href)
+        snapstream = new SnapStream(snapconfig);
     }
     show();
 }
