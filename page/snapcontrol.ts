@@ -1,3 +1,31 @@
+class SnapWebConfig {
+    constructor(snapServerUrl?:string, debug?:boolean) {
+        if (snapServerUrl) {
+            this.snapServerUrl = new URL(snapServerUrl);
+            let snapServerWSUrl = new URL(snapServerUrl);
+            
+            // we only change protocol
+            // this should allow compatibility with other case such as
+            // snapcast web ui hosted like this http://mynas/snapweb
+            if (snapServerWSUrl.protocol == "https:") {
+                snapServerWSUrl.protocol = "wss:"
+            } else {
+                snapServerWSUrl.protocol = "ws:"
+            }
+            this.snapServerWSUrl = snapServerWSUrl
+            
+            // maybe later we would want to enable debug mode ?
+            if (debug) {
+                this.debug = debug
+            }
+        }
+    }
+
+    snapServerUrl: URL = new URL("http://localhost:1780")
+    snapServerWSUrl: URL = new URL("ws://localhost:1780")
+    debug: boolean = false
+}
+
 class Host {
     constructor(json: any) {
         this.fromJson(json);
@@ -171,21 +199,10 @@ class Server {
 }
 
 class SnapControl {
-    secure: boolean = false;
-    snapport: number = 80;
-    snaphost!: string;
-
-    constructor(host: string, port: number, secure: boolean) {
+    
+    constructor(snapconfig: SnapWebConfig) {
+        this.connection = new WebSocket(snapconfig.snapServerWSUrl.toString())
         this.server = new Server();
-        this.secure = secure
-        this.snapport = port
-        this.snaphost = host
-
-        if (this.secure) {
-            this.connection = new WebSocket('wss://' + this.snaphost + ':' + this.snapport + '/jsonrpc');
-        } else {
-            this.connection = new WebSocket('ws://' + this.snaphost + ':' + this.snapport + '/jsonrpc');  
-        }
         this.msg_id = 0;
         this.status_req_id = -1;
         // console.log(navigator);
@@ -743,17 +760,10 @@ function deleteClient(id: string) {
 }
 
 window.onload = function (event: any) {
-    let secure = false;
-    let port = 80;
-    if (window.location.protocol == "https:") {
-      secure = true;
-      port = 443;
-    }
-    if (window.location.port != "") {
-      port = parseInt(window.location.port);
-    }
+    
+    let snapconfig = new SnapWebConfig("http://snapserver.local")
 
-    snapcontrol = new SnapControl(window.location.hostname, port, secure);
+    snapcontrol = new SnapControl(snapconfig);
 }
 
 // When the user clicks anywhere outside of the modal, close it
