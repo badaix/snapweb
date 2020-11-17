@@ -960,6 +960,7 @@ class SnapStream {
         window.clearInterval(this.syncHandle);
         this.stopAudio();
         if ([WebSocket.OPEN, WebSocket.CONNECTING].includes(this.streamsocket.readyState)) {
+            this.streamsocket.onclose = (ev) => {};
             this.streamsocket.close();
         }
     }
