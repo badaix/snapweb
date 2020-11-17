@@ -928,9 +928,7 @@ class SnapStream {
         msg.sent = new Tv(0, 0);
         msg.sent.setMilliseconds(this.timeProvider.now());
         msg.id = ++this.msgId;
-        if (this.streamsocket.readyState != this.streamsocket.OPEN) {
-            stop();
-        } else {
+        if (this.streamsocket.readyState == this.streamsocket.OPEN) {
             this.streamsocket.send(msg.serialize());
         }
     }
