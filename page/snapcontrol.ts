@@ -199,7 +199,7 @@ class Server {
 }
 
 class SnapControl {
-    
+
     constructor(snapconfig: SnapWebConfig) {
         this.connection = new WebSocket(snapconfig.snapServerWSUrl.toString())
         this.server = new Server();
@@ -760,9 +760,7 @@ function deleteClient(id: string) {
 }
 
 window.onload = function (event: any) {
-    
-    let snapconfig = new SnapWebConfig("http://snapserver.local")
-
+    let snapconfig = new SnapWebConfig(window.location.href)
     snapcontrol = new SnapControl(snapconfig);
 }
 
