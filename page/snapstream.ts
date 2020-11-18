@@ -814,11 +814,11 @@ class PcmDecoder extends Decoder {
 class SnapStream {
     constructor(baseUrl: string) {
         this.baseUrl = baseUrl;
-        this.connect();
         this.timeProvider = new TimeProvider();
+        this.connect();
     }
 
-    private connect(){
+    private connect() {
         this.streamsocket = new WebSocket(this.baseUrl + '/stream');
         this.streamsocket.binaryType = "arraybuffer";
         this.streamsocket.onmessage = (ev) => this.onMessage(ev);
@@ -839,7 +839,7 @@ class SnapStream {
         this.streamsocket.onerror = (ev) => { console.error('error:', ev); };
         this.streamsocket.onclose = (ev) => {
             window.clearInterval(this.syncHandle);
-            console.info('connection lost, reconnecting in 1s'); 
+            console.info('connection lost, reconnecting in 1s');
             setTimeout(() => this.connect(), 1000);
         }
     }
@@ -958,7 +958,7 @@ class SnapStream {
         window.clearInterval(this.syncHandle);
         this.stopAudio();
         if ([WebSocket.OPEN, WebSocket.CONNECTING].includes(this.streamsocket.readyState)) {
-            this.streamsocket.onclose = (ev) => {};
+            this.streamsocket.onclose = (ev) => { };
             this.streamsocket.close();
         }
     }
