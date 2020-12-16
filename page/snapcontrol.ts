@@ -182,9 +182,9 @@ class SnapControl {
     private connect(){
         this.connection = new WebSocket(this.baseUrl + '/jsonrpc');
         this.connection.onmessage = (msg: MessageEvent) => this.onMessage(msg.data);
-        this.connection.onopen = (ev: Event) => { this.status_req_id = this.sendRequest('Server.GetStatus'); };
+        this.connection.onopen = () => { this.status_req_id = this.sendRequest('Server.GetStatus'); };
         this.connection.onerror = (ev: Event) => { console.error('error:', ev); };
-        this.connection.onclose = (ev: Event) => {
+        this.connection.onclose = () => {
             console.info('connection lost, reconnecting in 1s'); 
             setTimeout(() => this.connect(), 1000);
         };
@@ -550,7 +550,7 @@ function show() {
             let slider = document.getElementById("vol_" + group.id) as HTMLInputElement;
             if (slider == null)
                 continue;
-            slider.addEventListener('pointerdown', function (ev: PointerEvent) {
+            slider.addEventListener('pointerdown', function () {
                 groupVolumeEnter(group.id);
             });
             slider.addEventListener('touchstart', function () {
@@ -747,7 +747,7 @@ function deleteClient(id: string) {
     }
 }
 
-window.onload = function (event: any) {
+window.onload = function () {
     snapcontrol = new SnapControl(config.baseUrl);
 }
 
