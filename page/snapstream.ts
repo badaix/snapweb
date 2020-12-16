@@ -71,7 +71,7 @@ class Tv {
 
 
 class BaseMessage {
-    constructor(buffer?: ArrayBuffer) {
+    constructor(_buffer?: ArrayBuffer) {
     }
 
     deserialize(buffer: ArrayBuffer) {
@@ -359,7 +359,7 @@ class AudioStream {
     chunks: Array<PcmChunkMessage> = new Array<PcmChunkMessage>();
 
     setVolume(percent: number, muted: boolean) {
-        let base = 10;
+        // let base = 10;
         this.volume = percent / 100; // (Math.pow(base, percent / 100) - 1) / (base - 1);
         console.log("setVolume: " + percent + " => " + this.volume + ", muted: " + this.muted);
         this.muted = muted;
@@ -623,21 +623,17 @@ class SampleFormat {
 
 
 class Decoder {
-    setHeader(buffer: ArrayBuffer): SampleFormat | null {
+    setHeader(_buffer: ArrayBuffer): SampleFormat | null {
         return new SampleFormat();
     }
 
-    decode(chunk: PcmChunkMessage): PcmChunkMessage | null {
+    decode(_chunk: PcmChunkMessage): PcmChunkMessage | null {
         return null;
     }
 }
 
 
 class OpusDecoder extends Decoder {
-    constructor() {
-        super();
-    }
-
     setHeader(buffer: ArrayBuffer): SampleFormat | null {
         let view = new DataView(buffer);
         let ID_OPUS = 0x4F505553;
@@ -657,7 +653,7 @@ class OpusDecoder extends Decoder {
         return format;
     }
 
-    decode(chunk: PcmChunkMessage): PcmChunkMessage | null {
+    decode(_chunk: PcmChunkMessage): PcmChunkMessage | null {
         return null;
     }
 }
@@ -689,7 +685,8 @@ class FlacDecoder extends Decoder {
         this.cacheInfo = { cachedBlocks: 0, isCachedChunk: true };
         // console.log("Flac len: " + this.flacChunk.byteLength);
         while (this.flacChunk.byteLength && Flac.FLAC__stream_decoder_process_single(this.decoder)) {
-            let state = Flac.FLAC__stream_decoder_get_state(this.decoder);
+            Flac.FLAC__stream_decoder_get_state(this.decoder);
+            // let state = Flac.FLAC__stream_decoder_get_state(this.decoder);
             // console.log("State: " + state);
         }
         // console.log("Pcm payload: " + this.pcmChunk!.payloadSize());
@@ -776,13 +773,13 @@ class PlayBuffer {
         this.source = source;
         this.source.buffer = this.buffer;
         this.source.connect(destination);
-        this.onended = (playBuffer: PlayBuffer) => { };
+        this.onended = (_playBuffer: PlayBuffer) => { };
     }
 
     public onended: (playBuffer: PlayBuffer) => void
 
     start() {
-        this.source.onended = (ev: Event) => {
+        this.source.onended = () => {
             this.onended(this);
         }
         this.source.start(this.playTime);
@@ -823,7 +820,7 @@ class SnapStream {
         this.streamsocket.binaryType = "arraybuffer";
         this.streamsocket.onmessage = (ev) => this.onMessage(ev);
 
-        this.streamsocket.onopen = (ev) => {
+        this.streamsocket.onopen = () => {
             console.log("on open");
             let hello = new HelloMessage();
 
@@ -837,7 +834,7 @@ class SnapStream {
             this.syncHandle = window.setInterval(() => this.syncTime(), 1000);
         }
         this.streamsocket.onerror = (ev) => { console.error('error:', ev); };
-        this.streamsocket.onclose = (ev) => {
+        this.streamsocket.onclose = () => {
             window.clearInterval(this.syncHandle);
             console.info('connection lost, reconnecting in 1s');
             setTimeout(() => this.connect(), 1000);
@@ -946,7 +943,7 @@ class SnapStream {
         }
         while (this.audioBuffers.length > 0) {
             let buffer = this.audioBuffers.pop();
-            buffer!.onended = (playBuffer: PlayBuffer) => { };
+            buffer!.onended = () => { };
             buffer!.source.stop();
         }
         while (this.freeBuffers.length > 0) {
@@ -958,7 +955,7 @@ class SnapStream {
         window.clearInterval(this.syncHandle);
         this.stopAudio();
         if ([WebSocket.OPEN, WebSocket.CONNECTING].includes(this.streamsocket.readyState)) {
-            this.streamsocket.onclose = (ev) => { };
+            this.streamsocket.onclose = () => { };
             this.streamsocket.close();
         }
     }
@@ -980,7 +977,7 @@ class SnapStream {
         this.audioBuffers.push(playBuffer);
         playBuffer.num = ++this.bufferNum;
         playBuffer.onended = (buffer: PlayBuffer) => {
-            let diff = this.timeProvider.nowSec() - buffer.playTime;
+            // let diff = this.timeProvider.nowSec() - buffer.playTime;
             this.freeBuffers.push(this.audioBuffers.splice(this.audioBuffers.indexOf(buffer), 1)[0].buffer);
             // console.debug("PlayBuffer " + playBuffer.num + " ended after: " + (diff * 1000) + ", in flight: " + this.audioBuffers.length);
             this.playNext();
