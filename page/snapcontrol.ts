@@ -179,13 +179,13 @@ class SnapControl {
         this.connect();
     }
 
-    private connect(){
+    private connect() {
         this.connection = new WebSocket(this.baseUrl + '/jsonrpc');
         this.connection.onmessage = (msg: MessageEvent) => this.onMessage(msg.data);
         this.connection.onopen = () => { this.status_req_id = this.sendRequest('Server.GetStatus'); };
         this.connection.onerror = (ev: Event) => { console.error('error:', ev); };
         this.connection.onclose = () => {
-            console.info('connection lost, reconnecting in 1s'); 
+            console.info('connection lost, reconnecting in 1s');
             setTimeout(() => this.connect(), 1000);
         };
     }
@@ -278,14 +278,14 @@ class SnapControl {
         client.config.volume.percent = percent;
         if (mute != undefined)
             client.config.volume.muted = mute;
-        this.sendRequest('Client.SetVolume',{id: client_id, volume: {muted: client.config.volume.muted, percent: client.config.volume.percent}});
+        this.sendRequest('Client.SetVolume', { id: client_id, volume: { muted: client.config.volume.muted, percent: client.config.volume.percent } });
     }
 
     public setClientName(client_id: string, name: string) {
         let client = this.getClient(client_id);
         let current_name: string = (client.config.name != "") ? client.config.name : client.host.name;
         if (name != current_name) {
-            this.sendRequest('Client.SetName', {id: client_id, name: name});
+            this.sendRequest('Client.SetName', { id: client_id, name: name });
             client.config.name = name;
         }
     }
@@ -294,13 +294,13 @@ class SnapControl {
         let client = this.getClient(client_id);
         let current_latency: number = client.config.latency;
         if (latency != current_latency) {
-            this.sendRequest('Client.SetLatency', {id: client_id, latency: latency});
+            this.sendRequest('Client.SetLatency', { id: client_id, latency: latency });
             client.config.latency = latency;
         }
     }
 
     public deleteClient(client_id: string) {
-        this.sendRequest('Server.DeleteClient', {id: client_id});
+        this.sendRequest('Server.DeleteClient', { id: client_id });
         this.server.groups.forEach((g: Group, gi: number) => {
             g.clients.forEach((c: Client, ci: number) => {
                 if (c.id == client_id) {
@@ -319,16 +319,16 @@ class SnapControl {
 
     public setStream(group_id: string, stream_id: string) {
         this.getGroup(group_id).stream_id = stream_id;
-        this.sendRequest('Group.SetStream', {id: group_id, stream_id: stream_id});
+        this.sendRequest('Group.SetStream', { id: group_id, stream_id: stream_id });
     }
 
     public setClients(group_id: string, clients: string[]) {
-        this.status_req_id = this.sendRequest('Group.SetClients', {id: group_id, clients: clients});
+        this.status_req_id = this.sendRequest('Group.SetClients', { id: group_id, clients: clients });
     }
 
     public muteGroup(group_id: string, mute: boolean) {
         this.getGroup(group_id).muted = mute;
-        this.sendRequest('Group.SetMute', {id: group_id, mute: mute});
+        this.sendRequest('Group.SetMute', { id: group_id, mute: mute });
     }
 
     private sendRequest(method: string, params?: any): number {
@@ -337,7 +337,7 @@ class SnapControl {
             jsonrpc: '2.0',
             method: method
         };
-        if(params)
+        if (params)
             msg.params = params;
 
         let msgJson = JSON.stringify(msg);
@@ -543,7 +543,9 @@ function show() {
     content = content + "<br><br>";
     (document.getElementById('show') as HTMLInputElement).innerHTML = content;
     let playElem = (document.getElementById('play-button') as HTMLElement);
-    playElem.addEventListener('click', function () { play(); }, false);
+    playElem.onclick = () => {
+        play();
+    };
 
     for (let group of snapcontrol.server.groups) {
         if (group.clients.length > 1) {
