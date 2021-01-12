@@ -812,7 +812,21 @@ class SnapStream {
     constructor(baseUrl: string) {
         this.baseUrl = baseUrl;
         this.timeProvider = new TimeProvider();
-        this.connect();
+
+        let AudioContext = window.AudioContext // Default
+            || window.webkitAudioContext // Safari and old versions of Chrome
+            || false;
+
+        if (AudioContext) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext);
+            this.gainNode = this.ctx.createGain();
+            this.gainNode.connect(this.ctx.destination);
+            this.connect();
+        } else {
+            // Web Audio API is not supported
+            // Alert the user
+            alert("Sorry, but the Web Audio API is not supported by your browser");
+        }
     }
 
     private connect() {
@@ -866,33 +880,22 @@ class SnapStream {
                     if (this.bufferDurationMs != 0) {
                         this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
                     }
-                    this.stopAudio();
-                    let options: object | undefined = { latencyHint: "playback", sampleRate: this.sampleFormat.rate };
-                    const chromeVersion = getChromeVersion();
-                    if (chromeVersion !== null && chromeVersion < 55) {
-                        // Some older browsers won't decode the stream if options are provided.
-                        options = undefined;
-                    }
-                    let AudioContext = window.AudioContext // Default
-                        || window.webkitAudioContext // Safari and old versions of Chrome
-                        || false;
+                    // this.stopAudio();
+                    // let options: object | undefined = { latencyHint: "playback", sampleRate: this.sampleFormat.rate };
+                    // const chromeVersion = getChromeVersion();
+                    // if (chromeVersion !== null && chromeVersion < 55) {
+                    //     // Some older browsers won't decode the stream if options are provided.
+                    //     options = undefined;
+                    // }
 
-                    if (AudioContext) {
-                        this.ctx = new AudioContext(options);
-                        this.timeProvider.setAudioContext(this.ctx);
-                        this.gainNode = this.ctx.createGain();
-                        this.gainNode.connect(this.ctx.destination);
-                        this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
-                        // this.timeProvider = new TimeProvider(this.ctx);
-                        this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
-                        this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx.outputLatency : 0)
-                        console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency + ", latency: " + this.latency);
-                        this.play();
-                    } else {
-                        // Web Audio API is not supported
-                        // Alert the user
-                        alert("Sorry, but the Web Audio API is not supported by your browser");
-                    }
+                    this.ctx.resume();
+                    this.timeProvider.setAudioContext(this.ctx);
+                    this.gainNode!.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
+                    // this.timeProvider = new TimeProvider(this.ctx);
+                    this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
+                    this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx.outputLatency : 0)
+                    console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency + ", latency: " + this.latency);
+                    this.play();
                 }
             }
         } else if (type == 2) {
@@ -938,9 +941,10 @@ class SnapStream {
     }
 
     private stopAudio() {
-        if (this.ctx) {
-            this.ctx.close();
-        }
+        // if (this.ctx) {
+        //     this.ctx.close();
+        // }
+        this.ctx.suspend();
         while (this.audioBuffers.length > 0) {
             let buffer = this.audioBuffers.pop();
             buffer!.onended = () => { };
@@ -999,7 +1003,7 @@ class SnapStream {
 
     timeProvider: TimeProvider;
     stream: AudioStream | undefined;
-    ctx: AudioContext | undefined;
+    ctx!: AudioContext; // | undefined;
     gainNode: GainNode | undefined;
     serverSettings: ServerSettingsMessage | undefined;
     decoder: Decoder | undefined;
