@@ -818,7 +818,7 @@ class SnapStream {
             || false;
 
         if (AudioContext) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext);
+            this.ctx = new AudioContext;
             this.gainNode = this.ctx.createGain();
             this.gainNode.connect(this.ctx.destination);
             this.connect();
@@ -890,7 +890,7 @@ class SnapStream {
 
                     this.ctx.resume();
                     this.timeProvider.setAudioContext(this.ctx);
-                    this.gainNode!.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
+                    this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
                     // this.timeProvider = new TimeProvider(this.ctx);
                     this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
                     this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx.outputLatency : 0)
@@ -908,9 +908,7 @@ class SnapStream {
             }
         } else if (type == 3) {
             this.serverSettings = new ServerSettingsMessage(msg.data);
-            if (this.gainNode) {
-                this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
-            }
+            this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
             this.bufferMs = this.serverSettings.bufferMs - this.serverSettings.latency;
             console.log("ServerSettings bufferMs: " + this.serverSettings.bufferMs + ", latency: " + this.serverSettings.latency + ", volume: " + this.serverSettings.volumePercent + ", muted: " + this.serverSettings.muted);
         } else if (type == 4) {
@@ -1004,7 +1002,7 @@ class SnapStream {
     timeProvider: TimeProvider;
     stream: AudioStream | undefined;
     ctx!: AudioContext; // | undefined;
-    gainNode: GainNode | undefined;
+    gainNode!: GainNode;
     serverSettings: ServerSettingsMessage | undefined;
     decoder: Decoder | undefined;
     sampleFormat: SampleFormat | undefined;
