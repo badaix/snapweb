@@ -389,6 +389,9 @@ function autoplayRequested(): boolean {
 
 function show() {
     // Render the page
+    const versionElem = document.getElementsByTagName("meta").namedItem("version");
+    console.log("Snapweb version " + versionElem?.content);
+
     let play_img: string;
     if (snapstream) {
         play_img = 'stop.png';
