@@ -24,3 +24,6 @@ dist:
 	cp page/speaker_icon.png dist
 	cp page/stop.png dist
 	cp page/styles.css dist
+
+clean:
+	rm -rf dist
