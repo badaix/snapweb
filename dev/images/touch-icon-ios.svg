@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
-   sodipodi:docname="Snapweb_ios.svg"
+   sodipodi:docname="touch-icon-ios.svg"
    inkscape:export-filename="/home/adam/logo_stuff/dragonfly/icon/AppIconTemplate/AppIconTemplate_white_on_reg.png"
    inkscape:export-xdpi="300"
    inkscape:export-ydpi="300"
@@ -85,16 +85,16 @@
   </defs>
   <sodipodi:namedview
      id="base"
-     pagecolor="#ffffff"
+     pagecolor="#ffc107"
      bordercolor="#666666"
      borderopacity="1.0"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="1"
      inkscape:pageshadow="2"
      inkscape:zoom="0.64000003"
-     inkscape:cx="225.11039"
+     inkscape:cx="-85.045845"
      inkscape:cy="540.67502"
      inkscape:document-units="px"
-     inkscape:current-layer="layer4"
+     inkscape:current-layer="layer5"
      showgrid="false"
      showguides="true"
      inkscape:guide-bbox="true"
@@ -113,7 +113,8 @@
      inkscape:snap-global="true"
      inkscape:snap-page="false"
      inkscape:snap-bbox="true"
-     inkscape:snap-object-midpoints="true">
+     inkscape:snap-object-midpoints="true"
+     inkscape:pagecheckerboard="true">
     <sodipodi:guide
        orientation="0,1"
        position="-10.429825,956.71547"
@@ -213,7 +214,7 @@
      inkscape:groupmode="layer"
      id="layer5"
      inkscape:label="Background"
-     style="display:inline;opacity:1;filter:url(#filter5339)">
+     style="display:none;opacity:1;filter:url(#filter5339)">
     <rect
        style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#ffc107;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;marker:none;enable-background:accumulate"
        id="rect4108"
