@@ -1,0 +1,19 @@
+$theme: #607d8b
+$accent: #ff4081
+$text: #686868
+$muted: lightgray
+$bg: #eee
+
+$radius: 0
+$pad: .8rem
+
+$shadow: 0px 3px 5px 0px rgba(0, 0, 0, 0.2)
+
+@mixin box
+  border-radius: $radius
+  box-shadow: $shadow
+  background-color: white
+  overflow: hidden
+
+  &.inner, .inner
+    padding: $pad

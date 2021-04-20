@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "devDependencies": {
+    "@vue/component-compiler-utils": "^3.2.0",
+    "parcel-bundler": "^1.12.5",
+    "sass": "^1.32.10",
+    "typescript": "^4.2.4",
+    "vue-template-compiler": "^2.6.12"
+  },
+  "scripts": {
+    "build": "parcel build page/index.html",
+    "start": "parcel page/index.html"
+  },
+  "dependencies": {
+    "vue": "^2.6.12",
+    "vue-hot-reload-api": "^2.3.4"
+  }
+}
