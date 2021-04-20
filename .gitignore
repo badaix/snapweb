@@ -1,3 +1,5 @@
 page/*.js
 page/*.js.map
-dist
+.cache/
+dist/
+node_modules/
