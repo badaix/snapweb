@@ -88,6 +88,63 @@ class Group {
     }
 }
 
+class Meta {
+    constructor(json: any) {
+        this.fromJson(json);
+    }
+
+    fromJson(json: any) {
+        this.title = json.title;
+        this.artist = json.artist;
+        this.album = json.album;
+        this.artUrl = json.artUrl;
+    }
+
+    title?: string;
+    artist?: string[];
+    album?: string;
+    artUrl?: string;
+}
+
+type PlaybackStatus = 'stopped' | 'paused' | 'playing';
+
+class Properties {
+    constructor(json: any) {
+        this.fromJson(json);
+    }
+
+    fromJson(json: any) {
+        this.loopStatus = json.loopStatus;
+        this.shuffle = json.shuffle;
+        this.volume = json.volume;
+        this.rate = json.rate;
+        this.playbackStatus = json.playbackStatus;
+        this.position = json.position;
+        this.minimumRate = json.minimumRate;
+        this.maximumRate = json.maximumRate;
+        this.canGoNext = json.canGoNext;
+        this.canGoPrevious = json.canGoPrevious;
+        this.canPlay = json.canPlay;
+        this.canPause = json.canPause;
+        this.canSeek = json.canSeek;
+        this.canControl = json.canControl;
+    }
+
+    loopStatus?: string;
+    shuffle?: boolean
+    volume?: number;
+    rate?: number;
+    playbackStatus?: PlaybackStatus;
+    position?: number;
+    minimumRate?: number;
+    maximumRate?: number;
+    canGoNext?: boolean;
+    canGoPrevious?: boolean;
+    canPlay?: boolean;
+    canPause?: boolean;
+    canSeek?: boolean;
+    canControl?: boolean;
+}
 
 class Stream {
     constructor(json: any) {
@@ -97,6 +154,16 @@ class Stream {
     fromJson(json: any) {
         this.id = json.id;
         this.status = json.status;
+        if (json.meta != undefined) {
+            this.meta = new Meta(json.meta);
+        } else {
+            this.meta = new Meta({});
+        }
+        if (json.properties != undefined) {
+            this.properties = new Properties(json.properties);
+        } else {
+            this.properties = new Properties({});
+        }
         let juri = json.uri;
         this.uri = { raw: juri.raw, scheme: juri.scheme, host: juri.host, path: juri.path, fragment: juri.fragment, query: juri.query }
     }
@@ -111,6 +178,9 @@ class Stream {
         fragment: string;
         query: string;
     }
+
+    meta!: Meta;
+    properties!: Properties;
 }
 
 
@@ -191,6 +261,7 @@ class SnapControl {
     }
 
     private action(answer: any) {
+        let stream!: Stream;
         switch (answer.method) {
             case 'Client.OnVolumeChanged':
                 let client = this.getClient(answer.params.id);
@@ -214,13 +285,110 @@ class SnapControl {
                 this.getGroup(answer.params.id).stream_id = answer.params.stream_id;
                 break;
             case 'Stream.OnUpdate':
-                this.getStream(answer.params.id).fromJson(answer.params.stream);
+                stream = this.getStream(answer.params.id);
+                stream.fromJson(answer.params.stream);
+                if (this.getMyStreamId() == stream.id) {
+                    this.updateProperties();
+                    this.updateMetadata();
+                }
                 break;
             case 'Server.OnUpdate':
                 this.server.fromJson(answer.params.server);
                 break;
+            case 'Stream.OnMetadata':
+                stream = this.getStream(answer.params.id);
+                stream.meta.fromJson(answer.params.meta);
+                if (this.getMyStreamId() == stream.id)
+                    this.updateMetadata();
+                break;
+            case 'Stream.OnProperties':
+                stream = this.getStream(answer.params.id);
+                stream.properties.fromJson(answer.params.properties);
+                if (this.getMyStreamId() == stream.id)
+                    this.updateProperties();
+                break;
             default:
                 break;
+        }
+    }
+
+    public updateProperties() {
+        let props!: Properties;
+        try {
+            props = this.getStreamFromClient(SnapStream.getClientId()).properties;
+        }
+        catch (e) {
+            console.log('updateProperties failed: ' + e);
+        }
+
+        console.log('updateProperties: ', props);
+        if ('mediaSession' in navigator) {
+            let stream_id: string = this.getStreamFromClient(SnapStream.getClientId()).id;
+            let play_state: MediaSessionPlaybackState = "none";
+            if (props.playbackStatus != undefined) {
+                if (props.playbackStatus == "playing") {
+                    audio.play();
+                    play_state = "playing";
+                }
+                else if (props.playbackStatus == "paused") {
+                    audio.pause();
+                    play_state = "paused";
+                }
+                else if (props.playbackStatus == "stopped") {
+                    audio.pause();
+                    play_state = "none";
+                }
+            }
+            navigator.mediaSession!.playbackState = play_state;
+            console.log('updateProperties playbackState: ', navigator.mediaSession!.playbackState);
+            navigator.mediaSession!.setActionHandler('play', () => {
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'Play' });
+            });
+            navigator.mediaSession!.setActionHandler('pause', () => {
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'Pause' });
+            });
+            navigator.mediaSession!.setActionHandler('previoustrack', () => {
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'Previous' });
+            });
+            navigator.mediaSession!.setActionHandler('nexttrack', () => {
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'Next' });
+            });
+            // navigator.mediaSession!.setActionHandler('seekbackward', function () { });
+            // navigator.mediaSession!.setActionHandler('seekforward', function () { });
+        }
+    }
+
+    public updateMetadata() {
+        let meta!: Meta;
+        try {
+            meta = this.getStreamFromClient(SnapStream.getClientId()).meta;
+        }
+        catch (e) {
+            console.log('updateMeta failed: ' + e);
+        }
+
+        console.log('updateMetadata: ', meta);
+        // https://github.com/Microsoft/TypeScript/issues/19473
+        if ('mediaSession' in navigator) {
+            let title: string = (meta.title != undefined) ? meta.title : "Unknown Title";
+            let artist: string = (meta.artist != undefined) ? meta.artist[0] : "Unknown Artist";
+            let album: string = (meta.album != undefined) ? meta.album : "";
+            let artwork: string = (meta.artUrl != undefined) ? meta.artUrl : 'launcher-icon.png';
+            console.log('Meta title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
+            navigator.mediaSession!.metadata = new MediaMetadata({
+                title: title,
+                artist: artist,
+                album: album,
+                artwork: [
+                    // { src: artwork, sizes: '250x250', type: 'image/jpeg' },
+                    // 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
+                    { src: artwork, sizes: '128x128', type: 'image/png' },
+                    { src: artwork, sizes: '192x192', type: 'image/png' },
+                    { src: artwork, sizes: '256x256', type: 'image/png' },
+                    { src: artwork, sizes: '384x384', type: 'image/png' },
+                    { src: artwork, sizes: '512x512', type: 'image/png' },
+                ]
+            });
         }
     }
 
@@ -262,6 +430,20 @@ class SnapControl {
                 if (client.id == client_id)
                     return group;
         throw new Error(`group for client ${client_id} was null`);
+    }
+
+    public getStreamFromClient(client_id: string): Stream {
+        let group: Group = this.getGroupFromClient(client_id);
+        return this.getStream(group.stream_id);
+    }
+
+    public getMyStreamId(): string {
+        try {
+            let group: Group = this.getGroupFromClient(SnapStream.getClientId());
+            return this.getStream(group.stream_id).id;
+        } catch (e) {
+            return "";
+        }
     }
 
     public getStream(stream_id: string): Stream {
@@ -353,6 +535,8 @@ class SnapControl {
         if (is_response) {
             if (answer.id == this.status_req_id) {
                 this.server = new Server(answer.result.server);
+                this.updateProperties();
+                this.updateMetadata();
                 show();
             }
         }
@@ -382,6 +566,7 @@ let snapcontrol!: SnapControl;
 let snapstream: SnapStream | null = null;
 let hide_offline: boolean = true;
 let autoplay_done: boolean = false;
+let audio = document.createElement('audio');
 
 function autoplayRequested(): boolean {
     return document.location.hash.match(/autoplay/) !== null;
@@ -631,9 +816,20 @@ function play() {
     if (snapstream) {
         snapstream.stop();
         snapstream = null;
+        audio.pause();
+        document.body.removeChild(audio);
     }
     else {
         snapstream = new SnapStream(config.baseUrl);
+        // let audio = document.querySelector('audio');
+        // User interacted with the page. Let's play audio...
+        document.body.appendChild(audio);
+        audio.src = "10-seconds-of-silence.mp3";
+        audio.loop = true;
+        audio.play().then(() => {
+            snapcontrol.updateProperties();
+            snapcontrol.updateMetadata();
+        });
     }
     show();
 }

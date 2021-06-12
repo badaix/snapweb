@@ -8,6 +8,7 @@ tsc:
 dist: tsc
 	mkdir -p dist/3rd-party
 	cp -r page/3rd-party/libflac.js dist/3rd-party/
+	cp page/10-seconds-of-silence.mp3 dist
 	cp page/favicon.ico dist
 	cp page/index.html dist
 	cp page/launcher-icon.png dist

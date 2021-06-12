@@ -851,6 +851,10 @@ class SnapStream {
         return true;
     }
 
+    public static getClientId(): string {
+        return getPersistentValue("uniqueId", uuidv4());
+    }
+
     private connect() {
         this.streamsocket = new WebSocket(this.baseUrl + '/stream');
         this.streamsocket.binaryType = "arraybuffer";
@@ -864,7 +868,7 @@ class SnapStream {
             hello.arch = "web";
             hello.os = navigator.platform;
             hello.hostname = "Snapweb client";
-            hello.uniqueId = getPersistentValue("uniqueId", uuidv4());
+            hello.uniqueId = SnapStream.getClientId();
             this.sendMessage(hello);
             this.syncTime();
             this.syncHandle = window.setInterval(() => this.syncTime(), 1000);
