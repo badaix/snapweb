@@ -10,7 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: dependencies
-      run: sudo npm install -g typescript@latest
+      run: |
+        sudo npm install -g typescript@latest 
+        sudo npm install --save @types/wicg-mediasession
     - name: build
       run: make
     - name: Archive artifacts
