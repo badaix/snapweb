@@ -88,7 +88,7 @@ class Group {
     }
 }
 
-class Meta {
+class Metadata {
     constructor(json: any) {
         this.fromJson(json);
     }
@@ -98,12 +98,14 @@ class Meta {
         this.artist = json.artist;
         this.album = json.album;
         this.artUrl = json.artUrl;
+        this.duration = json.duration;
     }
 
     title?: string;
     artist?: string[];
     album?: string;
     artUrl?: string;
+    duration?: number;
 }
 
 type PlaybackStatus = 'stopped' | 'paused' | 'playing';
@@ -154,10 +156,10 @@ class Stream {
     fromJson(json: any) {
         this.id = json.id;
         this.status = json.status;
-        if (json.meta != undefined) {
-            this.meta = new Meta(json.meta);
+        if (json.metadata != undefined) {
+            this.metadata = new Metadata(json.metadata);
         } else {
-            this.meta = new Meta({});
+            this.metadata = new Metadata({});
         }
         if (json.properties != undefined) {
             this.properties = new Properties(json.properties);
@@ -179,7 +181,7 @@ class Stream {
         query: string;
     }
 
-    meta!: Meta;
+    metadata!: Metadata;
     properties!: Properties;
 }
 
@@ -297,7 +299,7 @@ class SnapControl {
                 break;
             case 'Stream.OnMetadata':
                 stream = this.getStream(answer.params.id);
-                stream.meta.fromJson(answer.params.meta);
+                stream.metadata.fromJson(answer.params.metadata);
                 if (this.getMyStreamId() == stream.id)
                     this.updateMetadata();
                 break;
@@ -314,11 +316,14 @@ class SnapControl {
 
     public updateProperties() {
         let props!: Properties;
+        let metadata!: Metadata;
         try {
             props = this.getStreamFromClient(SnapStream.getClientId()).properties;
+            metadata = this.getStreamFromClient(SnapStream.getClientId()).metadata;
         }
         catch (e) {
             console.log('updateProperties failed: ' + e);
+            return;
         }
 
         console.log('updateProperties: ', props);
@@ -341,6 +346,7 @@ class SnapControl {
             }
             navigator.mediaSession!.playbackState = play_state;
             console.log('updateProperties playbackState: ', navigator.mediaSession!.playbackState);
+            // if (props.canGoNext == undefined || !props.canGoNext!)
             navigator.mediaSession!.setActionHandler('play', () => {
                 this.sendRequest('Stream.Control', { id: stream_id, command: 'Play' });
             });
@@ -353,28 +359,46 @@ class SnapControl {
             navigator.mediaSession!.setActionHandler('nexttrack', () => {
                 this.sendRequest('Stream.Control', { id: stream_id, command: 'Next' });
             });
-            // navigator.mediaSession!.setActionHandler('seekbackward', function () { });
-            // navigator.mediaSession!.setActionHandler('seekforward', function () { });
+            try {
+                navigator.mediaSession!.setActionHandler('stop', () => {
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'Stop' });
+                });
+            } catch (error) {
+                console.log('Warning! The "stop" media session action is not supported.');
+            }
+
+            if ((metadata.duration != undefined) && (props.position != undefined)) {
+                if ('setPositionState' in navigator.mediaSession!) {
+                    console.log('Updating position state: ' + props.position! + '/' + metadata.duration!);
+                    navigator.mediaSession!.setPositionState!({
+                        duration: metadata.duration,
+                        playbackRate: 1.0,
+                        position: props.position
+                    });
+                }
+            }
         }
+        // navigator.mediaSession!.setActionHandler('seekbackward', function () { });
+        // navigator.mediaSession!.setActionHandler('seekforward', function () { });
     }
 
     public updateMetadata() {
-        let meta!: Meta;
+        let metadata!: Metadata;
         try {
-            meta = this.getStreamFromClient(SnapStream.getClientId()).meta;
+            metadata = this.getStreamFromClient(SnapStream.getClientId()).metadata;
         }
         catch (e) {
             console.log('updateMeta failed: ' + e);
         }
 
-        console.log('updateMetadata: ', meta);
+        console.log('updateMetadata: ', metadata);
         // https://github.com/Microsoft/TypeScript/issues/19473
         if ('mediaSession' in navigator) {
-            let title: string = (meta.title != undefined) ? meta.title : "Unknown Title";
-            let artist: string = (meta.artist != undefined) ? meta.artist[0] : "Unknown Artist";
-            let album: string = (meta.album != undefined) ? meta.album : "";
-            let artwork: string = (meta.artUrl != undefined) ? meta.artUrl : 'launcher-icon.png';
-            console.log('Meta title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
+            let title: string = (metadata.title != undefined) ? metadata.title : "Unknown Title";
+            let artist: string = (metadata.artist != undefined) ? metadata.artist[0] : "Unknown Artist";
+            let album: string = (metadata.album != undefined) ? metadata.album : "";
+            let artwork: string = (metadata.artUrl != undefined) ? metadata.artUrl : 'launcher-icon.png';
+            console.log('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
             navigator.mediaSession!.metadata = new MediaMetadata({
                 title: title,
                 artist: artist,
