@@ -262,30 +262,32 @@ class SnapControl {
         };
     }
 
-    private action(answer: any) {
+    private action(answer: any): boolean {
         let stream!: Stream;
         switch (answer.method) {
             case 'Client.OnVolumeChanged':
                 let client = this.getClient(answer.params.id);
                 client.config.volume = answer.params.volume;
                 updateGroupVolume(this.getGroupFromClient(client.id));
-                break;
+                return true;
             case 'Client.OnLatencyChanged':
                 this.getClient(answer.params.id).config.latency = answer.params.latency;
-                break;
+                return false;
             case 'Client.OnNameChanged':
                 this.getClient(answer.params.id).config.name = answer.params.name;
-                break;
+                return true;
             case 'Client.OnConnect':
             case 'Client.OnDisconnect':
                 this.getClient(answer.params.client.id).fromJson(answer.params.client);
-                break;
+                return true;
             case 'Group.OnMute':
                 this.getGroup(answer.params.id).muted = Boolean(answer.params.mute);
-                break;
+                return true;
             case 'Group.OnStreamChanged':
                 this.getGroup(answer.params.id).stream_id = answer.params.stream_id;
-                break;
+                this.updateProperties();
+                this.updateMetadata();
+                return true;
             case 'Stream.OnUpdate':
                 stream = this.getStream(answer.params.id);
                 stream.fromJson(answer.params.stream);
@@ -293,24 +295,24 @@ class SnapControl {
                     this.updateProperties();
                     this.updateMetadata();
                 }
-                break;
+                return true;
             case 'Server.OnUpdate':
                 this.server.fromJson(answer.params.server);
-                break;
+                return true;
             case 'Stream.OnMetadata':
                 stream = this.getStream(answer.params.id);
                 stream.metadata.fromJson(answer.params.metadata);
                 if (this.getMyStreamId() == stream.id)
                     this.updateMetadata();
-                break;
+                return false;
             case 'Stream.OnProperties':
                 stream = this.getStream(answer.params.id);
                 stream.properties.fromJson(answer.params.properties);
                 if (this.getMyStreamId() == stream.id)
                     this.updateProperties();
-                break;
+                return false;
             default:
-                break;
+                return false;
         }
     }
 
@@ -525,6 +527,8 @@ class SnapControl {
 
     public setStream(group_id: string, stream_id: string) {
         this.getGroup(group_id).stream_id = stream_id;
+        this.updateProperties();
+        this.updateMetadata();
         this.sendRequest('Group.SetStream', { id: group_id, stream_id: stream_id });
     }
 
@@ -565,16 +569,18 @@ class SnapControl {
             }
         }
         else {
+            let refresh: boolean = false;
             if (Array.isArray(answer)) {
                 for (let a of answer) {
-                    this.action(a);
+                    refresh = refresh || this.action(a);
                 }
             } else {
-                this.action(answer);
+                refresh = this.action(answer);
             }
             // TODO: don't update everything, but only the changed, 
             // e.g. update the values for the volume sliders
-            show();
+            if (refresh)
+                show();
         }
     }
 
