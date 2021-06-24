@@ -124,12 +124,12 @@ class Properties {
         this.position = json.position;
         this.minimumRate = json.minimumRate;
         this.maximumRate = json.maximumRate;
-        this.canGoNext = json.canGoNext;
-        this.canGoPrevious = json.canGoPrevious;
-        this.canPlay = json.canPlay;
-        this.canPause = json.canPause;
-        this.canSeek = json.canSeek;
-        this.canControl = json.canControl;
+        this.canGoNext = Boolean(json.canGoNext);
+        this.canGoPrevious = Boolean(json.canGoPrevious);
+        this.canPlay = Boolean(json.canPlay);
+        this.canPause = Boolean(json.canPause);
+        this.canSeek = Boolean(json.canSeek);
+        this.canControl = Boolean(json.canControl);
     }
 
     loopStatus?: string;
@@ -140,12 +140,12 @@ class Properties {
     position?: number;
     minimumRate?: number;
     maximumRate?: number;
-    canGoNext?: boolean;
-    canGoPrevious?: boolean;
-    canPlay?: boolean;
-    canPause?: boolean;
-    canSeek?: boolean;
-    canControl?: boolean;
+    canGoNext: boolean = false;
+    canGoPrevious: boolean = false;
+    canPlay: boolean = false;
+    canPause: boolean = false;
+    canSeek: boolean = false;
+    canControl: boolean = false;
 }
 
 class Stream {
@@ -328,6 +328,8 @@ class SnapControl {
             return;
         }
 
+        // https://googlechrome.github.io/samples/media-session/audio.html
+        // https://developer.mozilla.org/en-US/docs/Web/API/MediaSession/setActionHandler#seekto
         console.log('updateProperties: ', props);
         if ('mediaSession' in navigator) {
             let stream_id: string = this.getStreamFromClient(SnapStream.getClientId()).id;
@@ -350,23 +352,57 @@ class SnapControl {
             console.log('updateProperties playbackState: ', navigator.mediaSession!.playbackState);
             // if (props.canGoNext == undefined || !props.canGoNext!)
             navigator.mediaSession!.setActionHandler('play', () => {
-                this.sendRequest('Stream.Control', { id: stream_id, command: 'Play' });
+                props.canPlay ?
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'Play' }) : null
             });
             navigator.mediaSession!.setActionHandler('pause', () => {
-                this.sendRequest('Stream.Control', { id: stream_id, command: 'Pause' });
+                props.canPause ?
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'Pause' }) : null
             });
             navigator.mediaSession!.setActionHandler('previoustrack', () => {
-                this.sendRequest('Stream.Control', { id: stream_id, command: 'Previous' });
+                props.canGoPrevious ?
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'Previous' }) : null
             });
             navigator.mediaSession!.setActionHandler('nexttrack', () => {
-                this.sendRequest('Stream.Control', { id: stream_id, command: 'Next' });
+                props.canGoNext ?
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'Next' }) : null
             });
             try {
                 navigator.mediaSession!.setActionHandler('stop', () => {
-                    this.sendRequest('Stream.Control', { id: stream_id, command: 'Stop' });
+                    props.canControl ?
+                        this.sendRequest('Stream.Control', { id: stream_id, command: 'Stop' }) : null
                 });
             } catch (error) {
                 console.log('Warning! The "stop" media session action is not supported.');
+            }
+
+            let defaultSkipTime: number = 10; // Time to skip in seconds by default
+            navigator.mediaSession!.setActionHandler('seekbackward', (event: MediaSessionActionDetails) => {
+                let offset: number = (event.seekOffset || defaultSkipTime) * -1;
+                if (props.position != undefined)
+                    Math.max(props.position! + offset, 0);
+                props.canSeek ?
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'Seek', params: { 'Offset': offset } }) : null
+            });
+
+            navigator.mediaSession!.setActionHandler('seekforward', (event: MediaSessionActionDetails) => {
+                let offset: number = event.seekOffset || defaultSkipTime;
+                if ((metadata.duration != undefined) && (props.position != undefined))
+                    Math.min(props.position! + offset, metadata.duration!);
+                props.canSeek ?
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'Seek', params: { 'Offset': offset } }) : null
+            });
+
+            try {
+                navigator.mediaSession!.setActionHandler('seekto', (event: MediaSessionActionDetails) => {
+                    let position: number = event.seekTime || 0;
+                    if (metadata.duration != undefined)
+                        Math.min(position, metadata.duration!);
+                    props.canSeek ?
+                        this.sendRequest('Stream.Control', { id: stream_id, command: 'SetPosition', params: { 'Position': position } }) : null
+                });
+            } catch (error) {
+                console.log('Warning! The "seekto" media session action is not supported.');
             }
 
             if ((metadata.duration != undefined) && (props.position != undefined)) {
@@ -396,10 +432,10 @@ class SnapControl {
         console.log('updateMetadata: ', metadata);
         // https://github.com/Microsoft/TypeScript/issues/19473
         if ('mediaSession' in navigator) {
-            let title: string = (metadata.title != undefined) ? metadata.title : "Unknown Title";
+            let title: string = metadata.title || "Unknown Title";
             let artist: string = (metadata.artist != undefined) ? metadata.artist[0] : "Unknown Artist";
-            let album: string = (metadata.album != undefined) ? metadata.album : "";
-            let artwork: string = (metadata.artUrl != undefined) ? metadata.artUrl : 'launcher-icon.png';
+            let album: string = metadata.album || "";
+            let artwork: string = metadata.artUrl || 'snapcast-512.png';
             console.log('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
             navigator.mediaSession!.metadata = new MediaMetadata({
                 title: title,
