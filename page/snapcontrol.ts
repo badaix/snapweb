@@ -328,6 +328,8 @@ class SnapControl {
             return;
         }
 
+        // https://developers.google.com/web/updates/2017/02/media-session
+        // https://github.com/googlechrome/samples/tree/gh-pages/media-session
         // https://googlechrome.github.io/samples/media-session/audio.html
         // https://developer.mozilla.org/en-US/docs/Web/API/MediaSession/setActionHandler#seekto
         console.log('updateProperties: ', props);
@@ -427,6 +429,7 @@ class SnapControl {
         }
         catch (e) {
             console.log('updateMeta failed: ' + e);
+            return;
         }
 
         console.log('updateMetadata: ', metadata);
