@@ -407,7 +407,7 @@ class SnapControl {
                 console.log('Warning! The "seekto" media session action is not supported.');
             }
 
-            if ((metadata.duration != undefined) && (props.position != undefined)) {
+            if ((metadata.duration != undefined) && (props.position != undefined) && (props.position! <= metadata.duration!)) {
                 if ('setPositionState' in navigator.mediaSession!) {
                     console.log('Updating position state: ' + props.position! + '/' + metadata.duration!);
                     navigator.mediaSession!.setPositionState!({
