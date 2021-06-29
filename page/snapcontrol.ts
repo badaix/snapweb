@@ -411,11 +411,18 @@ class SnapControl {
                 if ('setPositionState' in navigator.mediaSession!) {
                     console.log('Updating position state: ' + props.position! + '/' + metadata.duration!);
                     navigator.mediaSession!.setPositionState!({
-                        duration: metadata.duration,
+                        duration: metadata.duration!,
                         playbackRate: 1.0,
-                        position: props.position
+                        position: props.position!
                     });
                 }
+            }
+            else {
+                navigator.mediaSession!.setPositionState!({
+                    duration: 0,
+                    playbackRate: 1.0,
+                    position: 0
+            });
             }
         }
         // navigator.mediaSession!.setActionHandler('seekbackward', function () { });
@@ -886,6 +893,7 @@ function play() {
         snapstream.stop();
         snapstream = null;
         audio.pause();
+        audio.src = '';
         document.body.removeChild(audio);
     }
     else {
