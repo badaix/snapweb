@@ -15,9 +15,14 @@ dist: tsc
 	cp page/manifest.json dist
 	cp page/mute_icon.png dist
 	cp page/play.png dist
+	cp page/snapcast-512.png dist
 	cp page/speaker_icon.png dist
 	cp page/stop.png dist
 	cp page/styles.css dist
+
+dev: dist
+	cp page/snapcontrol.ts dist
+	cp page/snapstream.ts dist
 
 clean:
 	rm -rf dist
