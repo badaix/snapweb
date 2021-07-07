@@ -293,8 +293,8 @@ class SnapControl {
                 stream.fromJson(answer.params.stream);
                 if (this.getMyStreamId() == stream.id) {
                     this.updateProperties();
-                    this.updateMetadata();
                 }
+                this.updateMetadata(stream.id);
                 return true;
             case 'Server.OnUpdate':
                 this.server.fromJson(answer.params.server);
@@ -302,8 +302,7 @@ class SnapControl {
             case 'Stream.OnMetadata':
                 stream = this.getStream(answer.params.id);
                 stream.metadata.fromJson(answer.params.metadata);
-                if (this.getMyStreamId() == stream.id)
-                    this.updateMetadata();
+                this.updateMetadata(stream.id);
                 return false;
             case 'Stream.OnProperties':
                 stream = this.getStream(answer.params.id);
@@ -422,15 +421,29 @@ class SnapControl {
                     duration: 0,
                     playbackRate: 1.0,
                     position: 0
-            });
+                });
             }
         }
         // navigator.mediaSession!.setActionHandler('seekbackward', function () { });
         // navigator.mediaSession!.setActionHandler('seekforward', function () { });
     }
 
-    public updateMetadata() {
+    public updateMetadata(stream_id?: string) {
         let metadata!: Metadata;
+
+        // if (stream_id == undefined) {
+        for (let group of this.server.groups) {
+            metadata = this.server.getStream(group.stream_id)!.metadata;
+            let cover_img = document.getElementById("cover_" + group.id) as HTMLImageElement;
+            if (cover_img != undefined)
+                cover_img.src = metadata.artUrl || 'snapcast-512.png'
+        }
+        // } 
+
+        if ((stream_id != undefined) && (stream_id != this.getMyStreamId())) {
+            return;
+        }
+
         try {
             metadata = this.getStreamFromClient(SnapStream.getClientId()).metadata;
         }
@@ -440,6 +453,7 @@ class SnapControl {
         }
 
         console.log('updateMetadata: ', metadata);
+
         // https://github.com/Microsoft/TypeScript/issues/19473
         if ('mediaSession' in navigator) {
             let title: string = metadata.title || "Unknown Title";
@@ -720,16 +734,21 @@ function show() {
         // Group mute and refresh button
         content += "<div class='groupheader'>";
         content += streamselect;
+        let cover_img: string = server.getStream(group.stream_id)!.metadata.artUrl || "snapcast-512.png";
+
+        content += "<img src='" + cover_img + "' class='cover-img' id='cover_" + group.id + "'>";
         let clientCount = 0;
         for (let client of group.clients)
             if (!hide_offline || client.connected)
                 clientCount++;
         if (clientCount > 1) {
             let volume = snapcontrol.getGroupVolume(group, hide_offline);
+            content += "<div class='client'>";
             content += "<a href=\"javascript:setMuteGroup('" + group.id + "'," + !muted + ");\"><img src='" + mute_img + "' class='mute-button'></a>";
             content += "<div class='slidergroupdiv'>";
             content += "    <input type='range' draggable='false' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setGroupVolume(\"" + group.id + "\")' value=" + volume + " class='slider'>";
             // content += "    <input type='range' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
+            content += "</div>";
             content += "</div>";
         }
         // transparent placeholder edit icon
