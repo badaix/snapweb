@@ -28,6 +28,10 @@ body {
     background: #555;
 }
 
+input, textarea, button, select, a {
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
 .navbar {
     overflow: hidden;
     background-color: #607d8b;
