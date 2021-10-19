@@ -4,6 +4,12 @@ interface Window {
     webkitAudioContext: typeof AudioContext
 }
 
+// declare AudioContext.outputLatency for the ts compiler
+interface AudioContext extends BaseAudioContext {
+    readonly outputLatency: number;
+}
+
+
 function setCookie(key: string, value: string, exdays: number = -1) {
     let d = new Date();
     if (exdays < 0)
