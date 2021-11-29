@@ -626,7 +626,7 @@ class SnapControl {
             let refresh: boolean = false;
             if (Array.isArray(answer)) {
                 for (let a of answer) {
-                    refresh = refresh || this.action(a);
+                    refresh = this.action(a) || refresh;
                 }
             } else {
                 refresh = this.action(answer);
@@ -728,22 +728,21 @@ function show() {
         // Group mute and refresh button
         content += "<div class='groupheader'>";
         content += streamselect;
-        let cover_img: string = server.getStream(group.stream_id)!.properties.metadata.artUrl || "snapcast-512.png";
-
-        content += "<img src='" + cover_img + "' class='cover-img' id='cover_" + group.id + "'>";
+        // let cover_img: string = server.getStream(group.stream_id)!.properties.metadata.artUrl || "snapcast-512.png";
+        // content += "<img src='" + cover_img + "' class='cover-img' id='cover_" + group.id + "'>";
         let clientCount = 0;
         for (let client of group.clients)
             if (!hide_offline || client.connected)
                 clientCount++;
         if (clientCount > 1) {
             let volume = snapcontrol.getGroupVolume(group, hide_offline);
-            content += "<div class='client'>";
+            // content += "<div class='client'>";
             content += "<a href=\"javascript:setMuteGroup('" + group.id + "'," + !muted + ");\"><img src='" + mute_img + "' class='mute-button'></a>";
             content += "<div class='slidergroupdiv'>";
             content += "    <input type='range' draggable='false' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setGroupVolume(\"" + group.id + "\")' value=" + volume + " class='slider'>";
             // content += "    <input type='range' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
             content += "</div>";
-            content += "</div>";
+            // content += "</div>";
         }
         // transparent placeholder edit icon
         content += "<div class='edit-group-icon'>&#9998</div>";
