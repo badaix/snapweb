@@ -427,12 +427,12 @@ class SnapControl {
         let metadata!: Metadata;
 
         // if (stream_id == undefined) {
-        for (let group of this.server.groups) {
-            metadata = this.server.getStream(group.stream_id)!.properties.metadata;
-            let cover_img = document.getElementById("cover_" + group.id) as HTMLImageElement;
-            if (cover_img != undefined)
-                cover_img.src = metadata.artUrl || 'snapcast-512.png'
-        }
+        // for (let group of this.server.groups) {
+        //     metadata = this.server.getStream(group.stream_id)!.properties.metadata;
+        //     let cover_img = document.getElementById("cover_" + group.id) as HTMLImageElement;
+        //     if (cover_img != undefined)
+        //         cover_img.src = metadata.artUrl || 'snapcast-512.png'
+        // }
         // } 
 
         if ((stream_id != undefined) && (stream_id != this.getMyStreamId())) {
