@@ -346,24 +346,24 @@ class SnapControl {
                 // if (props.canGoNext == undefined || !props.canGoNext!)
                 navigator.mediaSession!.setActionHandler('play', () => {
                     props.canPlay ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'Play' }) : null
+                        this.sendRequest('Stream.Control', { id: stream_id, command: 'play' }) : null
                 });
                 navigator.mediaSession!.setActionHandler('pause', () => {
                     props.canPause ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'Pause' }) : null
+                        this.sendRequest('Stream.Control', { id: stream_id, command: 'pause' }) : null
                 });
                 navigator.mediaSession!.setActionHandler('previoustrack', () => {
                     props.canGoPrevious ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'Previous' }) : null
+                        this.sendRequest('Stream.Control', { id: stream_id, command: 'previous' }) : null
                 });
                 navigator.mediaSession!.setActionHandler('nexttrack', () => {
                     props.canGoNext ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'Next' }) : null
+                        this.sendRequest('Stream.Control', { id: stream_id, command: 'next' }) : null
                 });
                 try {
                     navigator.mediaSession!.setActionHandler('stop', () => {
                         props.canControl ?
-                            this.sendRequest('Stream.Control', { id: stream_id, command: 'Stop' }) : null
+                            this.sendRequest('Stream.Control', { id: stream_id, command: 'stop' }) : null
                     });
                 } catch (error) {
                     console.log('Warning! The "stop" media session action is not supported.');
@@ -375,7 +375,7 @@ class SnapControl {
                     if (props.position != undefined)
                         Math.max(props.position! + offset, 0);
                     props.canSeek ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'Seek', params: { 'Offset': offset } }) : null
+                        this.sendRequest('Stream.Control', { id: stream_id, command: 'seek', params: { 'offset': offset } }) : null
                 });
 
                 navigator.mediaSession!.setActionHandler('seekforward', (event: MediaSessionActionDetails) => {
@@ -383,7 +383,7 @@ class SnapControl {
                     if ((metadata.duration != undefined) && (props.position != undefined))
                         Math.min(props.position! + offset, metadata.duration!);
                     props.canSeek ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'Seek', params: { 'Offset': offset } }) : null
+                        this.sendRequest('Stream.Control', { id: stream_id, command: 'seek', params: { 'offset': offset } }) : null
                 });
 
                 try {
@@ -392,7 +392,7 @@ class SnapControl {
                         if (metadata.duration != undefined)
                             Math.min(position, metadata.duration!);
                         props.canSeek ?
-                            this.sendRequest('Stream.Control', { id: stream_id, command: 'SetPosition', params: { 'Position': position } }) : null
+                            this.sendRequest('Stream.Control', { id: stream_id, command: 'setPosition', params: { 'position': position } }) : null
                     });
                 } catch (error) {
                     console.log('Warning! The "seekto" media session action is not supported.');
