@@ -1,3 +1,6 @@
 page/*.js
 page/*.js.map
 dist
+node_modules
+package.json
+package-lock.json
