@@ -262,51 +262,62 @@ class SnapControl {
         };
     }
 
-    private action(answer: any): boolean {
+    private onNotification(notification: any): boolean {
         let stream!: Stream;
-        switch (answer.method) {
+        switch (notification.method) {
             case 'Client.OnVolumeChanged':
-                let client = this.getClient(answer.params.id);
-                client.config.volume = answer.params.volume;
+                let client = this.getClient(notification.params.id);
+                client.config.volume = notification.params.volume;
                 updateGroupVolume(this.getGroupFromClient(client.id));
                 return true;
             case 'Client.OnLatencyChanged':
-                this.getClient(answer.params.id).config.latency = answer.params.latency;
+                this.getClient(notification.params.id).config.latency = notification.params.latency;
                 return false;
             case 'Client.OnNameChanged':
-                this.getClient(answer.params.id).config.name = answer.params.name;
+                this.getClient(notification.params.id).config.name = notification.params.name;
                 return true;
             case 'Client.OnConnect':
             case 'Client.OnDisconnect':
-                this.getClient(answer.params.client.id).fromJson(answer.params.client);
+                this.getClient(notification.params.client.id).fromJson(notification.params.client);
                 return true;
             case 'Group.OnMute':
-                this.getGroup(answer.params.id).muted = Boolean(answer.params.mute);
+                this.getGroup(notification.params.id).muted = Boolean(notification.params.mute);
                 return true;
             case 'Group.OnStreamChanged':
-                this.getGroup(answer.params.id).stream_id = answer.params.stream_id;
-                this.updateProperties();
+                this.getGroup(notification.params.id).stream_id = notification.params.stream_id;
+                this.updateProperties(notification.params.stream_id);
                 return true;
             case 'Stream.OnUpdate':
-                stream = this.getStream(answer.params.id);
-                stream.fromJson(answer.params.stream);
+                stream = this.getStream(notification.params.id);
+                stream.fromJson(notification.params.stream);
                 this.updateProperties(stream.id);
                 return true;
             case 'Server.OnUpdate':
-                this.server.fromJson(answer.params.server);
+                this.server.fromJson(notification.params.server);
+                this.updateProperties(this.getMyStreamId());
                 return true;
             case 'Stream.OnProperties':
-                stream = this.getStream(answer.params.id);
-                stream.properties.fromJson(answer.params.properties);
+                stream = this.getStream(notification.params.id);
+                stream.properties.fromJson(notification.params.properties);
                 if (this.getMyStreamId() == stream.id)
-                    this.updateProperties();
+                    this.updateProperties(stream.id);
                 return false;
             default:
                 return false;
         }
     }
 
-    public updateProperties(stream_id?: string) {
+    public updateProperties(stream_id: string) {
+        if (!('mediaSession' in navigator)) {
+            console.log('updateProperties: mediaSession not supported');
+            return;
+        }
+
+        if (stream_id != this.getMyStreamId()) {
+            console.log('updateProperties: not my stream id: ' + stream_id + ', mine: ' + this.getMyStreamId());
+            return;
+        }
+
         let props!: Properties;
         let metadata!: Metadata;
         try {
@@ -318,160 +329,128 @@ class SnapControl {
             return;
         }
 
-        if ((stream_id == undefined) || (stream_id == this.getMyStreamId())) {
-            // https://developers.google.com/web/updates/2017/02/media-session
-            // https://github.com/googlechrome/samples/tree/gh-pages/media-session
-            // https://googlechrome.github.io/samples/media-session/audio.html
-            // https://developer.mozilla.org/en-US/docs/Web/API/MediaSession/setActionHandler#seekto
-            console.log('updateProperties: ', props);
-            if ('mediaSession' in navigator) {
-                let stream_id: string = this.getStreamFromClient(SnapStream.getClientId()).id;
-                let play_state: MediaSessionPlaybackState = "none";
-                if (props.playbackStatus != undefined) {
-                    if (props.playbackStatus == "playing") {
-                        audio.play();
-                        play_state = "playing";
-                    }
-                    else if (props.playbackStatus == "paused") {
-                        audio.pause();
-                        play_state = "paused";
-                    }
-                    else if (props.playbackStatus == "stopped") {
-                        audio.pause();
-                        play_state = "none";
-                    }
-                }
-                navigator.mediaSession!.playbackState = play_state;
-                console.log('updateProperties playbackState: ', navigator.mediaSession!.playbackState);
-                // if (props.canGoNext == undefined || !props.canGoNext!)
-                navigator.mediaSession!.setActionHandler('play', () => {
-                    props.canPlay ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'play' }) : null
-                });
-                navigator.mediaSession!.setActionHandler('pause', () => {
-                    props.canPause ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'pause' }) : null
-                });
-                navigator.mediaSession!.setActionHandler('previoustrack', () => {
-                    props.canGoPrevious ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'previous' }) : null
-                });
-                navigator.mediaSession!.setActionHandler('nexttrack', () => {
-                    props.canGoNext ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'next' }) : null
-                });
-                try {
-                    navigator.mediaSession!.setActionHandler('stop', () => {
-                        props.canControl ?
-                            this.sendRequest('Stream.Control', { id: stream_id, command: 'stop' }) : null
-                    });
-                } catch (error) {
-                    console.log('Warning! The "stop" media session action is not supported.');
-                }
-
-                let defaultSkipTime: number = 10; // Time to skip in seconds by default
-                navigator.mediaSession!.setActionHandler('seekbackward', (event: MediaSessionActionDetails) => {
-                    let offset: number = (event.seekOffset || defaultSkipTime) * -1;
-                    if (props.position != undefined)
-                        Math.max(props.position! + offset, 0);
-                    props.canSeek ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'seek', params: { 'offset': offset } }) : null
-                });
-
-                navigator.mediaSession!.setActionHandler('seekforward', (event: MediaSessionActionDetails) => {
-                    let offset: number = event.seekOffset || defaultSkipTime;
-                    if ((metadata.duration != undefined) && (props.position != undefined))
-                        Math.min(props.position! + offset, metadata.duration!);
-                    props.canSeek ?
-                        this.sendRequest('Stream.Control', { id: stream_id, command: 'seek', params: { 'offset': offset } }) : null
-                });
-
-                try {
-                    navigator.mediaSession!.setActionHandler('seekto', (event: MediaSessionActionDetails) => {
-                        let position: number = event.seekTime || 0;
-                        if (metadata.duration != undefined)
-                            Math.min(position, metadata.duration!);
-                        props.canSeek ?
-                            this.sendRequest('Stream.Control', { id: stream_id, command: 'setPosition', params: { 'position': position } }) : null
-                    });
-                } catch (error) {
-                    console.log('Warning! The "seekto" media session action is not supported.');
-                }
-
-                if ((metadata.duration != undefined) && (props.position != undefined) && (props.position! <= metadata.duration!)) {
-                    if ('setPositionState' in navigator.mediaSession!) {
-                        console.log('Updating position state: ' + props.position! + '/' + metadata.duration!);
-                        navigator.mediaSession!.setPositionState!({
-                            duration: metadata.duration!,
-                            playbackRate: 1.0,
-                            position: props.position!
-                        });
-                    }
-                }
-                else {
-                    navigator.mediaSession!.setPositionState!({
-                        duration: 0,
-                        playbackRate: 1.0,
-                        position: 0
-                    });
-                }
+        // https://developers.google.com/web/updates/2017/02/media-session
+        // https://github.com/googlechrome/samples/tree/gh-pages/media-session
+        // https://googlechrome.github.io/samples/media-session/audio.html
+        // https://developer.mozilla.org/en-US/docs/Web/API/MediaSession/setActionHandler#seekto
+        console.log('updateProperties: ', props);
+        let play_state: MediaSessionPlaybackState = "none";
+        if (props.playbackStatus != undefined) {
+            if (props.playbackStatus == "playing") {
+                audio.play();
+                play_state = "playing";
+            }
+            else if (props.playbackStatus == "paused") {
+                audio.pause();
+                play_state = "paused";
+            }
+            else if (props.playbackStatus == "stopped") {
+                audio.pause();
+                play_state = "none";
             }
         }
 
-        this.updateMetadata(stream_id);
-        // navigator.mediaSession!.setActionHandler('seekbackward', function () { });
-        // navigator.mediaSession!.setActionHandler('seekforward', function () { });
-    }
-
-    public updateMetadata(stream_id?: string) {
-        let metadata!: Metadata;
-
-        // if (stream_id == undefined) {
-        // for (let group of this.server.groups) {
-        //     metadata = this.server.getStream(group.stream_id)!.properties.metadata;
-        //     let cover_img = document.getElementById("cover_" + group.id) as HTMLImageElement;
-        //     if (cover_img != undefined)
-        //         cover_img.src = metadata.artUrl || 'snapcast-512.png'
-        // }
-        // } 
-
-        if ((stream_id != undefined) && (stream_id != this.getMyStreamId())) {
-            console.log('not my stream id: ' + stream_id + ', mine: ' + this.getMyStreamId());
-            return;
+        let mediaSession = navigator.mediaSession!;
+        mediaSession.playbackState = play_state;
+        console.log('updateProperties playbackState: ', navigator.mediaSession!.playbackState);
+        // if (props.canGoNext == undefined || !props.canGoNext!)
+        mediaSession.setActionHandler('play', () => {
+            props.canPlay ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'play' }) : null
+        });
+        mediaSession.setActionHandler('pause', () => {
+            props.canPause ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'pause' }) : null
+        });
+        mediaSession.setActionHandler('previoustrack', () => {
+            props.canGoPrevious ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'previous' }) : null
+        });
+        mediaSession.setActionHandler('nexttrack', () => {
+            props.canGoNext ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'next' }) : null
+        });
+        try {
+            mediaSession.setActionHandler('stop', () => {
+                props.canControl ?
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'stop' }) : null
+            });
+        } catch (error) {
+            console.log('Warning! The "stop" media session action is not supported.');
         }
+
+        let defaultSkipTime: number = 10; // Time to skip in seconds by default
+        mediaSession.setActionHandler('seekbackward', (event: MediaSessionActionDetails) => {
+            let offset: number = (event.seekOffset || defaultSkipTime) * -1;
+            if (props.position != undefined)
+                Math.max(props.position! + offset, 0);
+            props.canSeek ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'seek', params: { 'offset': offset } }) : null
+        });
+
+        mediaSession.setActionHandler('seekforward', (event: MediaSessionActionDetails) => {
+            let offset: number = event.seekOffset || defaultSkipTime;
+            if ((metadata.duration != undefined) && (props.position != undefined))
+                Math.min(props.position! + offset, metadata.duration!);
+            props.canSeek ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'seek', params: { 'offset': offset } }) : null
+        });
 
         try {
-            metadata = this.getStreamFromClient(SnapStream.getClientId()).properties.metadata;
-        }
-        catch (e) {
-            console.log('updateMeta failed: ' + e);
-            return;
+            mediaSession.setActionHandler('seekto', (event: MediaSessionActionDetails) => {
+                let position: number = event.seekTime || 0;
+                if (metadata.duration != undefined)
+                    Math.min(position, metadata.duration!);
+                props.canSeek ?
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'setPosition', params: { 'position': position } }) : null
+            });
+        } catch (error) {
+            console.log('Warning! The "seekto" media session action is not supported.');
         }
 
-        console.log('updateMetadata: ', metadata);
-
-        // https://github.com/Microsoft/TypeScript/issues/19473
-        if ('mediaSession' in navigator) {
-            let title: string = metadata.title || "Unknown Title";
-            let artist: string = (metadata.artist != undefined) ? metadata.artist[0] : "Unknown Artist";
-            let album: string = metadata.album || "";
-            let artwork: string = metadata.artUrl || 'snapcast-512.png';
-            console.log('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
-            navigator.mediaSession!.metadata = new MediaMetadata({
-                title: title,
-                artist: artist,
-                album: album,
-                artwork: [
-                    // { src: artwork, sizes: '250x250', type: 'image/jpeg' },
-                    // 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
-                    { src: artwork, sizes: '128x128', type: 'image/png' },
-                    { src: artwork, sizes: '192x192', type: 'image/png' },
-                    { src: artwork, sizes: '256x256', type: 'image/png' },
-                    { src: artwork, sizes: '384x384', type: 'image/png' },
-                    { src: artwork, sizes: '512x512', type: 'image/png' },
-                ]
+        if ((metadata.duration != undefined) && (props.position != undefined) && (props.position! <= metadata.duration!)) {
+            if ('setPositionState' in mediaSession) {
+                console.log('Updating position state: ' + props.position! + '/' + metadata.duration!);
+                mediaSession.setPositionState!({
+                    duration: metadata.duration!,
+                    playbackRate: 1.0,
+                    position: props.position!
+                });
+            }
+        }
+        else {
+            mediaSession.setPositionState!({
+                duration: 0,
+                playbackRate: 1.0,
+                position: 0
             });
         }
+
+
+        console.log('updateMetadata: ', metadata);
+        // https://github.com/Microsoft/TypeScript/issues/19473
+        let title: string = metadata.title || "Unknown Title";
+        let artist: string = (metadata.artist != undefined) ? metadata.artist[0] : "Unknown Artist";
+        let album: string = metadata.album || "";
+        let artwork: string = metadata.artUrl || 'snapcast-512.png';
+        console.log('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
+        navigator.mediaSession!.metadata = new MediaMetadata({
+            title: title,
+            artist: artist,
+            album: album,
+            artwork: [
+                // { src: artwork, sizes: '250x250', type: 'image/jpeg' },
+                // 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
+                { src: artwork, sizes: '128x128', type: 'image/png' },
+                { src: artwork, sizes: '192x192', type: 'image/png' },
+                { src: artwork, sizes: '256x256', type: 'image/png' },
+                { src: artwork, sizes: '384x384', type: 'image/png' },
+                { src: artwork, sizes: '512x512', type: 'image/png' },
+            ]
+        });
+
+        // mediaSession.setActionHandler('seekbackward', function () { });
+        // mediaSession.setActionHandler('seekforward', function () { });
     }
 
     public getClient(client_id: string): Client {
@@ -583,7 +562,7 @@ class SnapControl {
 
     public setStream(group_id: string, stream_id: string) {
         this.getGroup(group_id).stream_id = stream_id;
-        this.updateProperties();
+        this.updateProperties(stream_id);
         this.sendRequest('Group.SetStream', { id: group_id, stream_id: stream_id });
     }
 
@@ -612,24 +591,24 @@ class SnapControl {
     }
 
     private onMessage(msg: string) {
-        let answer = JSON.parse(msg);
-        let is_response: boolean = (answer.id != undefined);
-        console.log("Received " + (is_response ? "response" : "notification") + ", json: " + JSON.stringify(answer))
+        let json_msg = JSON.parse(msg);
+        let is_response: boolean = (json_msg.id != undefined);
+        console.log("Received " + (is_response ? "response" : "notification") + ", json: " + JSON.stringify(json_msg))
         if (is_response) {
-            if (answer.id == this.status_req_id) {
-                this.server = new Server(answer.result.server);
-                this.updateProperties();
+            if (json_msg.id == this.status_req_id) {
+                this.server = new Server(json_msg.result.server);
+                this.updateProperties(this.getMyStreamId());
                 show();
             }
         }
         else {
             let refresh: boolean = false;
-            if (Array.isArray(answer)) {
-                for (let a of answer) {
-                    refresh = this.action(a) || refresh;
+            if (Array.isArray(json_msg)) {
+                for (let notification of json_msg) {
+                    refresh = this.onNotification(notification) || refresh;
                 }
             } else {
-                refresh = this.action(answer);
+                refresh = this.onNotification(json_msg);
             }
             // TODO: don't update everything, but only the changed, 
             // e.g. update the values for the volume sliders
@@ -650,7 +629,7 @@ let snapcontrol!: SnapControl;
 let snapstream: SnapStream | null = null;
 let hide_offline: boolean = true;
 let autoplay_done: boolean = false;
-let audio = document.createElement('audio');
+let audio: HTMLAudioElement = document.createElement('audio');
 
 function autoplayRequested(): boolean {
     return document.location.hash.match(/autoplay/) !== null;
@@ -910,16 +889,14 @@ function play() {
     }
     else {
         snapstream = new SnapStream(config.baseUrl);
-        // let audio = document.querySelector('audio');
         // User interacted with the page. Let's play audio...
         document.body.appendChild(audio);
         audio.src = "10-seconds-of-silence.mp3";
         audio.loop = true;
         audio.play().then(() => {
-            snapcontrol.updateProperties();
+            snapcontrol.updateProperties(snapcontrol.getMyStreamId());
         });
     }
-    show();
 }
 
 function setMuteGroup(id: string, mute: boolean) {
