@@ -244,7 +244,7 @@ class HelloMessage extends JsonMessage {
 
     mac: string = "";
     hostname: string = "";
-    version: string = "0.1.0";
+    version: string = "0.0.0";
     clientName = "Snapweb";
     os: string = "";
     arch: string = "web";
@@ -869,6 +869,9 @@ class SnapStream {
             hello.os = navigator.platform;
             hello.hostname = "Snapweb client";
             hello.uniqueId = SnapStream.getClientId();
+            const versionElem = document.getElementsByTagName("meta").namedItem("version");
+            hello.version = versionElem ? versionElem.content : "0.0.0";
+
             this.sendMessage(hello);
             this.syncTime();
             this.syncHandle = window.setInterval(() => this.syncTime(), 1000);
