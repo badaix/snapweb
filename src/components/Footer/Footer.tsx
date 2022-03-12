@@ -10,7 +10,11 @@ type FormValues = {
     url: string
 }
 
-const EditForm: React.FC<any> = () => {
+type FormProps = {
+    close?: (mode: boolean) => void
+}
+
+const EditForm: React.FC<FormProps> = ({close}) => {
     const serverUrl = useAppSelector((state) => state.serverUrl)
     const dispatch = useAppDispatch()
 
@@ -30,10 +34,12 @@ const EditForm: React.FC<any> = () => {
                     return errors;
                 }}
                 onSubmit={(values, { setSubmitting }) => {
-                    console.log(values)
                     dispatch(setServerUrl(values.url))
                     dispatch(setServerId(-1))
                     setSubmitting(false);
+                    if (close) {
+                        close(false)
+                    }
                 }}
             >
                 {({ isSubmitting }) => (
