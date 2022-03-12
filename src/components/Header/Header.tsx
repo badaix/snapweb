@@ -1,6 +1,6 @@
 import React from "react"
 import { useAppSelector } from 'state/snapserverHooks'
-import Link from 'components/link'
+import Link from 'components/Link'
 import { Header as GrommetHeader, Heading, Button } from "grommet"
 import * as Icons from 'grommet-icons'
 

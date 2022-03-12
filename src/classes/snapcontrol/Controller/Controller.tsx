@@ -1,5 +1,4 @@
-import SnapServer, {API} from "types/snapcontrol/SnapServer";
-import Server from "classes/snapcontrol/Server";
+import SnapServer from "types/snapcontrol/SnapServer";
 
 // let snapcontrol!: SnapControl;
 // let snapstream: SnapStream | null = null;
