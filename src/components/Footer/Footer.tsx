@@ -43,7 +43,7 @@ const EditForm: React.FC<any> = () => {
                                 <Field id={`set-url`} name="url" as={TextInput} placeholder='API URL' />
                             </FormField>
                             <Box flex={true}>
-                                <Button color='status-ok' tip={'Save API URL'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
+                                <Button color='status-ok' a11yTitle={'Save API URL'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
 
                             </Box>
                         </Box>
@@ -105,7 +105,7 @@ const FooterComponent = () => {
                     onEsc={() => setShow(false)}
                     onClickOutside={() => setShow(false)}
                 >
-                    <Box width={'large'} pad={'small'} gap='small' justify="start">
+                    <Box pad={'small'} gap='small' justify="start">
                         <EditForm />
                         <Box justify="end" >
                             <Button a11yTitle="Close Modal" label="Close" onClick={() => setShow(false)} />
