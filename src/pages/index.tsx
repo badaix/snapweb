@@ -15,7 +15,7 @@ type DataProps = {
 const UsingTypescript: React.FC<PageProps<DataProps>> = () => {
   return (
     <Layout>
-      <Seo title="Using TypeScript" />
+      <Seo title="Snapweb" />
       <Controller />
     </Layout>
   )
