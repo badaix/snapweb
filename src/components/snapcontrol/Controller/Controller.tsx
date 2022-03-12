@@ -113,8 +113,10 @@ const ControllerComponent: React.FC = () => {
     }, [snapserver, dispatch])
 
     const connectToServer = React.useCallback((url: string) => {
-        const cleanedUrl = url.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:')
-        snapserver.connect(cleanedUrl, false, undefined, onConnect, undefined, messageMethods, notificationMethods)
+        const cleanedUrl = url ? url.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:') : ''
+        if (cleanedUrl) {
+            snapserver.connect(cleanedUrl, false, undefined, onConnect, undefined, messageMethods, notificationMethods)
+        }
     }, [server, notificationMethods, messageMethods, onConnect])
 
     const audio: HTMLAudioElement = React.useMemo(() => {
