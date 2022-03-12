@@ -71,7 +71,12 @@ class SnapServer {
             console.error('No URL to connect to')
             return;
         }
-        this.connection = new WebSocket(this.url);
+        try {
+            this.connection = new WebSocket(this.url);
+        } catch {
+            console.error('Invalid connection')
+            return;
+        }
         this.connection.onmessage = (msg: MessageEvent) => {
             const msgData = JSON.parse(msg.data);
             const isResponse: boolean = (msgData.id != undefined)

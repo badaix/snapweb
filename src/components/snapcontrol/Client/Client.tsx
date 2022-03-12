@@ -114,7 +114,7 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
                                 <Field id={`${id}#name`} name="name" as={TextInput} placeholder='Name' />
                             </FormField>
                             <Box flex={'grow'}>
-                                <Button color='status-ok' tip={'Save Name'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
+                                <Button color='status-ok' a11yTitle={'Save Name'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
 
                             </Box>
                         </Box>
@@ -139,7 +139,7 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
                                 <Field id={`${id}#latency`} name="latency" type='number' as={TextInput} placeholder='Latency' />
                             </FormField>
                             <Box flex={'grow'}>
-                                <Button color='status-ok' tip={'Save Name'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
+                                <Button color='status-ok' a11yTitle={'Save Name'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
                             </Box>
                         </Box>
                     </Form>
