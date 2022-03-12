@@ -35,12 +35,23 @@ module.exports = {
         // This will impact how browsers show your PWA/website
         // https://css-tricks.com/meta-theme-color-and-trickery/
         theme_color: `#607d8b`,
-        display: `minimal-ui`,
+        categories: ["music"],
+        description: "Snapcast web client",
+        display: `standalone`,
+        cache_busting_mode: 'none',
         icon: `src/images/icon.png`, // This path is relative to the root of the site.
+        theme_color_in_head: false, // This will avoid adding theme-color meta tag.
       },
     },
     // this (optional) plugin enables Progressive Web App + Offline functionality
     // To learn more, visit: https://gatsby.dev/offline
-    `gatsby-plugin-offline`,
+    {
+      resolve: 'gatsby-plugin-offline',
+      options: {
+         workboxConfig: {
+            globPatterns: ['**/icon-path*']
+         }
+      }
+   },
   ],
 }
