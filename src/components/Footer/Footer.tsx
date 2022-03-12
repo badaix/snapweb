@@ -58,9 +58,11 @@ const FooterComponent = () => {
     const server = useAppSelector((state) => state.details)
     const serverUrl = useAppSelector((state) => state.serverUrl)
     const serverRoot = React.useMemo(() => {
-        return serverUrl.replace('/' + serverUrl.split('//')[1].split('/')[1], '')
+        if (!serverUrl) return ''
+        return serverUrl?.replace('/' + serverUrl.split('//')[1].split('/')[1], '')
     }, [serverUrl])
     const serverCleanRoot = React.useMemo(() => {
+        if (!serverUrl) return ''
         return serverUrl.split('//')[1].split('/')[0]
     }, [serverUrl])
 
