@@ -64,6 +64,19 @@ class SnapServer {
 
     }
 
+    private openSocket() {
+        try {
+            console.log("Opening connection to", this.url)
+            this.connection = new WebSocket(this.url);
+            console.log("Opened connection to", this.url)
+        } catch (e) {
+            console.error('Invalid connection', e)
+            return false
+        }
+        return true
+
+    }
+
     private _connect(
         preventAutomaticReconnect?: boolean,
     ) {
@@ -71,58 +84,57 @@ class SnapServer {
             console.error('No URL to connect to')
             return;
         }
-        try {
-            this.connection = new WebSocket(this.url);
-        } catch {
-            console.error('Invalid connection')
-            return;
-        }
-        this.connection.onmessage = (msg: MessageEvent) => {
-            const msgData = JSON.parse(msg.data);
-            const isResponse: boolean = (msgData.id != undefined)
-            if (isResponse) {
-                console.log("Received message", msgData)
-                if (this.pending_response[msgData.id]) {
-                    const func = this.handleMessageMethods[this.pending_response[msgData.id] as keyof MessageMethods]
-                    if (func) {
-                        console.log(`Calling function ${this.pending_response[msgData.id] as keyof MessageMethods}`, {request: this.pending_response_requests[msgData.id] as any, result: msgData['result']})
-                        func({request: this.pending_response_requests[msgData.id] as any, result: msgData['result']})
+        if (this.openSocket()) {
+            this.connection.onmessage = (msg: MessageEvent) => {
+                const msgData = JSON.parse(msg.data);
+                const isResponse: boolean = (msgData.id != undefined)
+                if (isResponse) {
+                    console.log("Received message", msgData)
+                    if (this.pending_response[msgData.id]) {
+                        const func = this.handleMessageMethods[this.pending_response[msgData.id] as keyof MessageMethods]
+                        if (func) {
+                            console.log(`Calling function ${this.pending_response[msgData.id] as keyof MessageMethods}`, {request: this.pending_response_requests[msgData.id] as any, result: msgData['result']})
+                            func({request: this.pending_response_requests[msgData.id] as any, result: msgData['result']})
+                        }
+                        delete this.pending_response[msgData.id]
+                        delete this.pending_response_requests[msgData.id]
                     }
-                    delete this.pending_response[msgData.id]
-                    delete this.pending_response_requests[msgData.id]
+                } else {
+                    console.log("Received notification", msgData)
+                    const func = this.handleNotificationMethods[msgData['method'] as keyof NotificationMethods]
+                    if (func) {
+                        func(msgData['params'])
+                    }
                 }
-            } else {
-                console.log("Received notification", msgData)
-                const func = this.handleNotificationMethods[msgData['method'] as keyof NotificationMethods]
-                if (func) {
-                    func(msgData['params'])
+            };
+            this.connection.onopen = () => { 
+                console.log("connected to webserver")
+                if (this._handleOpen) {
+                    this._handleOpen()
                 }
-            }
-        };
-        this.connection.onopen = () => { 
-            console.log("connected to webserver")
-            if (this._handleOpen) {
-                this._handleOpen()
-            }
-        };
-        this.connection.onerror = (ev: Event) => { 
-            console.error('error:', ev); 
-            if (this._handleError) {
-                this._handleError(ev)
-            }
-        };
-        this.connection.onclose = () => {
-            console.info('connection lost, reconnecting in 1s');
-            if (this._handleClose) {
-                this._handleClose()
-            }
-            if (!preventAutomaticReconnect) {
-                setTimeout(() => this._connect(
-                    preventAutomaticReconnect
-                ), 1000);
-            }
-            
-        };
+            };
+            this.connection.onerror = (ev: Event) => { 
+                console.error('error:', ev); 
+                if (this._handleError) {
+                    this._handleError(ev)
+                }
+            };
+            this.connection.onclose = () => {
+                console.info('connection lost, reconnecting in 1s');
+                if (this._handleClose) {
+                    this._handleClose()
+                }
+                if (!preventAutomaticReconnect) {
+                    setTimeout(() => this._connect(
+                        preventAutomaticReconnect
+                    ), 1000);
+                }
+                
+            };
+        } else {
+            console.log("Failed to open socket")
+        }
+        
     }
 
     public serverGetStatus(): number {

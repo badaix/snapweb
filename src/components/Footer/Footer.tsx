@@ -15,7 +15,7 @@ const EditForm: React.FC<any> = () => {
     const dispatch = useAppDispatch()
 
     const initialForm: FormValues = {
-        url: serverUrl
+        url: serverUrl || ''
     }
     return (
         <Box>
@@ -36,11 +36,11 @@ const EditForm: React.FC<any> = () => {
                     setSubmitting(false);
                 }}
             >
-                {({ isSubmitting }) => (
+                {({ isSubmitting, values }) => (
                     <Form>
                         <Box direction="row" align="center" justify="between">
                             <FormField width={'75%'} margin={'none'} htmlFor={`set-url`} name="url" error={<ErrorMessage name="url" />}>
-                                <Field id={`set-url`} name="url" as={TextInput} placeholder='API URL' />
+                                <Field id={`set-url`} name="url" as={TextInput} placeholder='API URL' value={values.url} />
                             </FormField>
                             <Box flex={true}>
                                 <Button color='status-ok' a11yTitle={'Save API URL'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
