@@ -51,7 +51,7 @@ const EditForm: React.FC<any> = () => {
                     </Form>
                 )}
             </Formik>
-            <CheckBox checked={showOfflineClients}
+            <CheckBox checked={showOfflineClients || false}
                 label='Show offline clients'
                 onChange={(event) => {dispatch(setShowOfflineClients(event.target.checked))}}
             />
