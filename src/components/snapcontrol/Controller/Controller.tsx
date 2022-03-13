@@ -26,6 +26,7 @@ const ControllerComponent: React.FC = () => {
     const server = useAppSelector((state) => state.details)
     const serverUrl = useAppSelector((state) => state.serverUrl)
     const serverId = useAppSelector((state) => state.server_id)
+    const showOfflineClients = useAppSelector((state) => state.showOfflineClients)
     const groupsById = useAppSelector((state) => state.groupsById)
     const dispatch = useAppDispatch()
 
@@ -112,42 +113,38 @@ const ControllerComponent: React.FC = () => {
         dispatch(Actions.setServerId(snapserver.serverGetStatus()))
     }, [snapserver, dispatch])
 
+    const onClose = React.useCallback(() => {
+        // dispatch(Actions.setServerId(-1))
+    }, [dispatch])
+
     const connectToServer = React.useCallback((url: string) => {
         const cleanedUrl = url ? url.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:') : ''
         if (cleanedUrl) {
-            snapserver.connect(cleanedUrl, false, undefined, onConnect, undefined, messageMethods, notificationMethods)
+            snapserver.connect(cleanedUrl, false, undefined, onConnect, onClose, messageMethods, notificationMethods)
         }
     }, [server, notificationMethods, messageMethods, onConnect])
 
-    const audio: HTMLAudioElement = React.useMemo(() => {
-        const existingAudio = document.getElementsByTagName('audio')
-        if (existingAudio) {
-            for (let index = existingAudio.length - 1; index >= 0; index--) {
-                existingAudio[index].parentNode?.removeChild(existingAudio[index]);
-            }
-        }
-        return document.createElement('audio')
-    }, [])
-
-    const playbackState = React.useMemo(() => {
-        return navigator.mediaSession!.playbackState
-    }, [navigator.mediaSession])
-
     const groups = React.useMemo(() => {
-        return Object.values(groupsById).map((group) => {
+        let gs = Object.values(groupsById)
+        if (!showOfflineClients) {
+            gs = gs.filter((g) => !g.clients.every((v) => !v.connected))
+        }
+        return gs.map((group) => {
             return (
                 <GroupComponent key={group.id} id={group.id} />
             )
         })
-    }, [groupsById])
+    }, [groupsById, showOfflineClients])
 
     React.useEffect(() => {
-        if (serverId == -1 && serverUrl) {
+        console.log(serverUrl, serverId)
+        if (serverId == -1 && serverUrl && connectToServer) {
             connectToServer(serverUrl)
         }
     }, [connectToServer, serverId, serverUrl])
 
     return (
+        // Must be div
         <div>
             <Box fill={true} gap="small">
                 {groups}

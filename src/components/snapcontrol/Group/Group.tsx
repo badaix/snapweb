@@ -25,6 +25,7 @@ const NewComponent: React.FC<Props> = ({ id }) => {
     // const size = React.useContext(ResponsiveContext);
 
     const groupsById = useAppSelector((state) => state.groupsById)
+    const showOfflineClients = useAppSelector((state) => state.showOfflineClients)
 
     const instance: Group | undefined = React.useMemo(() => {
         return groupsById[id]
@@ -35,13 +36,23 @@ const NewComponent: React.FC<Props> = ({ id }) => {
 
     }, [instance?.muted])
 
+    const clients = React.useMemo(() => {
+        let newClients = instance?.clients || []
+        if (!showOfflineClients) {
+            newClients =  newClients.filter((c) => {
+                return c.connected
+            })
+        }
+        return newClients
+    }, [instance.clients, showOfflineClients])
+
     const kids = React.useMemo(() => {
-        return instance?.clients.map((client) => {
+        return clients.map((client) => {
             return (
                 <Client groupMuted={isMuted} id={client.id} key={client.id} />
             )
         }) || []
-    }, [instance.clients, isMuted])
+    }, [clients, isMuted])
 
     const background = React.useMemo(() => {
         return isMuted ? MUTED_COLORS : UNMUTED_COLORS

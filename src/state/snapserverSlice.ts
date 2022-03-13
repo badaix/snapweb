@@ -11,11 +11,12 @@ import {
 import { API } from 'types/snapcontrol/SnapServer'
 
 // Define a type for the slice state
-interface CounterState {
+export interface CounterState {
   value: number
   // controller: Controller
   server_id: number
   serverUrl?: string
+  showOfflineClients: boolean
   server?: Server
   details?: ServerDetails
   groupsById: Record<string, Group>
@@ -28,6 +29,7 @@ interface CounterState {
 const initialState: CounterState = {
   value: 0,
   server_id: -1,
+  showOfflineClients: false,
   serverUrl: process.env.GATSBY_SNAPSERVER,
   groupIdByClientId: {},
   groupsById: {},
@@ -44,6 +46,9 @@ export const counterSlice = createSlice({
     // Use the PayloadAction type to declare the contents of `action.payload`
     setServerId: (state, action: PayloadAction<number>) => {
       state.server_id = action.payload
+    },
+    setShowOfflineClients: (state, action: PayloadAction<boolean>) => {
+      state.showOfflineClients = action.payload
     },
     setServerUrl: (state, action: PayloadAction<string>) => {
       state.serverUrl = action.payload
@@ -141,9 +146,9 @@ export const counterSlice = createSlice({
   },
 })
 
-export const { setServerUrl, updateClient, updateClientLatency, setServerId, updateClientName, updateClientVolume, updateGroup, updateGroupClients, updateGroupMute, updateGroupName, updateGroupStream, updateServer, updateStream, updateStreamProperties } = counterSlice.actions
+export const { setShowOfflineClients, setServerUrl, updateClient, updateClientLatency, setServerId, updateClientName, updateClientVolume, updateGroup, updateGroupClients, updateGroupMute, updateGroupName, updateGroupStream, updateServer, updateStream, updateStreamProperties } = counterSlice.actions
 
-// Other code such as selectors can use the imported `RootState` type
-export const selectCount = (state: RootState) => state.value
+// // Other code such as selectors can use the imported `RootState` type
+// export const selectCount = (state: RootState) => state.value
 
 export default counterSlice.reducer

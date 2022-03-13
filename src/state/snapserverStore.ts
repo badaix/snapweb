@@ -1,13 +1,16 @@
 import { createStore} from '@reduxjs/toolkit'
-import counterReducer from './snapserverSlice'
-import { persistStore, persistReducer } from 'redux-persist'
+import counterReducer, {CounterState} from './snapserverSlice'
+import { persistStore, persistReducer, PersistConfig } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 
 
 
-const persistConfig = {
+const persistConfig: PersistConfig<CounterState> = {
   key: 'root',
   storage,
+  blacklist: [
+    "server_id" // Blacklisting this allows the server connection to connect after hydration
+  ]
 }
 
 const persistedReducer = persistReducer(persistConfig, counterReducer)

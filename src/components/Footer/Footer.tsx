@@ -1,7 +1,7 @@
-import { Footer, Text, Anchor, Box, TextInput, FormField, Button, Heading, Layer } from "grommet"
+import { Footer, Text, Anchor, Box, TextInput, CheckBox, FormField, Button, Heading, Layer } from "grommet"
 import React from "react"
 import { useAppSelector, useAppDispatch } from 'state/snapserverHooks'
-import { setServerUrl, setServerId} from 'state/snapserverSlice'
+import { setServerUrl, setServerId, setShowOfflineClients } from 'state/snapserverSlice'
 import * as Icons from 'grommet-icons'
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 
@@ -12,6 +12,7 @@ type FormValues = {
 
 const EditForm: React.FC<any> = () => {
     const serverUrl = useAppSelector((state) => state.serverUrl)
+    const showOfflineClients = useAppSelector((state) => state.showOfflineClients)
     const dispatch = useAppDispatch()
 
     const initialForm: FormValues = {
@@ -50,6 +51,10 @@ const EditForm: React.FC<any> = () => {
                     </Form>
                 )}
             </Formik>
+            <CheckBox checked={showOfflineClients}
+                label='Show offline clients'
+                onChange={(event) => {dispatch(setShowOfflineClients(event.target.checked))}}
+            />
         </Box>
     )
 }
@@ -80,14 +85,21 @@ const FooterComponent = () => {
     }, [setShow])
 
     return (
-        <Footer background="light-4" justify="center" pad="small">
+        <>
+        <Footer background="light-4" justify="between" pad={{
+            horizontal: 'large',
+            vertical: 'small'
+        }}>
+            {/* <Button hoverIndicator plain label='' icon={<Icons.View />} /> */}
+            <Text textAlign="center" onClick={handleClick} size="small">
+            </Text>
             <Text textAlign="center" size="small">
                 {serverUrl ? (
                     server ? (
                         <span>
-                            Connected to <Anchor title="Change connected server" href={serverRoot}>{server?.snapserver?.name}</Anchor> - {server?.snapserver?.version} ({<Anchor onClick={handleClick}>{serverCleanRoot}</Anchor>})
+                            Connected to <Anchor title="Connected Server" href={serverRoot}>{server?.snapserver?.name}</Anchor> - {server?.snapserver?.version}
                         </span>
-                        ) : <span>Disconnected from <Anchor onClick={handleClick}>{serverUrl}</Anchor></span>
+                        ) : <span>Disconnected from {serverUrl}</span>
                     
                 ) : (
                     <Anchor onClick={handleClick}>Click to Connect</Anchor>
@@ -100,20 +112,22 @@ const FooterComponent = () => {
                 {` and `}
                 <Anchor href="https://v2.grommet.io">Grommet</Anchor>
             </Text>
-            {show && (
-                <Layer
-                    onEsc={() => setShow(false)}
-                    onClickOutside={() => setShow(false)}
-                >
-                    <Box pad={'small'} gap='small' justify="start">
-                        <EditForm />
-                        <Box justify="end" >
-                            <Button a11yTitle="Close Modal" label="Close" onClick={() => setShow(false)} />
-                        </Box>
-                    </Box>
-                </Layer>
-            )}
+            <Button hoverIndicator onClick={handleClick} plain icon={<Icons.SettingsOption />} />
         </Footer>
+        {show && (
+            <Layer
+                onEsc={() => setShow(false)}
+                onClickOutside={() => setShow(false)}
+            >
+                <Box pad={'small'} gap='small' justify="start">
+                    <EditForm />
+                    <Box justify="end" >
+                        <Button a11yTitle="Close Modal" label="Close" onClick={() => setShow(false)} />
+                    </Box>
+                </Box>
+            </Layer>
+        )}
+        </>
     )
 }
 
