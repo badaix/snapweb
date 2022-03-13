@@ -137,7 +137,6 @@ const ControllerComponent: React.FC = () => {
     }, [groupsById, showOfflineClients])
 
     React.useEffect(() => {
-        console.log(serverUrl, serverId)
         if (serverId == -1 && serverUrl && connectToServer) {
             connectToServer(serverUrl)
         }

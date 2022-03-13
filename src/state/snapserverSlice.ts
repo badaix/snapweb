@@ -88,7 +88,6 @@ export const counterSlice = createSlice({
     },
     updateClientVolume: (state, action: PayloadAction<{ id: string, volume: Volume }>) => {
       const clientId = action.payload.id
-      console.log(Object.keys(state.clientsById), action.payload)
       state.clientsById[clientId].config.volume = action.payload.volume
     },
     updateGroup: (state, action: PayloadAction<Group>) => {

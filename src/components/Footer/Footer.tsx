@@ -31,7 +31,6 @@ const EditForm: React.FC<any> = () => {
                     return errors;
                 }}
                 onSubmit={(values, { setSubmitting }) => {
-                    console.log(values)
                     dispatch(setServerUrl(values.url))
                     dispatch(setServerId(-1))
                     setSubmitting(false);

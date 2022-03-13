@@ -67,17 +67,17 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
     }, [groupsById])
 
     const initialNameForm: NameFormValues = {
-        id: id,
-        name: instance?.config.name
+        id: id || '',
+        name: instance?.config.name || ''
     }
     const initialLatencyForm: LatencyFormValues = {
-        id: id,
-        latency: instance?.config.latency
+        id: id || '',
+        latency: instance?.config.latency || 0
     }
 
     const initialGroupForm: GroupFormValues = {
-        id: id,
-        groupId: myGroupId
+        id: id || '',
+        groupId: myGroupId || ''
     }
 
     const onGroupSelect = React.useCallback((clientId, groupId) => {
