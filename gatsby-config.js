@@ -38,7 +38,7 @@ module.exports = {
         categories: ["music"],
         description: "Snapcast web client",
         display: `standalone`,
-        cache_busting_mode: 'none',
+        // cache_busting_mode: 'none',
         icon: `src/images/icon.png`, // This path is relative to the root of the site.
         theme_color_in_head: false, // This will avoid adding theme-color meta tag.
       },
@@ -48,8 +48,9 @@ module.exports = {
     {
       resolve: 'gatsby-plugin-offline',
       options: {
+        precachePages: [`/index.html`],
          workboxConfig: {
-            globPatterns: ['**/icon-path*']
+            globPatterns: ['**/icon*', 'favicon*']
          }
       }
    },
