@@ -8,7 +8,7 @@ const NewComponent: React.FC<SelectExtendedProps> = ({ options, margin, placehol
         return Object.assign({}, stream, {label})
     }))
     return (
-        <Select plain placeholder={placeholder || 'Stream ID'} margin={ margin || 'none'} valueKey={{'key': 'id', 'reduce': true}} labelKey={'label'} options={streamsById} {...props} />
+        <Select placeholder={placeholder || 'Stream ID'} margin={ margin || 'none'} valueKey={{'key': 'id', 'reduce': true}} labelKey={'label'} options={streamsById} {...props} />
     )
 }
 

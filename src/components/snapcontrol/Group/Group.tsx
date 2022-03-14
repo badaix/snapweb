@@ -1,10 +1,10 @@
-import React, { SyntheticEvent } from "react"
-import { Group, Volume } from "types/snapcontrol"
+import React from "react"
+import { Group } from "types/snapcontrol"
 import Client from 'components/snapcontrol/Client'
 import Controller from 'classes/snapcontrol/Controller'
 import StreamSelector from 'components/snapcontrol/StreamSelector'
 import { useAppSelector } from 'state/snapserverHooks'
-import { Card, CardBody, CardFooter, CardHeader, Button, Heading, Box, ResponsiveContext } from 'grommet'
+import { Card, CardBody, CardFooter, CardHeader, Button, Heading, Box } from 'grommet'
 import * as Icons from 'grommet-icons'
 
 type Props = {
@@ -68,47 +68,49 @@ const NewComponent: React.FC<Props> = ({ id }) => {
     }, [instance?.muted, instance?.id])
 
     const onSelectStreamId = React.useCallback((event) => {
-        const id = event.value
-        Controller.getInstance().serverInstance.groupSetStream({ id: instance?.id, stream_id: id })
+        console.log(event)
+        if (event) {
+            const id = event.value
+            Controller.getInstance().serverInstance.groupSetStream({ id: instance?.id, stream_id: id })
+        }
     }, [instance?.id])
 
 
     return (
         <Card background={background}>
-            <CardHeader pad="none" justify="start" align="start" direction="column" background={background}>
-                {instance?.name && <Heading margin={'none'} level={6}>{instance?.name}</Heading>}
-                <Box fill='horizontal' direction="row" align="center" justify="stretch" gap="small" pad={'none'} margin={'none'}>
-                    <StreamSelector  width={'100%'} onChange={onSelectStreamId} options={[]} value={instance?.stream_id} />
-                </Box>
-            </CardHeader>
-            <CardBody pad="none">
-                {kids}
-            </CardBody>
-            <CardFooter pad={'small'} direction='row' justify='between' background={background}>
-                <Box flex='grow'>
+            <CardHeader pad="small" justify="between" align="center" direction="row" background={background}>
+                <Box flex='grow' height={'100%'}>
                     <Button
                         icon={<VolumeIcon color="black" />}
-                        label={`${isMuted ? 'Unm' : 'M'}ute`}
+                        // label={`${isMuted ? 'Un-' : ``}Mute`}
                         plain={true}
                         reverse
                         onClick={onMuteToggle}
                         hoverIndicator
                         fill
-                        a11yTitle={isMuted ? 'Unmute the group stream' : 'Mute the group streams'}
+                        a11yTitle={isMuted ? 'Unmute the group audio' : 'Mute the group audio'}
                     />
                 </Box>
-                <Box flex='grow'>
+                <Box fill='horizontal' direction="row" align="center" justify="start" gap="small" pad={{horizontal: 'medium'}} margin={'none'}>
+                    <StreamSelector width={'100%'} onChange={onSelectStreamId} options={[]} value={instance?.stream_id} />
+                    {instance?.name && <Heading margin={'none'} level={6}>{instance?.name}</Heading>}
+                </Box>
+                <Box flex='grow'  height={'100%'}>
                     <Button
                         plain={true}
                         fill
-                        label={`Edit`}
+                        label={`Edit ${instance?.name.trim() || 'Group'} Settings`}
                         justify="center"
                         icon={<Icons.Edit color="black" />}
                         hoverIndicator
-                        a11yTitle="Edit the group"
+                        a11yTitle="Edit  settings"
                     />
                 </Box>
-            </CardFooter>
+            </CardHeader>
+            <hr color="black" style={{'width': '98%', height: '1px'}}/>
+            <CardBody pad="none">
+                {kids}
+            </CardBody>
         </Card>
         // <div>
         //     <ul>

@@ -95,13 +95,6 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
             {/* <Heading level={5}>{myGroupId}</Heading> */}
             <Formik
                 initialValues={initialNameForm}
-                validate={values => {
-                    const errors: Partial<Record<keyof NameFormValues, string>> = {};
-                    if (!values.name) {
-                        errors.name = 'Required';
-                    }
-                    return errors;
-                }}
                 onSubmit={(values, { setSubmitting }) => {
                     Controller.getInstance().serverInstance.clientSetName(values)
                     setSubmitting(false);
@@ -111,7 +104,7 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
                     <Form>
                         <Box direction="column" align="center" justify="between">
                             <FormField width={'100%'} margin={'none'} htmlFor={`${id}#name`} name="name" error={<ErrorMessage name="name" />}>
-                                <Field id={`${id}#name`} name="name" as={TextInput} placeholder='Name' />
+                                <Field id={`${id}#name`} name="name" as={TextInput} placeholder={instance?.host.name || 'Name'} />
                             </FormField>
                             <Box width={'100%'}>
                                 <Button label='Save Name' fill={'horizontal'} color='status-ok' a11yTitle={'Save Name'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
@@ -123,10 +116,6 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
             </Formik>
             <Formik
                 initialValues={initialLatencyForm}
-                validate={values => {
-                    const errors: Partial<Record<keyof LatencyFormValues, string>> = {};
-                    return errors;
-                }}
                 onSubmit={(values, { setSubmitting }) => {
                     Controller.getInstance().serverInstance.clientSetLatency(values)
                     setSubmitting(false);
@@ -166,19 +155,16 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
                 <Select
                     value={myGroupId}
                     onChange={(event) => {
-                        const groupId = event.value
-                        onGroupSelect(id, groupId)
+                        if (event) {
+                            const groupId = event.value
+                            if (groupId != myGroupId) {
+                                onGroupSelect(id, groupId)
+                            }
+                        }
                     }}
+                    a11yTitle='Select a group for this client'
                     id={`${id}#group`} name="group" type='select' placeholder='Group' valueKey={{ 'key': 'id', 'reduce': true }} labelKey={'label'} options={groups}
                 />
-                {/* {({ isSubmitting, submitForm }) => (
-                    <Form>
-                        <Box direction="row" align="center" justify="between">
-                            <FormField margin={'none'} htmlFor={`${id}#group`} name="group" error={<ErrorMessage name="group" />}>
-                            </FormField>
-                        </Box>
-                    </Form>
-                )} */}
             </Formik>
         </Box>
     )
@@ -241,7 +227,6 @@ const NewComponent: React.FC<Props> = ({ id, groupMuted }) => {
                         icon={<Icons.Edit color="black" />}
                         hoverIndicator
                         onClick={() => { setShow(true) }}
-                        disabled={disabled}
                     />
                 </CardBody>
                 <CardFooter>
