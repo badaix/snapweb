@@ -251,6 +251,7 @@ const NewComponent: React.FC<Props> = ({ id, groupMuted }) => {
                 <Layer
                     onEsc={() => setShow(false)}
                     onClickOutside={() => setShow(false)}
+                    background={{opacity: 'strong', color: 'light-4'}}
                 >
                     <Box pad={'small'} gap='small' justify="start" background={{ opacity: 'strong', color: 'light-4' }}>
                         <EditForm id={id} />

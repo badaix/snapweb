@@ -117,6 +117,7 @@ const FooterComponent = () => {
             <Layer
                 onEsc={() => setShow(false)}
                 onClickOutside={() => setShow(false)}
+                background={{opacity: 'strong', color: 'light-4'}}
                 >
                 <Box
                 background={{opacity: 'strong', color: 'light-4'}}
