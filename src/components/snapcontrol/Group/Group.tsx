@@ -78,7 +78,7 @@ const NewComponent: React.FC<Props> = ({ id }) => {
 
     return (
         <Card background={background}>
-            <CardHeader pad={{horizontal: 'small'}} justify="between" align="center" direction="row" background={background}>
+            <CardHeader pad={{horizontal: 'small', vertical: 'xsmall'}} justify="between" align="center" direction="row" background={background}>
                 <Box flex='grow' height={'100%'}>
                     <Button
                         icon={<VolumeIcon color="black" />}

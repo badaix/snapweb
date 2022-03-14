@@ -20,7 +20,7 @@ const EditForm: React.FC<any> = () => {
     }
     return (
         <Box>
-            <Heading level={3}>Settings</Heading>
+            <Heading level={2} margin={{vertical: 'small', top: 'none'}}>Settings</Heading>
             <Formik
                 initialValues={initialForm}
                 validate={values => {
