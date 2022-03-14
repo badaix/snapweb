@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import type { RootState } from './snapserverStore'
 import {
   Server,
   Stream,
@@ -12,7 +11,6 @@ import { API } from 'types/snapcontrol/SnapServer'
 
 // Define a type for the slice state
 export interface CounterState {
-  value: number
   // controller: Controller
   server_id: number
   serverUrl?: string
@@ -27,7 +25,6 @@ export interface CounterState {
 
 // Define the initial state using that type
 const initialState: CounterState = {
-  value: 0,
   server_id: -1,
   showOfflineClients: false,
   serverUrl: process.env.GATSBY_SNAPSERVER,
@@ -54,17 +51,17 @@ export const counterSlice = createSlice({
       console.log('Setting server URL to', action.payload)
       state.serverUrl = action.payload
     },
-    updateServer: (state, action: PayloadAction<Server>) => {
-      state.details = action.payload.server
+    updateServer: (state, action: PayloadAction<Server | undefined>) => {
+      state.details = action.payload?.server
       const newStreamsById = {}
-      action.payload.streams?.forEach((stream) => {
+      action.payload?.streams?.forEach((stream) => {
         newStreamsById[stream.id] = stream
       })
       state.streamsById = newStreamsById
       const newGroupIdByClientId = {}
       const newGroupsById = {}
       const newClientsById = {}
-      action.payload.groups?.forEach((group) => {
+      action.payload?.groups?.forEach((group) => {
         group.clients?.forEach((client) => {
           newGroupIdByClientId[client.id] = group.id
           newClientsById[client.id] = client

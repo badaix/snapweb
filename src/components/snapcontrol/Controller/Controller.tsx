@@ -114,7 +114,7 @@ const ControllerComponent: React.FC = () => {
     }, [snapserver, dispatch])
 
     const onClose = React.useCallback(() => {
-        // dispatch(Actions.setServerId(-1))
+        dispatch(Actions.updateServer(undefined))
     }, [dispatch])
 
     const connectToServer = React.useCallback((url: string) => {

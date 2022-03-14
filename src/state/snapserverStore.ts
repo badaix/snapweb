@@ -1,15 +1,20 @@
 import { createStore} from '@reduxjs/toolkit'
 import counterReducer, {CounterState} from './snapserverSlice'
 import { persistStore, persistReducer, PersistConfig } from 'redux-persist'
-import storage from 'redux-persist/lib/storage'
+import localforage from 'localforage'
 
 
 
 const persistConfig: PersistConfig<CounterState> = {
   key: 'root',
-  storage,
+  storage: localforage,
+  keyPrefix: 'snapweb_',
   blacklist: [
     "server_id" // Blacklisting this allows the server connection to connect after hydration
+  ],
+  'whitelist': [
+    'serverUrl',
+    'details'
   ]
 }
 
