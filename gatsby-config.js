@@ -1,9 +1,9 @@
 module.exports = {
   siteMetadata: {
-    title: `Gatsby Default Starter`,
-    description: `Kick off your next, great Gatsby project with this default starter. This barebones starter ships with the main Gatsby configuration files you might need.`,
-    author: `@gatsbyjs`,
-    siteUrl: `https://gatsbystarterdefaultsource.gatsbyjs.io/`,
+    title: `Snapweb`,
+    description: `A configurable static website to support Snapcast servers.`,
+    author: `@daredoes`,
+    siteUrl: `https://snapweb.netlify.app/`,
   },
   plugins: [
     `gatsby-plugin-react-helmet`,

@@ -51,6 +51,7 @@ export const counterSlice = createSlice({
       state.showOfflineClients = action.payload
     },
     setServerUrl: (state, action: PayloadAction<string>) => {
+      console.log('Setting server URL to', action.payload)
       state.serverUrl = action.payload
     },
     updateServer: (state, action: PayloadAction<Server>) => {

@@ -2,7 +2,7 @@ import React from "react"
 import Controller from "classes/snapcontrol/Controller"
 import GroupComponent from "components/snapcontrol/Group"
 import { API } from "types/snapcontrol/SnapServer"
-import { useAppSelector, useAppDispatch } from 'state/snapserverHooks'
+import { useAppSelector, useAppDispatch, } from 'state/snapserverHooks'
 import * as Actions from 'state/snapserverSlice'
 import {Box} from 'grommet'
 // let snapcontrol!: SnapControl;
@@ -141,6 +141,25 @@ const ControllerComponent: React.FC = () => {
             connectToServer(serverUrl)
         }
     }, [connectToServer, serverId, serverUrl])
+
+    React.useEffect(() => {
+        if (typeof window !== 'undefined') {
+            if (window.location.search) {
+                const queryParams = new URLSearchParams(window.location.search)
+                const url = queryParams.get('url')
+                if (url) {
+                    console.log(url)
+                    dispatch(Actions.setServerUrl(url))
+                    dispatch(Actions.setServerId(-1))
+                    queryParams.delete('url')
+                    const params = queryParams.toString()
+                    const currentURL = window.location.protocol + "//" + window.location.host + window.location.pathname +  `${params ? `?${params}` : ''}`;  
+                    console.log('Pushing state ', currentURL)
+                    window.history.pushState({ path: currentURL }, '', currentURL)
+                }
+            }
+        }
+    })
 
     return (
         // Must be div
