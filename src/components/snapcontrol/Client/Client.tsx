@@ -1,6 +1,6 @@
 import React from "react"
 import { Client, Volume } from "types/snapcontrol"
-import { useAppSelector, useAppDispatch } from 'state/snapserverHooks'
+import { useAppSelector } from 'state/snapserverHooks'
 import {
     RangeInput,
     Heading,
@@ -61,9 +61,9 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
     const groups = React.useMemo(() => {
         return Object.values(groupsById).map((g, i) => {
             const data = Object.assign({}, g)
-            data['label'] = `${g.name || `Group ${i+1}`} • ${g.clients.length} Client(s)`
+            data['label'] = `${g.name || `Group ${i + 1}`} • ${g.clients.length} Client(s)`
             return data
-        }).concat([{id: '', name: '', stream_id: '', clients: [], muted: false, label: 'New'} as Group])
+        }).concat([{ id: '', name: '', stream_id: '', clients: [], muted: false, label: 'New' } as Group])
     }, [groupsById])
 
     const initialNameForm: NameFormValues = {
@@ -84,10 +84,10 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
         if (groupId) {
             const clients = groupsById[groupId].clients.map((c) => c.id)
             clients.push(clientId)
-            Controller.getInstance().serverInstance.groupSetClients({id: groupId, clients: clients})
+            Controller.getInstance().serverInstance.groupSetClients({ id: groupId, clients: clients })
         } else {
             const clients = groupsById[myGroupId].clients.map((c) => c.id).filter((cId) => cId != clientId)
-            Controller.getInstance().serverInstance.groupSetClients({id: myGroupId, clients: clients})
+            Controller.getInstance().serverInstance.groupSetClients({ id: myGroupId, clients: clients })
         }
     }, [myGroupId, groupsById])
     return (
@@ -109,12 +109,12 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
             >
                 {({ isSubmitting }) => (
                     <Form>
-                        <Box direction="row" align="center" justify="between">
-                            <FormField margin={'none'} htmlFor={`${id}#name`} name="name" error={<ErrorMessage name="name" />}>
+                        <Box direction="column" align="center" justify="between">
+                            <FormField width={'100%'} margin={'none'} htmlFor={`${id}#name`} name="name" error={<ErrorMessage name="name" />}>
                                 <Field id={`${id}#name`} name="name" as={TextInput} placeholder='Name' />
                             </FormField>
-                            <Box flex={'grow'}>
-                                <Button color='status-ok' a11yTitle={'Save Name'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
+                            <Box width={'100%'}>
+                                <Button label='Save Name' fill={'horizontal'} color='status-ok' a11yTitle={'Save Name'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
 
                             </Box>
                         </Box>
@@ -134,12 +134,12 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
             >
                 {({ isSubmitting }) => (
                     <Form>
-                        <Box direction="row" align="center" justify="between">
-                            <FormField margin={'none'} htmlFor={`${id}#latency`} name="latency" error={<ErrorMessage name="latency" />}>
+                        <Box direction="column" align="center" justify="between">
+                            <FormField width={'100%'} margin={'none'} htmlFor={`${id}#latency`} name="latency" error={<ErrorMessage name="latency" />}>
                                 <Field id={`${id}#latency`} name="latency" type='number' as={TextInput} placeholder='Latency' />
                             </FormField>
-                            <Box flex={'grow'}>
-                                <Button color='status-ok' a11yTitle={'Save Name'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
+                            <Box width={'100%'}>
+                                <Button label='Save Latency' color='status-ok' a11yTitle={'Save Name'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
                             </Box>
                         </Box>
                     </Form>
@@ -155,22 +155,22 @@ const EditForm: React.FC<FormProps> = ({ id }) => {
                     if (values.groupId) {
                         const clients = groupsById[values.groupId].clients.map((c) => c.id)
                         clients.push(values.id)
-                        Controller.getInstance().serverInstance.groupSetClients({id: values.groupId, clients: clients})
+                        Controller.getInstance().serverInstance.groupSetClients({ id: values.groupId, clients: clients })
                     } else {
                         const clients = groupsById[myGroupId].clients.map((c) => c.id).filter((cId) => cId != values.id)
-                        Controller.getInstance().serverInstance.groupSetClients({id: values.groupId, clients: clients})
+                        Controller.getInstance().serverInstance.groupSetClients({ id: values.groupId, clients: clients })
                     }
                     setSubmitting(false);
                 }}
             >
                 <Select
-                value={myGroupId}
-                onChange={(event) => {
-                    const groupId = event.value
-                    onGroupSelect(id, groupId)
-                }}
-                 id={`${id}#group`} name="group" type='select' placeholder='Group' valueKey={{'key': 'id', 'reduce': true}} labelKey={'label'} options={groups}
-                 />
+                    value={myGroupId}
+                    onChange={(event) => {
+                        const groupId = event.value
+                        onGroupSelect(id, groupId)
+                    }}
+                    id={`${id}#group`} name="group" type='select' placeholder='Group' valueKey={{ 'key': 'id', 'reduce': true }} labelKey={'label'} options={groups}
+                />
                 {/* {({ isSubmitting, submitForm }) => (
                     <Form>
                         <Box direction="row" align="center" justify="between">
@@ -252,7 +252,7 @@ const NewComponent: React.FC<Props> = ({ id, groupMuted }) => {
                     onEsc={() => setShow(false)}
                     onClickOutside={() => setShow(false)}
                 >
-                    <Box pad={'small'} gap='small' justify="start">
+                    <Box pad={'small'} gap='small' justify="start" background={{ opacity: 'strong', color: 'light-4' }}>
                         <EditForm id={id} />
                         <Box justify="end" >
                             <Button a11yTitle="Close Modal" label="Close" onClick={() => setShow(false)} />

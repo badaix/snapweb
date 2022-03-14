@@ -20,7 +20,7 @@ const EditForm: React.FC<any> = () => {
     }
     return (
         <Box>
-            <Heading level={5}>Set API URL</Heading>
+            <Heading level={3}>Settings</Heading>
             <Formik
                 initialValues={initialForm}
                 validate={values => {
@@ -38,12 +38,12 @@ const EditForm: React.FC<any> = () => {
             >
                 {({ isSubmitting, values }) => (
                     <Form>
-                        <Box direction="row" align="center" justify="between">
-                            <FormField width={'75%'} margin={'none'} htmlFor={`set-url`} name="url" error={<ErrorMessage name="url" />}>
+                        <Box direction="column" align="center" justify="between">
+                            <FormField width={'100%'} margin={'none'} htmlFor={`set-url`} name="url" error={<ErrorMessage name="url" />}>
                                 <Field id={`set-url`} name="url" as={TextInput} placeholder='API URL' value={values.url} />
                             </FormField>
-                            <Box flex={true}>
-                                <Button color='status-ok' a11yTitle={'Save API URL'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
+                            <Box width={'100%'}>
+                                <Button label='Save API Url' color='status-ok' a11yTitle={'Save API URL'} margin='small' gap="xxsmall" alignSelf="stretch" type="submit" disabled={isSubmitting} icon={<Icons.CloudUpload color='status-ok' />} hoverIndicator size="small" />
 
                             </Box>
                         </Box>
@@ -117,8 +117,10 @@ const FooterComponent = () => {
             <Layer
                 onEsc={() => setShow(false)}
                 onClickOutside={() => setShow(false)}
-            >
-                <Box pad={'small'} gap='small' justify="start">
+                >
+                <Box
+                background={{opacity: 'strong', color: 'light-4'}}
+                pad={'small'} gap='small' justify="start">
                     <EditForm />
                     <Box justify="end" >
                         <Button a11yTitle="Close Modal" label="Close" onClick={() => setShow(false)} />

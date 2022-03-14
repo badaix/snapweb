@@ -25,7 +25,18 @@ const newTheme: ThemeType = {
   'global': {
     'colors': {
       'brand': '#607d8b'
-    }
+    },
+  },
+  'layer': {
+    'container': {
+      'extend': {
+        'minWidth': '50%'
+      }
+    },
+    'background': {
+      opacity: 'strong',
+      color: 'light-4'
+    },
   }
 }
 
