@@ -4,8 +4,9 @@ import Client from 'components/snapcontrol/Client'
 import Controller from 'classes/snapcontrol/Controller'
 import StreamSelector from 'components/snapcontrol/StreamSelector'
 import { useAppSelector } from 'state/snapserverHooks'
-import { Card, CardBody, CardFooter, CardHeader, Button, Heading, Box } from 'grommet'
+import { Card, CardBody, CardHeader, Button, Heading, Box, Layer } from 'grommet'
 import * as Icons from 'grommet-icons'
+import EditForm from 'components/EditGroupSettingsForm'
 
 type Props = {
     id: string
@@ -75,14 +76,16 @@ const NewComponent: React.FC<Props> = ({ id }) => {
         }
     }, [instance?.id])
 
+    const [show, setShow] = React.useState<boolean>(false)
+
 
     return (
+        <>
         <Card background={background}>
             <CardHeader pad={{horizontal: 'small', vertical: 'xsmall'}} justify="between" align="center" direction="row" background={background}>
                 <Box flex='grow' height={'100%'}>
                     <Button
                         icon={<VolumeIcon color="black" />}
-                        // label={`${isMuted ? 'Un-' : ``}Mute`}
                         plain={true}
                         reverse
                         onClick={onMuteToggle}
@@ -93,7 +96,6 @@ const NewComponent: React.FC<Props> = ({ id }) => {
                 </Box>
                 <Box fill='horizontal' direction="row" align="center" justify="start" gap="small" pad={{horizontal: 'medium'}} margin={'none'}>
                     <StreamSelector width={'100%'} onChange={onSelectStreamId} options={[]} value={instance?.stream_id} />
-                    {instance?.name && <Heading margin={'none'} level={6}>{instance?.name}</Heading>}
                 </Box>
                 <Box flex='grow'  height={'100%'}>
                     <Button
@@ -102,6 +104,7 @@ const NewComponent: React.FC<Props> = ({ id }) => {
                         label={`Edit ${instance?.name.trim() || 'Group'} Settings`}
                         justify="center"
                         icon={<Icons.Edit color="black" />}
+                        onClick={() => {setShow(true)}}
                         hoverIndicator
                         a11yTitle="Edit  settings"
                     />
@@ -112,14 +115,21 @@ const NewComponent: React.FC<Props> = ({ id }) => {
                 {kids}
             </CardBody>
         </Card>
-        // <div>
-        //     <ul>
-        //         <li>{instance?.name || 'unknown'}</li>
-        //         <li>{instance?.muted ? 'muted': 'not muted'}</li>
-        //         <li>{instance?.stream_id}</li>
-        //         {kids}
-        //     </ul>
-        // </div>
+        {show && (
+                <Layer
+                    onEsc={() => setShow(false)}
+                    onClickOutside={() => setShow(false)}
+                    background={{opacity: 'strong', color: 'light-4'}}
+                >
+                    <Box pad={'small'} gap='small' justify="start" background={{ opacity: 'strong', color: 'light-4' }}>
+                        <EditForm id={id} />
+                        <Box justify="end" >
+                            <Button a11yTitle="Close Modal" label="Close" onClick={() => setShow(false)} />
+                        </Box>
+                    </Box>
+                </Layer>
+            )}
+        </>
     )
 }
 

@@ -4,6 +4,7 @@ import {
     ClientSetVolume,
     GroupSetClients,
     GroupSetMute,
+    GroupSetName,
     GroupSetStream,
     MessageMethods,
     NotificationMethods,
@@ -201,7 +202,10 @@ class SnapServer {
 
     public groupSetMute(options: GroupSetMute): number {
         return this.sendRequest('Group.SetMute', options)
+    }
 
+    public groupSetName(options: GroupSetName): number {
+        return this.sendRequest('Group.SetName', options)
     }
 
     // Sends a request through the websocket connection and increments our counter for requests to the server

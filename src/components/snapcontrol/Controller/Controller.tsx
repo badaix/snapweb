@@ -5,11 +5,6 @@ import { API } from "types/snapcontrol/SnapServer"
 import { useAppSelector, useAppDispatch, } from 'state/snapserverHooks'
 import * as Actions from 'state/snapserverSlice'
 import {Box} from 'grommet'
-// let snapcontrol!: SnapControl;
-// let snapstream: SnapStream | null = null;
-// let hide_offline: boolean = true;
-// let autoplay_done: boolean = false;
-// let audio: HTMLAudioElement = document.createElement('audio');
 
 // This class acts as a Controller for the web page, and the controllers and stream
 
@@ -60,7 +55,7 @@ const ControllerComponent: React.FC = () => {
                 dispatch(Actions.updateGroupStream({ id: response.request.id, stream_id: response.result.stream_id }))
             },
             'Group.SetName': (response: API.GroupSetNameResponse) => {
-                dispatch(Actions.updateGroupName({ id: response.result.id, name: response.result.name }))
+                dispatch(Actions.updateGroupName({ id: response.request.id, name: response.result.name }))
             },
             'Group.SetMute': (response: API.GroupSetMuteResponse) => {
                 dispatch(Actions.updateGroupMute({ id: response.request.id, mute: response.result.mute }))
@@ -148,7 +143,6 @@ const ControllerComponent: React.FC = () => {
                 const queryParams = new URLSearchParams(window.location.search)
                 const url = queryParams.get('url')
                 if (url) {
-                    console.log(url)
                     dispatch(Actions.setServerUrl(url))
                     dispatch(Actions.setServerId(-1))
                     queryParams.delete('url')

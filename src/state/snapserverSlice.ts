@@ -114,6 +114,7 @@ export const counterSlice = createSlice({
     },
     updateGroupName: (state, action: PayloadAction<{ id: string, name: string }>) => {
       const groupId = action.payload.id
+      console.log(action.payload, state.groupsById[groupId])
       state.groupsById[groupId].name = action.payload.name
     },
     updateGroupClients: (state, action: PayloadAction<{ id: string, clients: Client[] }>) => {
@@ -147,5 +148,6 @@ export const { setShowOfflineClients, setServerUrl, updateClient, updateClientLa
 
 // // Other code such as selectors can use the imported `RootState` type
 // export const selectCount = (state: RootState) => state.value
+
 
 export default counterSlice.reducer
