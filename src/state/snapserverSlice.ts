@@ -114,7 +114,6 @@ export const counterSlice = createSlice({
     },
     updateGroupName: (state, action: PayloadAction<{ id: string, name: string }>) => {
       const groupId = action.payload.id
-      console.log(action.payload, state.groupsById[groupId])
       state.groupsById[groupId].name = action.payload.name
     },
     updateGroupClients: (state, action: PayloadAction<{ id: string, clients: Client[] }>) => {
