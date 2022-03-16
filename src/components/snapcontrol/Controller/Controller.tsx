@@ -158,22 +158,34 @@ const ControllerComponent: React.FC = () => {
         if (typeof window !== 'undefined') {
             if (window.location.search) {
                 const queryParams = new URLSearchParams(window.location.search)
-                const url = queryParams.get('url')
+                const api = queryParams.get('api')
                 const stream = queryParams.get('stream')
-                if (url) {
-                    dispatch(Actions.setServerUrl(url))
-                    queryParams.delete('url')
-                    const params = queryParams.toString()
-                    const currentURL = window.location.protocol + "//" + window.location.host + window.location.pathname +  `${params ? `?${params}` : ''}`;  
-                    window.history.pushState({ path: currentURL }, '', currentURL)
-                }
-                if (stream) {
-                    dispatch(Actions.setStreamUrl(stream))
+                const server = queryParams.get('server')
+                if (server) {
+                    dispatch(Actions.setCustomUrl(server))
+                    queryParams.delete('server')
                     queryParams.delete('stream')
+                    queryParams.delete('api')
                     const params = queryParams.toString()
                     const currentURL = window.location.protocol + "//" + window.location.host + window.location.pathname +  `${params ? `?${params}` : ''}`;  
                     window.history.pushState({ path: currentURL }, '', currentURL)
+                } else {
+                    if (api) {
+                        dispatch(Actions.setServerUrl(api))
+                        queryParams.delete('api')
+                        const params = queryParams.toString()
+                        const currentURL = window.location.protocol + "//" + window.location.host + window.location.pathname +  `${params ? `?${params}` : ''}`;  
+                        window.history.pushState({ path: currentURL }, '', currentURL)
+                    }
+                    if (stream) {
+                        dispatch(Actions.setStreamUrl(stream))
+                        queryParams.delete('stream')
+                        const params = queryParams.toString()
+                        const currentURL = window.location.protocol + "//" + window.location.host + window.location.pathname +  `${params ? `?${params}` : ''}`;  
+                        window.history.pushState({ path: currentURL }, '', currentURL)
+                    }
                 }
+
             }
         }
     })
