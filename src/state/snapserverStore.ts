@@ -10,10 +10,12 @@ const persistConfig: PersistConfig<CounterState> = {
   storage: localforage,
   keyPrefix: 'snapweb_',
   blacklist: [
-    "server_id" // Blacklisting this allows the server connection to connect after hydration
+    "server_id", // Blacklisting this allows the server connection to connect after hydration
+    "stream_id" // Blacklisting this allows the server connection to connect after hydration
   ],
   'whitelist': [
     'serverUrl',
+    'streamUrl',
     'details'
   ]
 }

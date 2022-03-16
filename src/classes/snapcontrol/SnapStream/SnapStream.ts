@@ -1,7 +1,7 @@
 import AudioStream from 'classes/snapcontrol/AudioStream';
 import TimeProvider from 'classes/snapcontrol/TimePro'
 import Decoder from 'classes/snapcontrol/decoders/Decoder';
-import FlacDecoder from 'classes/snapcontrol/decoders/FlacDecoder';
+// import FlacDecoder from 'classes/snapcontrol/decoders/FlacDecoder';
 import OpusDecoder from 'classes/snapcontrol/decoders/OpusDecoder';
 import PcmDecoder from 'classes/snapcontrol/decoders/PcmDecoder';
 import CodecMessage from 'classes/snapcontrol/messages/CodecMessage';
@@ -82,7 +82,7 @@ class SnapStream {
     }
 
     connect() {
-        this.streamsocket = new WebSocket(this.baseUrl + '/stream');
+        this.streamsocket = new WebSocket(this.baseUrl);
         this.streamsocket.binaryType = "arraybuffer";
         this.streamsocket.onmessage = (ev) => this.onMessage(ev);
 
@@ -117,7 +117,7 @@ class SnapStream {
             let codec = new CodecMessage(msg.data);
             console.log("Codec: " + codec.codec);
             if (codec.codec == "flac") {
-                this.decoder = new FlacDecoder();
+                // this.decoder = new FlacDecoder();
             } else if (codec.codec == "pcm") {
                 this.decoder = new PcmDecoder();
             } else if (codec.codec == "opus") {

@@ -20,6 +20,7 @@ const ControllerComponent: React.FC = () => {
 
     const server = useAppSelector((state) => state.details)
     const serverUrl = useAppSelector((state) => state.serverUrl)
+    const streamUrl = useAppSelector((state) => state.streamUrl)
     const serverId = useAppSelector((state) => state.server_id)
     const showOfflineClients = useAppSelector((state) => state.showOfflineClients)
     const groupsById = useAppSelector((state) => state.groupsById)
@@ -125,6 +126,8 @@ const ControllerComponent: React.FC = () => {
         if (cleanedUrl) {
             snapstream.baseUrl = cleanedUrl
             snapstream.connect()
+            dispatch(Actions.setStreamId(1))
+
         }
     }, [snapstream])
 
@@ -145,6 +148,12 @@ const ControllerComponent: React.FC = () => {
             connectToServer(serverUrl)
         }
     }, [connectToServer, serverId, serverUrl])
+
+    React.useEffect(() => {
+        if (serverId == -1 && streamUrl && connectToStream) {
+            connectToStream(streamUrl)
+        }
+    }, [connectToStream, serverId, streamUrl])
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {

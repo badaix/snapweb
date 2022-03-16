@@ -13,7 +13,9 @@ import { API } from 'types/snapcontrol/SnapServer'
 export interface CounterState {
   // controller: Controller
   server_id: number
+  stream_id: number
   serverUrl?: string
+  streamUrl?: string
   showOfflineClients: boolean
   server?: Server
   details?: ServerDetails
@@ -26,8 +28,10 @@ export interface CounterState {
 // Define the initial state using that type
 const initialState: CounterState = {
   server_id: -1,
+  stream_id: -1,
   showOfflineClients: false,
   serverUrl: process.env.GATSBY_SNAPSERVER,
+  streamUrl: process.env.GATSBY_SNAPSTREAM,
   groupIdByClientId: {},
   groupsById: {},
   streamsById: {},
@@ -44,12 +48,19 @@ export const counterSlice = createSlice({
     setServerId: (state, action: PayloadAction<number>) => {
       state.server_id = action.payload
     },
+    setStreamId: (state, action: PayloadAction<number>) => {
+      state.stream_id = action.payload
+    },
     setShowOfflineClients: (state, action: PayloadAction<boolean>) => {
       state.showOfflineClients = action.payload
     },
     setServerUrl: (state, action: PayloadAction<string>) => {
       console.log('Setting server URL to', action.payload)
       state.serverUrl = action.payload
+    },
+    setStreamUrl: (state, action: PayloadAction<string>) => {
+      console.log('Setting stream URL to', action.payload)
+      state.streamUrl = action.payload
     },
     updateServer: (state, action: PayloadAction<Server | undefined>) => {
       state.details = action.payload?.server
@@ -143,7 +154,7 @@ export const counterSlice = createSlice({
   },
 })
 
-export const { setShowOfflineClients, setServerUrl, updateClient, updateClientLatency, setServerId, updateClientName, updateClientVolume, updateGroup, updateGroupClients, updateGroupMute, updateGroupName, updateGroupStream, updateServer, updateStream, updateStreamProperties } = counterSlice.actions
+export const { setShowOfflineClients, setStreamUrl, setServerUrl, updateClient, updateClientLatency, setStreamId, setServerId, updateClientName, updateClientVolume, updateGroup, updateGroupClients, updateGroupMute, updateGroupName, updateGroupStream, updateServer, updateStream, updateStreamProperties } = counterSlice.actions
 
 // // Other code such as selectors can use the imported `RootState` type
 // export const selectCount = (state: RootState) => state.value
