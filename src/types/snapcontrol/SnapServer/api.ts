@@ -4,7 +4,6 @@ import Server from 'types/snapcontrol/Server'
 import Volume from 'types/snapcontrol/Volume'
 import Properties from 'types/snapcontrol/Properties'
 import Stream from 'types/snapcontrol/Stream'
-import { string } from 'yup'
 
 export type GroupGetStatus = {
     id: string

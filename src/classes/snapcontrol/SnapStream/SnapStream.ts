@@ -15,6 +15,8 @@ import ServerSettingsMessage from 'classes/snapcontrol/messages/ServerSettingsMe
 import TV from 'classes/snapcontrol/TV';
 import AudioContext from 'types/snapcontrol/AudioContext';
 import storage from 'localforage'
+import configureStore from 'state/snapserverStore'
+import { setMyClientId } from 'state/snapserverSlice';
 
 function getChromeVersion(): number | null {
     const raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
@@ -66,18 +68,12 @@ class SnapStream {
     }
 
     public static async getClientId(): Promise<string> {
-        let clientId = ""
-        // Todo, replace with redux if possible, and uuid library
-        await storage.getItem('uniqueId', (err, value: string) => {
-            if (value) {
-                clientId = value
-            } else {
-                storage.setItem('uniqueId', uuidv4(), (err, value: string) => {
-                    clientId = value
-                })
-                clientId = uuidv4()
-            }
-        })
+        const { store } = configureStore()
+        let clientId = store.getState().myClientId
+        if (!clientId) {
+            clientId = uuidv4()
+            store.dispatch(setMyClientId(clientId))
+        }
         return clientId
     }
 

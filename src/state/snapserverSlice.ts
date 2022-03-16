@@ -14,6 +14,7 @@ export interface CounterState {
   // controller: Controller
   server_id: number
   stream_id: number
+  myClientId: string
   serverUrl?: string
   streamUrl?: string
   showOfflineClients: boolean
@@ -29,6 +30,7 @@ export interface CounterState {
 const initialState: CounterState = {
   server_id: -1,
   stream_id: -1,
+  myClientId: '',
   showOfflineClients: false,
   serverUrl: process.env.GATSBY_SNAPSERVER,
   streamUrl: process.env.GATSBY_SNAPSTREAM,
@@ -57,6 +59,10 @@ export const counterSlice = createSlice({
     setServerUrl: (state, action: PayloadAction<string>) => {
       console.log('Setting server URL to', action.payload)
       state.serverUrl = action.payload
+    },
+    setMyClientId: (state, action: PayloadAction<string>) => {
+      console.log('Setting my client ID to', action.payload)
+      state.myClientId = action.payload
     },
     setStreamUrl: (state, action: PayloadAction<string>) => {
       console.log('Setting stream URL to', action.payload)
@@ -154,7 +160,7 @@ export const counterSlice = createSlice({
   },
 })
 
-export const { setShowOfflineClients, setStreamUrl, setServerUrl, updateClient, updateClientLatency, setStreamId, setServerId, updateClientName, updateClientVolume, updateGroup, updateGroupClients, updateGroupMute, updateGroupName, updateGroupStream, updateServer, updateStream, updateStreamProperties } = counterSlice.actions
+export const { setShowOfflineClients, setMyClientId, setStreamUrl, setServerUrl, updateClient, updateClientLatency, setStreamId, setServerId, updateClientName, updateClientVolume, updateGroup, updateGroupClients, updateGroupMute, updateGroupName, updateGroupStream, updateServer, updateStream, updateStreamProperties } = counterSlice.actions
 
 // // Other code such as selectors can use the imported `RootState` type
 // export const selectCount = (state: RootState) => state.value

@@ -15,7 +15,6 @@ import { grommet, ThemeType } from "grommet/themes"
 import { Provider } from 'react-redux'
 import configureStore from 'state/snapserverStore'
 import { PersistGate } from 'redux-persist/integration/react'
-
 import Footer from 'components/Footer'
 
 const { persistor, store } = configureStore()
