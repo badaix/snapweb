@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: dependencies
-    - shell: bash -l {0}
+      shell: bash -l {0}
       run: nvm install && nvm use && yarn
     - name: build
       shell: bash -l {0}
