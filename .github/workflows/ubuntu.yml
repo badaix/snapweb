@@ -15,8 +15,8 @@ jobs:
         yarn
     - name: build
       run: npm run build
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: develop_snapshot
-        path: /home/runner/work/snapweb/snapweb/public
+    # - name: Archive artifacts
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: develop_snapshot
+    #     path: /home/runner/work/snapweb/snapweb/public
