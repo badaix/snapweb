@@ -10,13 +10,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: dependencies
-      run: |
-        sudo npm install -g typescript@latest 
-        sudo npm install --save @types/wicg-mediasession@1.1.0
+      shell: bash -l {0}
+      run: nvm install && nvm use && yarn
     - name: build
-      run: make
+      shell: bash -l {0}
+      run: npm run build
     - name: Archive artifacts
       uses: actions/upload-artifact@v2
       with:
         name: develop_snapshot
-        path: /home/runner/work/snapweb/snapweb/dist
+        path: /home/runner/work/snapweb/snapweb/public

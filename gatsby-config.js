@@ -1,0 +1,58 @@
+module.exports = {
+  siteMetadata: {
+    title: `Snapweb`,
+    description: `A configurable static website to support Snapcast servers.`,
+    author: `@daredoes`,
+    siteUrl: `https://snapweb.netlify.app/`,
+  },
+  plugins: [
+    `gatsby-plugin-react-helmet`,
+    "gatsby-plugin-root-import",
+    `gatsby-plugin-image`,
+    // {
+    //   resolve: `gatsby-plugin-react-redux-persist`,
+    //   options: {
+    //     // [required] - path to your createStore module
+    //     pathToCreateStoreModule: './src/state/snapserverStore',
+    //   }
+    // },
+    {
+      resolve: `gatsby-source-filesystem`,
+      options: {
+        name: `images`,
+        path: `${__dirname}/src/images`,
+      },
+    },
+    `gatsby-transformer-sharp`,
+    `gatsby-plugin-sharp`,
+    {
+      resolve: `gatsby-plugin-manifest`,
+      options: {
+        name: `snapweb`,
+        short_name: `Snapweb`,
+        start_url: `/`,
+        background_color: `#607d8b`,
+        // This will impact how browsers show your PWA/website
+        // https://css-tricks.com/meta-theme-color-and-trickery/
+        theme_color: `#607d8b`,
+        categories: ["music"],
+        description: "Snapcast web client",
+        display: `standalone`,
+        // cache_busting_mode: 'none',
+        icon: `src/images/icon.png`, // This path is relative to the root of the site.
+        theme_color_in_head: false, // This will avoid adding theme-color meta tag.
+      },
+    },
+    // this (optional) plugin enables Progressive Web App + Offline functionality
+    // To learn more, visit: https://gatsby.dev/offline
+    {
+      resolve: 'gatsby-plugin-offline',
+      options: {
+        precachePages: [`/index.html`],
+         workboxConfig: {
+            globPatterns: ['**/icon*', 'favicon*']
+         }
+      }
+   },
+  ],
+}
