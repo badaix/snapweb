@@ -14,9 +14,8 @@ import TimeMessage from 'classes/snapcontrol/messages/TimeMessage';
 import ServerSettingsMessage from 'classes/snapcontrol/messages/ServerSettingsMessage';
 import TV from 'classes/snapcontrol/TV';
 import AudioContext from 'types/snapcontrol/AudioContext';
-import storage from 'localforage'
 import configureStore from 'state/snapserverStore'
-import { setMyClientId } from 'state/snapserverSlice';
+import { setMyClientId, setPlaying } from 'state/snapserverSlice';
 
 function getChromeVersion(): number | null {
     const raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
@@ -75,6 +74,11 @@ class SnapStream {
             store.dispatch(setMyClientId(clientId))
         }
         return clientId
+    }
+
+    public async setPlaying(playing: boolean): Promise<void> {
+        const { store } = configureStore()
+        store.dispatch(setPlaying(playing))
     }
 
     connect() {
@@ -189,7 +193,7 @@ class SnapStream {
         // console.log("prepareSource median: " + Math.round(this.median * 10) / 10);
     }
 
-    private stopAudio() {
+    stopAudio() {
         // if (this.ctx) {
         //     this.ctx.close();
         // }
@@ -205,6 +209,7 @@ class SnapStream {
     }
 
     public stop() {
+        this.setPlaying(false)
         window.clearInterval(this.syncHandle);
         this.stopAudio();
         if ([WebSocket.OPEN, WebSocket.CONNECTING].includes(this.streamsocket.readyState)) {
@@ -214,6 +219,7 @@ class SnapStream {
     }
 
     public play() {
+        this.setPlaying(true)
         this.playTime = this.timeProvider.nowSec() + 0.1;
         for (let i = 1; i <= this.audioBufferCount; ++i) {
             this.playNext();

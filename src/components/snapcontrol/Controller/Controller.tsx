@@ -22,8 +22,10 @@ const ControllerComponent: React.FC = () => {
     const serverUrl = useAppSelector((state) => state.serverUrl)
     const streamUrl = useAppSelector((state) => state.streamUrl)
     const serverId = useAppSelector((state) => state.server_id)
+    const streamId = useAppSelector((state) => state.stream_id)
     const showOfflineClients = useAppSelector((state) => state.showOfflineClients)
     const groupsById = useAppSelector((state) => state.groupsById)
+    const clientsById = useAppSelector((state) => state.clientsById)
     const dispatch = useAppDispatch()
 
     const snapserver = Controller.getInstance().serverInstance
@@ -121,27 +123,24 @@ const ControllerComponent: React.FC = () => {
         }
     }, [snapserver, notificationMethods, messageMethods, onConnect, onClose])
 
-    const connectToStream = React.useCallback((url: string) => {
-        const cleanedUrl = url ? url.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:') : ''
+    React.useEffect(() => {
+        const cleanedUrl = streamUrl ? streamUrl.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:') : ''
         if (cleanedUrl) {
             snapstream.baseUrl = cleanedUrl
-            snapstream.connect()
-            dispatch(Actions.setStreamId(1))
-
         }
-    }, [snapstream])
+    }, [streamUrl])
 
     const groups = React.useMemo(() => {
         let gs = Object.values(groupsById)
         if (!showOfflineClients) {
-            gs = gs.filter((g) => !g.clients.every((v) => !v.connected))
+            gs = gs.filter((g) => !g.clients.map((c) => clientsById[c.id]).every((v) => !v.connected))
         }
         return gs.map((group) => {
             return (
                 <GroupComponent key={group.id} id={group.id} />
             )
         })
-    }, [groupsById, showOfflineClients])
+    }, [groupsById, showOfflineClients, clientsById])
 
     React.useEffect(() => {
         if (serverId == -1 && serverUrl && connectToServer) {
@@ -149,24 +148,32 @@ const ControllerComponent: React.FC = () => {
         }
     }, [connectToServer, serverId, serverUrl])
 
-    React.useEffect(() => {
-        if (serverId == -1 && streamUrl && connectToStream) {
-            connectToStream(streamUrl)
-        }
-    }, [connectToStream, serverId, streamUrl])
+    // React.useEffect(() => {
+    //     if (streamId == -1 && streamUrl && connectToStream) {
+    //         connectToStream(streamUrl)
+    //     }
+    // }, [connectToStream, streamId, streamUrl])
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
             if (window.location.search) {
                 const queryParams = new URLSearchParams(window.location.search)
                 const url = queryParams.get('url')
+                const stream = queryParams.get('stream')
                 if (url) {
                     dispatch(Actions.setServerUrl(url))
                     dispatch(Actions.setServerId(-1))
                     queryParams.delete('url')
                     const params = queryParams.toString()
                     const currentURL = window.location.protocol + "//" + window.location.host + window.location.pathname +  `${params ? `?${params}` : ''}`;  
-                    console.log('Pushing state ', currentURL)
+                    window.history.pushState({ path: currentURL }, '', currentURL)
+                }
+                if (stream) {
+                    dispatch(Actions.setStreamUrl(stream))
+                    dispatch(Actions.setStreamId(-1))
+                    queryParams.delete('stream')
+                    const params = queryParams.toString()
+                    const currentURL = window.location.protocol + "//" + window.location.host + window.location.pathname +  `${params ? `?${params}` : ''}`;  
                     window.history.pushState({ path: currentURL }, '', currentURL)
                 }
             }

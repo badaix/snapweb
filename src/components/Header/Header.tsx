@@ -13,6 +13,7 @@ type Props = {
 const HeaderComponent: React.FC<Props> = ({ siteTitle }) => {
     const server = useAppSelector((state) => state.details)
     const snapstream = Controller.getInstance().streamInstance
+    const playing = useAppSelector((state) => state.playing)
     const clientsById = useAppSelector((state) => state.clientsById)
     // const groupIdByClientId = useAppSelector((state) => state.groupIdByClientId)
     // const streamsById = useAppSelector((state) => state.streamsById)
@@ -50,20 +51,20 @@ const HeaderComponent: React.FC<Props> = ({ siteTitle }) => {
     // }, [snapstream, myStream?.properties.playbackStatus])
 
     const onClick = React.useCallback(() => {
-        // if (myClient?.connected) {
-        //     snapstream.stop()
-        // } else {
-        // }
-        snapstream.play()
-    }, [snapstream, myClient?.connected])
+        if (playing) {
+            snapstream.stop()
+        } else {
+            snapstream.connect()
+        }
+    }, [snapstream, playing])
 
     const StatusIcon = React.useMemo(() => {
-        if (myClient?.connected) {
+        if (playing) {
             return Icons.StopFill
         }
         return Icons.PlayFill
 
-    }, [myClient?.connected])
+    }, [playing])
     return (
         <GrommetHeader background="brand" justify="between" pad={{'horizontal': 'medium'}}>
             <Heading margin={'none'} level={4}>
