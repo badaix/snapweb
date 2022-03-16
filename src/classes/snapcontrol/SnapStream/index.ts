@@ -1,1 +1,1 @@
-export { default } from './TimeProvider'
+export { default } from './SnapStream'

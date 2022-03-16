@@ -1,4 +1,4 @@
-import BaseMessage from 'classes/snapcontrol/BaseMessage'
+import BaseMessage from 'classes/snapcontrol/messages/BaseMessage'
 
 class JsonMessage extends BaseMessage {
     constructor(buffer?: ArrayBuffer) {

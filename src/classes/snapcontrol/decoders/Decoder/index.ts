@@ -1,1 +1,1 @@
-export { default } from './SampleFormat'
+export { default } from './Decoder'

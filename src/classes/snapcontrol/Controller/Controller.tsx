@@ -1,4 +1,5 @@
 import SnapServer from "types/snapcontrol/SnapServer";
+import SnapStream from "classes/snapcontrol/SnapStream";
 
 // let snapcontrol!: SnapControl;
 // let snapstream: SnapStream | null = null;
@@ -20,6 +21,7 @@ function getDefaultBaseUrl(): string {
 class Controller {
     private static instance: Controller;
     public serverInstance: SnapServer = new SnapServer();
+    public streamInstance: SnapStream = new SnapStream();
     private _audio?: HTMLAudioElement
 
     private constructor() {

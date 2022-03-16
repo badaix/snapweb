@@ -26,6 +26,7 @@ const ControllerComponent: React.FC = () => {
     const dispatch = useAppDispatch()
 
     const snapserver = Controller.getInstance().serverInstance
+    const snapstream = Controller.getInstance().streamInstance
 
 
     const messageMethods: API.MessageMethods = React.useMemo(() => {
@@ -117,7 +118,15 @@ const ControllerComponent: React.FC = () => {
         if (cleanedUrl) {
             snapserver.connect(cleanedUrl, false, undefined, onConnect, onClose, messageMethods, notificationMethods)
         }
-    }, [server, notificationMethods, messageMethods, onConnect])
+    }, [snapserver, notificationMethods, messageMethods, onConnect, onClose])
+
+    const connectToStream = React.useCallback((url: string) => {
+        const cleanedUrl = url ? url.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:') : ''
+        if (cleanedUrl) {
+            snapstream.baseUrl = cleanedUrl
+            snapstream.connect()
+        }
+    }, [snapstream])
 
     const groups = React.useMemo(() => {
         let gs = Object.values(groupsById)

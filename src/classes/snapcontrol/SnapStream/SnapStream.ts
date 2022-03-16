@@ -1,5 +1,5 @@
-import TimeProvider from 'classes/snapcontrol/TimeProvider'
 import AudioStream from 'classes/snapcontrol/AudioStream';
+import TimeProvider from 'classes/snapcontrol/TimePro'
 import Decoder from 'classes/snapcontrol/decoders/Decoder';
 import FlacDecoder from 'classes/snapcontrol/decoders/FlacDecoder';
 import OpusDecoder from 'classes/snapcontrol/decoders/OpusDecoder';
@@ -14,6 +14,7 @@ import TimeMessage from 'classes/snapcontrol/messages/TimeMessage';
 import ServerSettingsMessage from 'classes/snapcontrol/messages/ServerSettingsMessage';
 import TV from 'classes/snapcontrol/TV';
 import AudioContext from 'types/snapcontrol/AudioContext';
+import storage from 'localforage'
 
 function getChromeVersion(): number | null {
     const raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
@@ -27,17 +28,12 @@ function uuidv4(): string {
     });
 }
 
-function getPersistentValue(key: string, defaultValue: string = ""): string {
-    return defaultValue;
-}
-
 class SnapStream {
-    constructor(baseUrl: string) {
+    constructor(baseUrl?: string) {
         this.baseUrl = baseUrl;
         this.timeProvider = new TimeProvider();
 
         if (this.setupAudioContext()) {
-            this.connect();
         } else {
             alert("Sorry, but the Web Audio API is not supported by your browser");
         }
@@ -47,6 +43,7 @@ class SnapStream {
         let AudioContext = (window.AudioContext) // Default
             || window['webkitAudioContext'] // Safari and old versions of Chrome
             || false;
+        console.log(AudioContext)
 
         if (AudioContext) {
             let options: AudioContextOptions | undefined;
@@ -68,17 +65,28 @@ class SnapStream {
         return true;
     }
 
-    public static getClientId(): string {
+    public static async getClientId(): Promise<string> {
+        let clientId = ""
         // Todo, replace with redux if possible, and uuid library
-        return getPersistentValue("uniqueId", uuidv4());
+        await storage.getItem('uniqueId', (err, value: string) => {
+            if (value) {
+                clientId = value
+            } else {
+                storage.setItem('uniqueId', uuidv4(), (err, value: string) => {
+                    clientId = value
+                })
+                clientId = uuidv4()
+            }
+        })
+        return clientId
     }
 
-    private connect() {
+    connect() {
         this.streamsocket = new WebSocket(this.baseUrl + '/stream');
         this.streamsocket.binaryType = "arraybuffer";
         this.streamsocket.onmessage = (ev) => this.onMessage(ev);
 
-        this.streamsocket.onopen = () => {
+        this.streamsocket.onopen = async () => {
             console.log("on open");
             let hello = new HelloMessage();
 
@@ -86,8 +94,8 @@ class SnapStream {
             hello.arch = "web";
             hello.os = navigator.platform;
             hello.hostname = "Snapweb client";
-            hello.uniqueId = SnapStream.getClientId();
-            const versionElem = document.getElementsByTagName("meta").namedItem("version");
+            hello.uniqueId = await SnapStream.getClientId();
+            const versionElem = null // document.getElementsByTagName("meta").namedItem("version");
             hello.version = versionElem ? versionElem.content : "0.0.0";
 
             this.sendMessage(hello);
@@ -136,7 +144,6 @@ class SnapStream {
                     }
 
                     this.ctx.resume();
-                    // TODO: Consider moving CTX output latency variables to new class
                     this.timeProvider.setAudioContext(this.ctx);
                     this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
                     // this.timeProvider = new TimeProvider(this.ctx);

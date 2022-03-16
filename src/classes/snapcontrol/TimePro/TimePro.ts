@@ -1,5 +1,5 @@
 import AudioContext from "types/snapcontrol/AudioContext";
-class TimeProvider {
+class TimePro {
     constructor(ctx: AudioContext | undefined = undefined) {
         if (ctx) {
             this.setAudioContext(ctx);
@@ -57,4 +57,4 @@ class TimeProvider {
     ctx: AudioContext | undefined;
 }
 
-export default TimeProvider
+export default TimePro

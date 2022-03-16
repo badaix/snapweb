@@ -1,4 +1,4 @@
-import BaseMessage from 'classes/snapcontrol/BaseMessage'
+import BaseMessage from 'classes/snapcontrol/messages/BaseMessage'
 import TV from 'classes/snapcontrol/TV'
 
 class TimeMessage extends BaseMessage {

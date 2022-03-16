@@ -1,6 +1,6 @@
-import SampleFormat from "../SampleFormat";
-import PcmChunkMessage from "../messages/PcmChunkMessage";
-import TimeProvider from "../TimeProvider";
+import SampleFormat from "classes/snapcontrol/SampleFormat";
+import PcmChunkMessage from "classes/snapcontrol/messages/PcmChunkMessage";
+import TimeProvider from "classes/snapcontrol/TimePro";
 
 class AudioStream {
     constructor(public timeProvider: TimeProvider, public sampleFormat: SampleFormat, public bufferMs: number) {
