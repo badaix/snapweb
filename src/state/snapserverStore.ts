@@ -16,6 +16,7 @@ const persistConfig: PersistConfig<CounterState> = {
   'whitelist': [
     'serverUrl',
     'streamUrl',
+    'customUrl',
     'details',
     'myClientId',
     'showOfflineClients',

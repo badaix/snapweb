@@ -162,7 +162,6 @@ const ControllerComponent: React.FC = () => {
                 const stream = queryParams.get('stream')
                 if (url) {
                     dispatch(Actions.setServerUrl(url))
-                    dispatch(Actions.setServerId(-1))
                     queryParams.delete('url')
                     const params = queryParams.toString()
                     const currentURL = window.location.protocol + "//" + window.location.host + window.location.pathname +  `${params ? `?${params}` : ''}`;  
@@ -170,7 +169,6 @@ const ControllerComponent: React.FC = () => {
                 }
                 if (stream) {
                     dispatch(Actions.setStreamUrl(stream))
-                    dispatch(Actions.setStreamId(-1))
                     queryParams.delete('stream')
                     const params = queryParams.toString()
                     const currentURL = window.location.protocol + "//" + window.location.host + window.location.pathname +  `${params ? `?${params}` : ''}`;  

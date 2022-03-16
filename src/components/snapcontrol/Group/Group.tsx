@@ -70,7 +70,6 @@ const NewComponent: React.FC<Props> = ({ id }) => {
     }, [instance?.muted, instance?.id])
 
     const onSelectStreamId = React.useCallback((event) => {
-        console.log(event)
         if (event) {
             const id = event.value
             Controller.getInstance().serverInstance.groupSetStream({ id: instance?.id, stream_id: id })

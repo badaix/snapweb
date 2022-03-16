@@ -17,6 +17,7 @@ export interface CounterState {
   playing: boolean
   myClientId: string
   serverUrl?: string
+  customUrl?: string
   streamUrl?: string
   showOfflineClients: boolean
   server?: Server
@@ -64,7 +65,8 @@ export const counterSlice = createSlice({
     },
     setServerUrl: (state, action: PayloadAction<string>) => {
       console.log('Setting server URL to', action.payload)
-      state.serverUrl = action.payload
+      state.serverUrl = action.payload.trim()
+      state.server_id = -1
     },
     setMyClientId: (state, action: PayloadAction<string>) => {
       console.log('Setting my client ID to', action.payload)
@@ -72,8 +74,16 @@ export const counterSlice = createSlice({
     },
     setStreamUrl: (state, action: PayloadAction<string>) => {
       console.log('Setting stream URL to', action.payload)
-      state.streamUrl = action.payload
+      state.streamUrl = action.payload.trim()
       state.stream_id = -1
+    },
+    setCustomUrl: (state, action: PayloadAction<string>) => {
+      console.log('Setting custom URL to', action.payload)
+      state.customUrl = action.payload.trim()
+      state.streamUrl = `${state.customUrl}/stream`
+      state.stream_id = -1
+      state.serverUrl = `${state.customUrl}/jsonrpc`
+      state.server_id = -1
     },
     updateServer: (state, action: PayloadAction<Server | undefined>) => {
       state.details = action.payload?.server
@@ -167,7 +177,7 @@ export const counterSlice = createSlice({
   },
 })
 
-export const { setShowOfflineClients, setPlaying, setMyClientId, setStreamUrl, setServerUrl, updateClient, updateClientLatency, setStreamId, setServerId, updateClientName, updateClientVolume, updateGroup, updateGroupClients, updateGroupMute, updateGroupName, updateGroupStream, updateServer, updateStream, updateStreamProperties } = counterSlice.actions
+export const { setShowOfflineClients, setCustomUrl, setPlaying, setMyClientId, setStreamUrl, setServerUrl, updateClient, updateClientLatency, setStreamId, setServerId, updateClientName, updateClientVolume, updateGroup, updateGroupClients, updateGroupMute, updateGroupName, updateGroupStream, updateServer, updateStream, updateStreamProperties } = counterSlice.actions
 
 // // Other code such as selectors can use the imported `RootState` type
 // export const selectCount = (state: RootState) => state.value
