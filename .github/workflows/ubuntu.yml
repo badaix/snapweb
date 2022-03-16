@@ -15,8 +15,8 @@ jobs:
     - name: build
       shell: bash -l {0}
       run: npm run build
-    # - name: Archive artifacts
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: develop_snapshot
-    #     path: /home/runner/work/snapweb/snapweb/public
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: develop_snapshot
+        path: /home/runner/work/snapweb/snapweb/public

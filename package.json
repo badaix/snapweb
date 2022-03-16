@@ -2,7 +2,7 @@
   "name": "snapweb",
   "private": true,
   "description": "A PWA that allows control of a Snapcast server via the Websockets API",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "author": "Daniel A.R. Evans <me@daredoes.work>",
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.0",
