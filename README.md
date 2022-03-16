@@ -19,7 +19,7 @@ On a compatible client (Android/iOS/etc) open `http://<snapserver host>:1780` an
 
 <img width="567" alt="Home Screen" src="https://user-images.githubusercontent.com/6538753/158523563-a02ccc8a-b7f7-4b83-baab-4312c9409bc1.png">
 <img width="398" alt="Edit Client Screen" src="https://user-images.githubusercontent.com/6538753/158523585-643ab2bd-b527-477b-b1bc-fbc876a9004c.png">
-<img width="375" alt="Change Group Stream ID src="https://user-images.githubusercontent.com/6538753/158523632-e1de94e5-96ef-4ba0-b017-afaa9ade92a5.png">
+<img width="375" alt="Change Group Stream ID" src="https://user-images.githubusercontent.com/6538753/158523632-e1de94e5-96ef-4ba0-b017-afaa9ade92a5.png">
 <img width="381" alt="Change Server Settings 1" src="https://user-images.githubusercontent.com/6538753/158523680-b5f21cde-3e08-433e-9865-85a1ab7b0774.png">
 <img width="362" alt="Change Server Settings 2" src="https://user-images.githubusercontent.com/6538753/158523732-8e3231a1-f9bc-45db-a6c3-7ff419ab776f.png">
 <img width="370" alt="Edit Group Screen" src="https://user-images.githubusercontent.com/6538753/158523780-a52ebd52-74f9-474a-9040-6a9c199a5883.png">
