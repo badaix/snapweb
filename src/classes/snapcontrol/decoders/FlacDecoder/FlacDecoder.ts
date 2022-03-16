@@ -1,17 +1,18 @@
 import Decoder from 'classes/snapcontrol/decoders/Decoder'
 import SampleFormat from 'classes/snapcontrol/SampleFormat'
 import PcmChunkMessage from 'classes/snapcontrol/messages/PcmChunkMessage'
-import libFactory from 'libflacjs'
+import Flac from 'libflacjs/dist/libflac'
 
 class FlacDecoder extends Decoder {
     constructor() {
         super();
-        this.Flac = libFactory('release.wasm')
-        this.decoder = this.Flac.create_libflac_decoder(true);
+        if (typeof window !== 'undefined') {
+            this.decoder = Flac.create_libflac_decoder(true);
+        }
         if (this.decoder) {
-            let init_status = this.Flac.init_decoder_stream(this.decoder, this.read_callback_fn.bind(this), this.write_callback_fn.bind(this), this.error_callback_fn.bind(this), this.metadata_callback_fn.bind(this), false);
+            let init_status = Flac.init_decoder_stream(this.decoder, this.read_callback_fn.bind(this), this.write_callback_fn.bind(this), this.error_callback_fn.bind(this), this.metadata_callback_fn.bind(this), false);
             console.log("Flac init: " + init_status);
-            this.Flac.setOptions(this.decoder, { analyseSubframes: true, analyseResiduals: true });
+            Flac.setOptions(this.decoder, { analyseSubframes: true, analyseResiduals: true });
         }
         this.sampleFormat = new SampleFormat();
         this.flacChunk = new ArrayBuffer(0);
@@ -29,8 +30,8 @@ class FlacDecoder extends Decoder {
         this.pcmChunk!.clearPayload();
         this.cacheInfo = { cachedBlocks: 0, isCachedChunk: true };
         // console.log("Flac len: " + this.flacChunk.byteLength);
-        while (this.flacChunk.byteLength && this.Flac.FLAC__stream_decoder_process_single(this.decoder)) {
-            this.Flac.FLAC__stream_decoder_get_state(this.decoder);
+        while (this.flacChunk.byteLength && Flac.FLAC__stream_decoder_process_single(this.decoder)) {
+            Flac.FLAC__stream_decoder_get_state(this.decoder);
             // let state = Flac.FLAC__stream_decoder_get_state(this.decoder);
             // console.log("State: " + state);
         }
@@ -97,7 +98,7 @@ class FlacDecoder extends Decoder {
 
     setHeader(buffer: ArrayBuffer): SampleFormat | null {
         this.header = buffer.slice(0);
-        this.Flac.FLAC__stream_decoder_process_until_end_of_metadata(this.decoder);
+        Flac.FLAC__stream_decoder_process_until_end_of_metadata(this.decoder);
         return this.sampleFormat;
     }
 
@@ -106,7 +107,6 @@ class FlacDecoder extends Decoder {
     header: ArrayBuffer | null = null;
     flacChunk: ArrayBuffer;
     pcmChunk?: PcmChunkMessage;
-    Flac: any;
 
     cacheInfo: { isCachedChunk: boolean, cachedBlocks: number } = { isCachedChunk: false, cachedBlocks: 0 };
 }
