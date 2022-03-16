@@ -1,50 +1,35 @@
-<!-- AUTO-GENERATED-CONTENT:START (STARTER) -->
-<p align="center">
-  <a href="https://www.gatsbyjs.com">
-    <img alt="Gatsby" src="https://www.gatsbyjs.com/Gatsby-Monogram.svg" width="60" />
-  </a>
-</p>
-<h1 align="center">
-  Gatsby's default starter
-</h1>
+# Snapweb
 
-Kick off your project with this default boilerplate. This starter ships with the main Gatsby configuration files you might need to get up and running blazing fast with the blazing fast app generator for React.
+Web client for [Snapcast](https://github.com/badaix/snapcast), optimized for mobile devices. Written in typescript using GatsbyJS and Grommet
 
-_Have another more specific idea? You may want to check out our vibrant collection of [official and community-created starters](https://www.gatsbyjs.com/docs/gatsby-starters/)._
+## Setup
 
-## 🚀 Quick start
+1. Run `nvm install && nvm use` in the directory, this will install and activate the needed node environment.
+2. Run `yarn` to install the needed node packages, this may take some time depending on your network connection
+3. Run `npm run build` to export the site to a `dist` folder, or `npm run start` to load the site for development at `localhost:8000`
+4. Copy the created `public` directory to some path on your snapserver host and let the `[http] doc_root` in your `snapserver.conf` point to it
+5. Restart `snapserver` and navigate with a browser to `http://<snapserver host>:1780`
+6. Enjoy :)
 
-1.  **Create a Gatsby site.**
+## Setup as WebApp
 
-    Use the Gatsby CLI ([install instructions](https://www.gatsbyjs.com/docs/tutorial/part-0/#gatsby-cli)) to create a new site, specifying the default starter.
+On a compatible client (Android/iOS/etc) open `http://<snapserver host>:1780` and select in the menu `Add to homescreen`
 
-    ```shell
-    # create a new Gatsby site using the default starter
-    gatsby new my-default-starter https://github.com/gatsbyjs/gatsby-starter-default
-    ```
+## Screenshot
 
-1.  **Start developing.**
+## Contributing
 
-    Navigate into your new site’s directory and start it up.
+This webclient wraps Snapserver's [WebSocket API](https://github.com/badaix/snapcast/blob/master/doc/json_rpc_api/v2_0_0.md).  
+Pull requests are highly appreciated, and thoroughly reviewed. Please check the list of [open issues](https://github.com/badaix/snapweb/issues).  
+Branch from the `develop` branch and ensure it is up to date with the current `develop` branch before submitting your pull request.
 
-    ```shell
-    cd my-default-starter/
-    gatsby develop
-    ```
+High prio issues:
 
-1.  **Open the source code and start editing!**
+- Missing opus support [#8](https://github.com/badaix/snapweb/issues/8)
+- Missing Vorbis support [#14](https://github.com/badaix/snapweb/issues/14)
+- Seems that audio playback on iOS is not working [#18](https://github.com/badaix/snapweb/issues/18)
 
-    Your site is now running at `http://localhost:8000`!
-
-    _Note: You'll also see a second link: _`http://localhost:8000/___graphql`_. This is a tool you can use to experiment with querying your data. Learn more about using this tool in the [Gatsby Tutorial](https://www.gatsbyjs.com/docs/tutorial/part-4/#use-graphiql-to-explore-the-data-layer-and-write-graphql-queries)._
-
-    Open the `my-default-starter` directory in your code editor of choice and edit `src/pages/index.js`. Save your changes and the browser will update in real time!
-
-## 🚀 Quick start (Gatsby Cloud)
-
-Deploy this starter with one click on [Gatsby Cloud](https://www.gatsbyjs.com/cloud/):
-
-[<img src="https://www.gatsbyjs.com/deploynow.svg" alt="Deploy to Gatsby Cloud">](https://www.gatsbyjs.com/dashboard/deploynow?url=https://github.com/gatsbyjs/gatsby-starter-default)
+Please consider that one of the design goals is to keep the client small and simple.
 
 ## 🧐 What's inside?
 
@@ -101,5 +86,3 @@ Looking for more guidance? Full documentation for Gatsby lives [on the website](
 [Build, Deploy, and Host On The Only Cloud Built For Gatsby](https://www.gatsbyjs.com/products/cloud/)
 
 Gatsby Cloud is an end-to-end cloud platform specifically built for the Gatsby framework that combines a modern developer experience with an optimized, global edge network.
-
-<!-- AUTO-GENERATED-CONTENT:END -->
