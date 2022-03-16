@@ -32,6 +32,10 @@ type NameFormValues = {
     name: string
 }
 
+type DeleteFormValues = {
+    id: string
+}
+
 type GroupFormValues = {
     id: string,
     groupId: string
@@ -60,6 +64,9 @@ const EditClientSettingsForm: React.FC<FormProps> = ({ id }) => {
         id: id || '',
         name: instance?.config.name || ''
     }
+    const initialDeleteForm: DeleteFormValues = {
+        id: id || ''
+    }
     const initialLatencyForm: LatencyFormValues = {
         id: id || '',
         latency: instance?.config.latency || 0
@@ -80,6 +87,14 @@ const EditClientSettingsForm: React.FC<FormProps> = ({ id }) => {
             Controller.getInstance().serverInstance.groupSetClients({ id: myGroupId, clients: clients })
         }
     }, [myGroupId, groupsById])
+
+    const deleteClient = React.useCallback(() => {
+        if (confirm('Are you sure you want to delete this client? It cannot be undone.')) {
+            Controller.getInstance().serverInstance.serverDeleteClient({
+                id: id
+            })
+        }
+    }, [id])
     return (
         <Box>
             {/* <Heading level={5}>{myGroupId}</Heading> */}
@@ -156,6 +171,35 @@ const EditClientSettingsForm: React.FC<FormProps> = ({ id }) => {
                     id={`${id}#group`} name="group" type='select' placeholder='Group' valueKey={{ 'key': 'id', 'reduce': true }} labelKey={'label'} options={groups}
                 />
             </Formik>
+            <Formik
+                initialValues={initialDeleteForm}
+                onSubmit={(values, { setSubmitting }) => {
+                    deleteClient()
+                    setSubmitting(false);
+                }}
+            >
+                {({ isSubmitting }) => (
+                    <Form>
+                        <Box direction="column" align="center" justify="between">
+                            <Box width={'100%'}>
+                            <Button 
+                            color={'status-critical'} 
+                            label='Delete Client' 
+                            a11yTitle='Delete Client'
+                            margin={'small'}
+                            gap='xxsmall'
+                            type="submit"
+                            disabled={isSubmitting}
+                            icon={<Icons.Trash />} 
+                            hoverIndicator 
+                            size="small"
+                            />
+                            </Box>
+                        </Box>
+                    </Form>
+                )}
+            </Formik>
+            
         </Box>
     )
 }
