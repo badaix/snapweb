@@ -430,23 +430,25 @@ class SnapControl {
         console.log('updateMetadata: ', metadata);
         // https://github.com/Microsoft/TypeScript/issues/19473
         let title: string = metadata.title || "Unknown Title";
-        let artist: string = (metadata.artist != undefined) ? metadata.artist[0] : "Unknown Artist";
+        let artist: string = (metadata.artist != undefined) ? metadata.artist.join(', ') : "Unknown Artist";
         let album: string = metadata.album || "";
-        let artwork: string = metadata.artUrl || 'snapcast-512.png';
+        let artwork: Array<MediaImage> = [{ src: 'snapcast-512.png', sizes: '512x512', type: 'image/png' }];
+        if (metadata.artUrl != undefined) {
+            artwork = [
+                { src: metadata.artUrl!, sizes: '96x96', type: 'image/png' },
+                { src: metadata.artUrl!, sizes: '128x128', type: 'image/png' },
+                { src: metadata.artUrl!, sizes: '192x192', type: 'image/png' },
+                { src: metadata.artUrl!, sizes: '256x256', type: 'image/png' },
+                { src: metadata.artUrl!, sizes: '384x384', type: 'image/png' },
+                { src: metadata.artUrl!, sizes: '512x512', type: 'image/png' },
+            ]
+        } // || 'snapcast-512.png';
         console.log('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
         navigator.mediaSession!.metadata = new MediaMetadata({
             title: title,
             artist: artist,
             album: album,
-            artwork: [
-                // { src: artwork, sizes: '250x250', type: 'image/jpeg' },
-                // 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
-                { src: artwork, sizes: '128x128', type: 'image/png' },
-                { src: artwork, sizes: '192x192', type: 'image/png' },
-                { src: artwork, sizes: '256x256', type: 'image/png' },
-                { src: artwork, sizes: '384x384', type: 'image/png' },
-                { src: artwork, sizes: '512x512', type: 'image/png' },
-            ]
+            artwork: artwork
         });
 
         // mediaSession.setActionHandler('seekbackward', function () { });
