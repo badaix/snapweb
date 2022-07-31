@@ -247,8 +247,10 @@ namespace Snapcast {
     }
 }
 
+interface OnChange { (server: Snapcast.Server): void }
 
 class SnapControl {
+    
     constructor(baseUrl: string) {
         this.server = new Snapcast.Server();
         this.baseUrl = baseUrl;
@@ -619,12 +621,21 @@ class SnapControl {
             } else {
                 refresh = this.onNotification(json_msg);
             }
+
             // TODO: don't update everything, but only the changed, 
             // e.g. update the values for the volume sliders
             // if (refresh)
             //     show();
         }
+        if (this.onChange) {
+            console.log("onChange");
+            this.onChange(this.server);
+        } else {
+            console.log("no onChange");
+        }
     }
+
+    public onChange?: OnChange;
 
     baseUrl: string;
     connection!: WebSocket;
