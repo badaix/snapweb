@@ -1,33 +1,18 @@
 import React from 'react';
 import logo from './snapcast-512.png';
 import { SnapControl, Snapcast } from './snapcontrol';
-import { Slider } from '@mui/material';
-// import VolumeDown from '@mui/icons-material/VolumeDown';
-import { VolumeUp, PlayArrow, MoreVert } from '@mui/icons-material';
-import Stack from '@mui/material/Stack';
-import { Box, ButtonBase } from '@mui/material';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardMedia from '@mui/material/CardMedia';
-import Typography from '@mui/material/Typography';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import Grid from '@mui/material/Grid';
-import Divider from '@mui/material/Divider';
-import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
+import { Slider, Stack, Box, Card, CardMedia, Typography, AppBar, Toolbar, IconButton, Grid, Divider, MenuItem, FormControl, Select, Menu } from '@mui/material';
+import { VolumeUp as VolumeUpIcon, PlayArrow as PlayArrowIcon, MoreVert as MoreVertIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Menu as MenuIcon } from '@mui/icons-material';
 import './App.css';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import MenuItem from "@mui/material/MenuItem";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import Container from "@mui/material/Container";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
 
-
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Button from '@mui/material/Button';
+import InputAdornment from '@mui/material/InputAdornment';
 
 
 const theme = createTheme({
@@ -64,12 +49,18 @@ type ClientProps = {
 
 type ClientState = {
   // client: Snapcast.Client;
+  anchorEl: HTMLElement | null;
+  open: boolean;
+  detailsOpen: boolean;
 };
 
 class Client extends React.Component<ClientProps, ClientState> {
   state: ClientState = {
     // optional second annotation for better type inference
-    client: this.props.client,
+    anchorEl: null,
+    // client: this.props.client,
+    open: false,
+    detailsOpen: false,
   };
 
   onVolumeChange(event: Event, value: number | Array<number>) {
@@ -79,6 +70,29 @@ class Client extends React.Component<ClientProps, ClientState> {
     this.props.client.config.volume.percent = value as number;
     // this.setState({ client: client });
     this.setState({});
+  };
+
+  onOptionsClicked(event: React.MouseEvent<HTMLButtonElement>) {
+    console.log("onOptionsClicked");
+    this.setState({ anchorEl: event.currentTarget, open: true });
+  };
+
+  onClose() {
+    this.setState({ anchorEl: null, open: false });
+  };
+
+  onDetailsClose() {
+    this.setState({ detailsOpen: false });
+  };
+
+  onSelected(item: string) {
+    console.log("Selected: " + item);
+    if (item === "details") {
+      this.setState({ detailsOpen: true });
+    } else if (item === "delete") {
+
+    }
+    this.setState({ anchorEl: null, open: false });
   };
 
   render() {
@@ -94,18 +108,138 @@ class Client extends React.Component<ClientProps, ClientState> {
               </Typography>
               <Stack spacing={2} direction="row" alignItems="center">
                 <IconButton aria-label="Mute">
-                  <VolumeUp />
+                  <VolumeUpIcon />
                 </IconButton>
                 <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" value={this.props.client.config.volume.percent} onChange={(event, value) => { this.onVolumeChange(event, value) }} />
               </Stack>
             </Stack>
           </Grid>
           <Grid item xs={1}>
-            <IconButton aria-label="Options">
-              <MoreVert />
+            <IconButton aria-label="Options" onClick={(event) => { this.onOptionsClicked(event); }}>
+              <MoreVertIcon />
             </IconButton>
+            <Menu
+              id="basic-menu"
+              anchorEl={this.state.anchorEl}
+              open={this.state.open}
+              onClose={() => { this.onClose() }}
+              MenuListProps={{
+                'aria-labelledby': 'basic-button',
+              }}
+            >
+              <MenuItem onClick={() => { this.onSelected("details") }}>Details</MenuItem>
+              {/* <MenuItem onClick={() => { this.onSelected("delete") }}>Delete</MenuItem> */}
+            </Menu>
           </Grid>
         </Grid>
+
+        <Dialog open={this.state.detailsOpen} onClose={() => { this.onDetailsClose() }}>
+          <DialogTitle>Client settings</DialogTitle>
+          <DialogContent>
+            {/* <DialogContentText>
+              To subscribe to this website, please enter your email address here. We
+              will send updates occasionally.
+            </DialogContentText> */}
+            <TextField
+              autoFocus
+              margin="dense"
+              id="name"
+              label="Name"
+              type="text"
+              fullWidth
+              defaultValue={this.props.client.config.name}
+              variant="standard"
+            />
+            <TextField
+              margin="dense"
+              id="latency"
+              label="Latency"
+              type="number"
+              fullWidth
+              value={this.props.client.config.latency}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">ms</InputAdornment>,
+              }}
+              variant="standard"
+            />
+            <TextField
+              margin="dense"
+              id="mac"
+              label="MAC"
+              type="text"
+              fullWidth
+              value={this.props.client.host.mac}
+              variant="standard"
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+            <TextField
+              margin="dense"
+              id="id"
+              label="ID"
+              type="text"
+              fullWidth
+              value={this.props.client.id}
+              variant="standard"
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+            <TextField
+              margin="dense"
+              id="ip"
+              label="IP"
+              type="text"
+              fullWidth
+              value={this.props.client.host.ip}
+              variant="standard"
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+            <TextField
+              margin="dense"
+              id="host"
+              label="Host"
+              type="text"
+              fullWidth
+              value={this.props.client.host.name}
+              variant="standard"
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+            <TextField
+              margin="dense"
+              id="os"
+              label="OS"
+              type="text"
+              fullWidth
+              value={this.props.client.host.os}
+              variant="standard"
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+            <TextField
+              margin="dense"
+              id="version"
+              label="Version"
+              type="text"
+              fullWidth
+              value={this.props.client.snapclient.version}
+              variant="standard"
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => { this.onDetailsClose() }}>Cancel</Button>
+            <Button onClick={() => { this.onDetailsClose() }}>Apply</Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     );
   }
@@ -308,7 +442,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, ServerState> {
                 aria-label="menu"
                 sx={{ mr: 2 }}
               >
-                <PlayArrow fontSize="large" />
+                <PlayArrowIcon fontSize="large" />
                 {/* sx={{ height: 30, width: 30 }} /> */}
               </IconButton>
             </Toolbar>
