@@ -3,13 +3,17 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { SnapControl, Snapcast } from './snapcontrol';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+
+let snapcontrol = new SnapControl("ws://192.168.0.3:1780");
+
 root.render(
   <React.StrictMode>
-    <App />
+    <App snapcontrol={snapcontrol} />
   </React.StrictMode>
 );
 
