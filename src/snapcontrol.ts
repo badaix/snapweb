@@ -250,7 +250,7 @@ namespace Snapcast {
 interface OnChange { (server: Snapcast.Server): void }
 
 class SnapControl {
-    
+
     constructor(baseUrl: string) {
         this.server = new Snapcast.Server();
         this.baseUrl = baseUrl;
@@ -602,6 +602,7 @@ class SnapControl {
     }
 
     private onMessage(msg: string) {
+        let refresh: boolean = false;
         let json_msg = JSON.parse(msg);
         let is_response: boolean = (json_msg.id !== undefined);
         console.log("Received " + (is_response ? "response" : "notification") + ", json: " + JSON.stringify(json_msg))
@@ -609,11 +610,11 @@ class SnapControl {
             if (json_msg.id === this.status_req_id) {
                 this.server = new Snapcast.Server(json_msg.result.server);
                 this.updateProperties(this.getMyStreamId());
+                refresh = true;
                 // show();
             }
         }
         else {
-            let refresh: boolean = false;
             if (Array.isArray(json_msg)) {
                 for (let notification of json_msg) {
                     refresh = this.onNotification(notification) || refresh;
@@ -621,17 +622,20 @@ class SnapControl {
             } else {
                 refresh = this.onNotification(json_msg);
             }
+            refresh = true;
 
             // TODO: don't update everything, but only the changed, 
             // e.g. update the values for the volume sliders
             // if (refresh)
             //     show();
         }
-        if (this.onChange) {
-            console.log("onChange");
-            this.onChange(this.server);
-        } else {
-            console.log("no onChange");
+        if (refresh) {
+            if (this.onChange) {
+                console.log("onChange");
+                this.onChange(this.server);
+            } else {
+                console.log("no onChange");
+            }
         }
     }
 

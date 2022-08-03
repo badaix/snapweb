@@ -4,7 +4,6 @@ import { SnapControl, Snapcast } from './snapcontrol';
 import { Slider, Stack, Box, Card, CardMedia, Typography, AppBar, Toolbar, IconButton, Grid, Divider, MenuItem, FormControl, Select, Menu } from '@mui/material';
 import { VolumeUp as VolumeUpIcon, PlayArrow as PlayArrowIcon, MoreVert as MoreVertIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Menu as MenuIcon } from '@mui/icons-material';
 import './App.css';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
@@ -15,36 +14,10 @@ import Button from '@mui/material/Button';
 import InputAdornment from '@mui/material/InputAdornment';
 
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      light: '#757ce8',
-      main: '#607d8b',
-      dark: '#002884',
-      contrastText: '#fff',
-    },
-    secondary: {
-      light: '#ff7961',
-      main: '#f44336',
-      dark: '#ba000d',
-      contrastText: '#000',
-    },
-  },
-  typography: {
-    subtitle1: {
-      fontSize: 17,
-    },
-    body1: {
-      fontWeight: 500,
-    },
-    h5: {
-      fontWeight: 300,
-    }
-  }
-});
 
 type ClientProps = {
   client: Snapcast.Client;
+  snapcontrol: SnapControl
 };
 
 type ClientState = {
@@ -69,6 +42,7 @@ class Client extends React.Component<ClientProps, ClientState> {
     // client.config.volume.percent = value as number;
     this.props.client.config.volume.percent = value as number;
     // this.setState({ client: client });
+    this.props.snapcontrol.setVolume(this.props.client.id, value as number, false);
     this.setState({});
   };
 
@@ -250,6 +224,7 @@ type GroupProps = {
   // using `interface` is also ok
   server: Snapcast.Server
   group: Snapcast.Group;
+  snapcontrol: SnapControl
 };
 
 type GroupState = {
@@ -267,7 +242,7 @@ class Group extends React.Component<GroupProps, GroupState> {
     let clients = [];
     for (let client of this.props.group.clients)
       if (client.connected)
-        clients.push(<Client key={client.id} client={client} />);
+        clients.push(<Client key={client.id} client={client} snapcontrol={this.props.snapcontrol}/>);
     if (clients.length === 0)
       return (null);
     let stream = this.props.server.getStream(this.props.group.stream_id);
@@ -365,6 +340,7 @@ class Group extends React.Component<GroupProps, GroupState> {
 type ServerProps = {
   // using `interface` is also ok
   server: Snapcast.Server;
+  snapcontrol: SnapControl
 };
 
 type ServerState = {
@@ -385,7 +361,7 @@ class Server extends React.Component<ServerProps, ServerState> {
 
     return (
       <Box sx={{ m: 1.5 }} >
-        {this.props.server.groups.map(group => <Group group={group} key={group.id} server={this.props.server} />)}
+        {this.props.server.groups.map(group => <Group group={group} key={group.id} server={this.props.server} snapcontrol={this.props.snapcontrol}/>)}
         {/* this.props.server
         {groups} */}
       </Box>
@@ -419,36 +395,31 @@ class App extends React.Component<{ snapcontrol: SnapControl }, ServerState> {
   render() {
     return (
       <div className="App">
-        <ThemeProvider theme={theme}>
-          <AppBar position="sticky">
-            <Toolbar>
-              <IconButton
+        <AppBar position="sticky">
+          <Toolbar>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              sx={{ mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              Snapcast
+            </Typography>
+            <IconButton
                 size="large"
                 edge="start"
                 color="inherit"
                 aria-label="menu"
-                sx={{ mr: 2 }}
-              >
-                <MenuIcon />
-              </IconButton>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                Snapcast
-              </Typography>
-              {/* <Button color="inherit">Login</Button> */}
-              <IconButton
-                size="large"
-                edge="start"
-                color="inherit"
-                aria-label="menu"
-                sx={{ mr: 2 }}
-              >
+                sx={{ mr: 2 }} >
                 <PlayArrowIcon fontSize="large" />
-                {/* sx={{ height: 30, width: 30 }} /> */}
-              </IconButton>
-            </Toolbar>
-          </AppBar>
-          <Server server={this.state.server} />
-        </ThemeProvider>
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+        <Server server={this.state.server} snapcontrol={this.props.snapcontrol} />
       </div >
     );
   }
