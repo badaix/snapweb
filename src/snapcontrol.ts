@@ -60,6 +60,10 @@ namespace Snapcast {
             usec: number;
         };
         connected: boolean = false;
+
+        getName(): string {
+            return this.config.name.length === 0 ? this.host.name : this.config.name;
+        }
     }
 
 

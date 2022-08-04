@@ -1,17 +1,10 @@
 import React from 'react';
 import logo from './snapcast-512.png';
-import { SnapControl, Snapcast } from './snapcontrol';
-import { Slider, Stack, Box, Card, CardMedia, Typography, AppBar, Toolbar, IconButton, Grid, Divider, MenuItem, FormControl, Select, Menu } from '@mui/material';
-import { VolumeUp as VolumeUpIcon, PlayArrow as PlayArrowIcon, MoreVert as MoreVertIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Menu as MenuIcon } from '@mui/icons-material';
 import './App.css';
-
-import TextField from '@mui/material/TextField';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import Button from '@mui/material/Button';
-import InputAdornment from '@mui/material/InputAdornment';
+import { SnapControl, Snapcast } from './snapcontrol';
+import { AppBar, Box, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, InputAdornment, Menu, MenuItem, Select, Slider, Stack, TextField, Toolbar, Typography, IconButton } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { VolumeUp as VolumeUpIcon, PlayArrow as PlayArrowIcon, MoreVert as MoreVertIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Menu as MenuIcon, Settings as SettingsIcon } from '@mui/icons-material';
 
 
 
@@ -38,12 +31,8 @@ class Client extends React.Component<ClientProps, ClientState> {
 
   onVolumeChange(event: Event, value: number | Array<number>) {
     console.log("onVolumeChange: " + value);
-    // let client = this.state.client;
-    // client.config.volume.percent = value as number;
     this.props.client.config.volume.percent = value as number;
-    // this.setState({ client: client });
     this.props.snapcontrol.setVolume(this.props.client.id, value as number, false);
-    this.setState({});
   };
 
   onOptionsClicked(event: React.MouseEvent<HTMLButtonElement>) {
@@ -84,7 +73,7 @@ class Client extends React.Component<ClientProps, ClientState> {
                 <IconButton aria-label="Mute">
                   <VolumeUpIcon />
                 </IconButton>
-                <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" value={this.props.client.config.volume.percent} onChange={(event, value) => { this.onVolumeChange(event, value) }} />
+                <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" defaultValue={this.props.client.config.volume.percent} onChange={(event, value) => { this.onVolumeChange(event, value) }} />
               </Stack>
             </Stack>
           </Grid>
@@ -115,21 +104,11 @@ class Client extends React.Component<ClientProps, ClientState> {
               will send updates occasionally.
             </DialogContentText> */}
             <TextField
-              autoFocus
-              margin="dense"
-              id="name"
-              label="Name"
-              type="text"
-              fullWidth
+              autoFocus margin="dense" id="name" label="Name" type="text" fullWidth variant="standard"
               defaultValue={this.props.client.config.name}
-              variant="standard"
             />
             <TextField
-              margin="dense"
-              id="latency"
-              label="Latency"
-              type="number"
-              fullWidth
+              margin="dense" id="latency" label="Latency" type="number" fullWidth
               value={this.props.client.config.latency}
               InputProps={{
                 endAdornment: <InputAdornment position="end">ms</InputAdornment>,
@@ -137,73 +116,43 @@ class Client extends React.Component<ClientProps, ClientState> {
               variant="standard"
             />
             <TextField
-              margin="dense"
-              id="mac"
-              label="MAC"
-              type="text"
-              fullWidth
+              margin="dense" id="mac" label="MAC" type="text" fullWidth variant="standard"
               value={this.props.client.host.mac}
-              variant="standard"
               InputProps={{
                 readOnly: true,
               }}
             />
             <TextField
-              margin="dense"
-              id="id"
-              label="ID"
-              type="text"
-              fullWidth
+              margin="dense" id="id" label="ID" type="text" fullWidth variant="standard"
               value={this.props.client.id}
-              variant="standard"
               InputProps={{
                 readOnly: true,
               }}
             />
             <TextField
-              margin="dense"
-              id="ip"
-              label="IP"
-              type="text"
-              fullWidth
+              margin="dense" id="ip" label="IP" type="text" fullWidth variant="standard"
               value={this.props.client.host.ip}
-              variant="standard"
               InputProps={{
                 readOnly: true,
               }}
             />
             <TextField
-              margin="dense"
-              id="host"
-              label="Host"
-              type="text"
-              fullWidth
+              margin="dense" id="host" label="Host" type="text" fullWidth variant="standard"
               value={this.props.client.host.name}
-              variant="standard"
               InputProps={{
                 readOnly: true,
               }}
             />
             <TextField
-              margin="dense"
-              id="os"
-              label="OS"
-              type="text"
-              fullWidth
+              margin="dense" id="os" label="OS" type="text" fullWidth variant="standard"
               value={this.props.client.host.os}
-              variant="standard"
               InputProps={{
                 readOnly: true,
               }}
             />
             <TextField
-              margin="dense"
-              id="version"
-              label="Version"
-              type="text"
-              fullWidth
+              margin="dense" id="version" label="Version" type="text" fullWidth variant="standard"
               value={this.props.client.snapclient.version}
-              variant="standard"
               InputProps={{
                 readOnly: true,
               }}
@@ -228,13 +177,34 @@ type GroupProps = {
 };
 
 type GroupState = {
-  count: number; // like this
+  anchorEl: HTMLElement | null;
+  settingsOpen: boolean;
+  settingsClients: Snapcast.Client[];
 };
 
 class Group extends React.Component<GroupProps, GroupState> {
+  state: GroupState = {
+    anchorEl: null,
+    settingsOpen: false,
+    settingsClients: [],
+  };
 
   onStreamSelected(id: string) {
     console.log("onStreamSelected: " + id);
+  };
+
+  onSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
+    console.log("onSettingsClicked");
+    this.setState({ anchorEl: event.currentTarget, settingsOpen: true });
+  };
+
+  onSettingsClose(event: object) {
+    console.log("onSettingsClose: " + event);
+    this.setState({ settingsOpen: false });
+  };
+
+  onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("onChange: " + event.target.value);
   };
 
   render() {
@@ -242,7 +212,7 @@ class Group extends React.Component<GroupProps, GroupState> {
     let clients = [];
     for (let client of this.props.group.clients)
       if (client.connected)
-        clients.push(<Client key={client.id} client={client} snapcontrol={this.props.snapcontrol}/>);
+        clients.push(<Client key={client.id} client={client} snapcontrol={this.props.snapcontrol} />);
     if (clients.length === 0)
       return (null);
     let stream = this.props.server.getStream(this.props.group.stream_id);
@@ -251,87 +221,119 @@ class Group extends React.Component<GroupProps, GroupState> {
     let artist = stream?.properties.metadata.artist || "Unknown artist";
     console.log("Art URL: " + artUrl);
 
-    return (
-      <Card sx={{
-        p: 2,
-        my: 2,
-        flexGrow: 1
-      }}>
-        <Grid
-          container
-          direction="row"
-          wrap="nowrap"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{
-            mb: 2
-          }}>
+    let allClients = [];
+    for (let group of this.props.server.groups)
+      for (let client of group.clients)
+        allClients.push(client);
 
-          <Grid item justifyContent="center">
-            <CardMedia
-              component="img"
-              sx={{ width: 64 }}
-              image={artUrl}
-              alt="Live from space album cover"
-            />
-          </Grid>
-          <Grid item xs={12} sm container wrap="nowrap">
-            <Grid
-              item
-              container
-              direction="column"
-              spacing={0}
-              sx={{ ml: 3 }}
-              justifyContent="center"
-            >
-              <Box component="div" sx={{ textOverflow: 'ellipsis' }}>
-                <Typography
-                  gutterBottom
-                  variant="subtitle1"
-                  align="left"
-                  sx={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box'
-                  }}
-                >
-                  {title}
+    return (
+      <div>
+        <Card sx={{
+          p: 2,
+          my: 2,
+          flexGrow: 1
+        }}>
+          <Grid
+            container
+            direction="row"
+            wrap="nowrap"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{
+              mb: 2
+            }}>
+
+            <IconButton aria-label="Options" onClick={(event) => { this.onSettingsClicked(event); }}>
+              <SettingsIcon />
+            </IconButton>
+            <Grid item justifyContent="center">
+              <CardMedia
+                component="img"
+                sx={{ width: 64 }}
+                image={artUrl}
+                alt="Live from space album cover"
+              />
+            </Grid>
+            <Grid item xs={12} sm container wrap="nowrap">
+              <Grid
+                item
+                container
+                direction="column"
+                spacing={0}
+                sx={{ ml: 3 }}
+                justifyContent="center"
+              >
+                <Box component="div" sx={{ textOverflow: 'ellipsis' }}>
+                  <Typography
+                    gutterBottom
+                    variant="subtitle1"
+                    align="left"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box'
+                    }}
+                  >
+                    {title}
+                  </Typography>
+                </Box>
+                <Typography noWrap variant="body1" gutterBottom align="left">
+                  {artist}
                 </Typography>
-              </Box>
-              <Typography noWrap variant="body1" gutterBottom align="left">
-                {artist}
-              </Typography>
-            </Grid>
-            <Grid item>
-              <FormControl variant="standard" fullWidth>
-                {/* <InputLabel id="demo-simple-select-label">Stream</InputLabel> */}
-                <Select
-                  labelId="demo-simple-select-label"
-                  id="demo-simple-select"
-                  value={this.props.group.stream_id}
-                  label="Stream"
-                  onChange={(event, child) => { this.onStreamSelected(event.target.value) }}
-                >
-                  {this.props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <Box sx={{ display: "flex", alignItems: "center", pl: 1, pb: 1 }}>
-                <IconButton aria-label="previous">
-                  <SkipPreviousIcon />
-                </IconButton>
-                <IconButton aria-label="play/pause">
-                  <PlayArrowIcon sx={{ height: 38, width: 38 }} />
-                </IconButton>
-                <IconButton aria-label="next">
-                  <SkipNextIcon />
-                </IconButton>
-              </Box>
+              </Grid>
+              <Grid item>
+                <FormControl variant="standard" fullWidth>
+                  {/* <InputLabel id="demo-simple-select-label">Stream</InputLabel> */}
+                  <Select
+                    id="stream"
+                    value={this.props.group.stream_id}
+                    label="Stream"
+                    onChange={(event, child) => { this.onStreamSelected(event.target.value) }}
+                  >
+                    {this.props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
+                  </Select>
+                </FormControl>
+                <Box sx={{ display: "flex", alignItems: "center", pl: 1, pb: 1 }}>
+                  <IconButton aria-label="previous">
+                    <SkipPreviousIcon />
+                  </IconButton>
+                  <IconButton aria-label="play/pause">
+                    <PlayArrowIcon sx={{ height: 38, width: 38 }} />
+                  </IconButton>
+                  <IconButton aria-label="next">
+                    <SkipNextIcon />
+                  </IconButton>
+                </Box>
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
-        <Divider />
-        {clients}
-      </Card>
+          <Divider />
+          {clients}
+        </Card>
+
+        <Dialog fullWidth open={this.state.settingsOpen} onClose={(event: object) => { this.onSettingsClose(event) }}>
+          <DialogTitle>Group settings</DialogTitle>
+          <DialogContent>
+            <Divider textAlign="left">Stream</Divider>
+            <TextField
+              // label="Stream" 
+              margin="dense" id="stream" select fullWidth variant="standard"
+              value={this.props.group.stream_id}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => { this.onChange(event) }}
+            >
+              {this.props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
+            </TextField>
+            <Divider textAlign="left">Clients</Divider>
+            <FormGroup>
+              {allClients.map(client => <FormControlLabel control={<Checkbox defaultChecked={this.props.group.clients.includes(client)} />} label={client.getName()} />)}
+            </FormGroup>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={(event: object) => { this.onSettingsClose(event) }}>Cancel</Button>
+            <Button onClick={(event: object) => { this.onSettingsClose(event) }}>Apply</Button>
+          </DialogActions>
+        </Dialog>
+      </div>
     );
   }
 }
@@ -361,7 +363,7 @@ class Server extends React.Component<ServerProps, ServerState> {
 
     return (
       <Box sx={{ m: 1.5 }} >
-        {this.props.server.groups.map(group => <Group group={group} key={group.id} server={this.props.server} snapcontrol={this.props.snapcontrol}/>)}
+        {this.props.server.groups.map(group => <Group group={group} key={group.id} server={this.props.server} snapcontrol={this.props.snapcontrol} />)}
         {/* this.props.server
         {groups} */}
       </Box>
