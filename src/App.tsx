@@ -18,21 +18,28 @@ type ClientState = {
   anchorEl: HTMLElement | null;
   open: boolean;
   detailsOpen: boolean;
+  // volume: {
+  //   muted: boolean;
+  //   percent: number;
+  // };
 };
 
 class Client extends React.Component<ClientProps, ClientState> {
   state: ClientState = {
-    // optional second annotation for better type inference
     anchorEl: null,
-    // client: this.props.client,
     open: false,
     detailsOpen: false,
+    // volume: this.props.client.config.volume
   };
 
-  onVolumeChange(event: Event, value: number | Array<number>) {
+  onVolumeChange(value: number) {
     console.log("onVolumeChange: " + value);
-    this.props.client.config.volume.percent = value as number;
-    this.props.snapcontrol.setVolume(this.props.client.id, value as number, false);
+    // let volume = { muted: this.state.volume.muted, percent: value as number };
+    // this.setState({});// volume: volume });
+    // this.props.snapcontrol.setVolume(this.props.client.id, volume.percent, volume.muted);
+    this.props.client.config.volume.percent = value;
+    this.props.snapcontrol.setVolume(this.props.client.id, value, false);
+    this.setState({});
   };
 
   onOptionsClicked(event: React.MouseEvent<HTMLButtonElement>) {
@@ -73,7 +80,7 @@ class Client extends React.Component<ClientProps, ClientState> {
                 <IconButton aria-label="Mute">
                   <VolumeUpIcon />
                 </IconButton>
-                <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + this.props.client.id} defaultValue={this.props.client.config.volume.percent} onChange={(event, value) => { this.onVolumeChange(event, value) }} />
+                <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + this.props.client.id} value={this.props.client.config.volume.percent} onChange={(_, value) => { this.onVolumeChange(value as number) }} />
               </Stack>
             </Stack>
           </Grid>
@@ -169,6 +176,12 @@ class Client extends React.Component<ClientProps, ClientState> {
 }
 
 
+type GroupClient = {
+  client: Snapcast.Client;
+  inGroup: boolean;
+  wasInGroup: boolean;
+};
+
 type GroupProps = {
   // using `interface` is also ok
   server: Snapcast.Server
@@ -179,43 +192,62 @@ type GroupProps = {
 type GroupState = {
   anchorEl: HTMLElement | null;
   settingsOpen: boolean;
-};
-
-type GroupClient = {
-  client: Snapcast.Client;
-  inGroup: boolean;
+  clients: GroupClient[];
+  streamId: string;
 };
 
 class Group extends React.Component<GroupProps, GroupState> {
   state: GroupState = {
     anchorEl: null,
     settingsOpen: false,
+    clients: [],
+    streamId: ""
   };
 
   onStreamSelected(id: string) {
     console.log("onStreamSelected: " + id);
   };
 
-  clients!: GroupClient[];
+  // clients!: GroupClient[];
 
   onSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
     console.log("onSettingsClicked");
 
-    this.clients = [];
-    this.props.server.groups.map(group => group.clients.map(client => this.clients.push({ client: client, inGroup: this.props.group.clients.includes(client) })));
+    let clients: GroupClient[] = [];
+    for (let group of this.props.server.groups) {
+      for (let client of group.clients) {
+        let inGroup: boolean = this.props.group.clients.includes(client);
+        clients.push({ client: client, inGroup: inGroup, wasInGroup: inGroup });
+      }
+    }
 
     // this.clients = [];
     // this.props.server.groups.map(group => group.clients.map(client => this.clients.push(client.id)));
-    this.setState({ anchorEl: event.currentTarget, settingsOpen: true });// , settingsClients: clients });
+    this.setState({ anchorEl: event.currentTarget, settingsOpen: true, clients: clients, streamId: this.props.group.stream_id });// , settingsClients: clients });
   };
 
-  onSettingsClose(event: object) {
-    console.log("onSettingsClose: " + event);
-    let groupClients: string[] = [];
-    for (let element of this.clients)
-      if (element.inGroup)
-        groupClients.push(element.client.id);
-    this.props.snapcontrol.setClients(this.props.group.id, groupClients);
+  onSettingsClose(apply: boolean) {
+    console.log("onSettingsClose: " + apply);
+    if (apply) {
+      let changed: boolean = false;
+      for (let element of this.state.clients) {
+        if (element.inGroup !== element.wasInGroup) {
+          changed = true;
+          break;
+        }
+      }
+
+      if (changed) {
+        let groupClients: string[] = [];
+        for (let element of this.state.clients)
+          if (element.inGroup)
+            groupClients.push(element.client.id);
+        this.props.snapcontrol.setClients(this.props.group.id, groupClients);
+      }
+
+      if (this.props.group.stream_id !== this.state.streamId)
+        this.props.snapcontrol.setStream(this.props.group.id, this.state.streamId);
+    }
     this.setState({ settingsOpen: false });
   };
 
@@ -225,8 +257,10 @@ class Group extends React.Component<GroupProps, GroupState> {
 
   onGroupClientChange = (client: Snapcast.Client, inGroup: boolean) => {
     console.log("onGroupClientChange: " + client.id + ", in group: " + inGroup);
-    let idx = this.clients.findIndex(element => element.client === client);
-    this.clients[idx].inGroup = inGroup;
+    let clients = this.state.clients;
+    let idx = this.state.clients.findIndex(element => element.client === client);
+    clients[idx].inGroup = inGroup;
+    this.setState({ clients: clients });
   };
 
   render() {
@@ -310,7 +344,11 @@ class Group extends React.Component<GroupProps, GroupState> {
                     id="stream"
                     value={this.props.group.stream_id}
                     label="Stream"
-                    onChange={(event, child) => { this.onStreamSelected(event.target.value) }}
+                    onChange={(event) => {
+                      let stream: string = event.target.value;
+                      this.setState({ streamId: stream });
+                      this.props.snapcontrol.setStream(this.props.group.id, stream);
+                    }}
                   >
                     {this.props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
                   </Select>
@@ -333,28 +371,28 @@ class Group extends React.Component<GroupProps, GroupState> {
           {clients}
         </Card>
 
-        <Dialog fullWidth open={this.state.settingsOpen} onClose={(event: object) => { this.onSettingsClose(event) }}>
+        <Dialog fullWidth open={this.state.settingsOpen} onClose={() => { this.onSettingsClose(false) }}>
           <DialogTitle>Group settings</DialogTitle>
           <DialogContent>
             <Divider textAlign="left">Stream</Divider>
             <TextField
               // label="Stream" 
               margin="dense" id="stream" select fullWidth variant="standard"
-              value={this.props.group.stream_id}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => { this.onChange(event) }}
+              value={this.state.streamId}
+              onChange={(event) => { console.log('SetStream: ' + event.target.value); this.setState({ streamId: event.target.value }) }}
             >
               {this.props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
             </TextField>
             <Divider textAlign="left">Clients</Divider>
             <FormGroup>
               {/* {allClients.map(client => <FormControlLabel control={<Checkbox defaultChecked={this.props.group.clients.includes(client)} />} label={client.getName()} />)} */}
-              {this.clients?.map(client => <FormControlLabel control={<Checkbox defaultChecked={client.inGroup} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { this.onGroupClientChange(client.client, e.target.checked) }} />} label={client.client.getName()} key={client.client.id} />)}
+              {this.state.clients.map(client => <FormControlLabel control={<Checkbox checked={client.inGroup} key={"cb-" + client.client.id} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { this.onGroupClientChange(client.client, e.target.checked) }} />} label={client.client.getName()} key={"label-" + client.client.id} />)}
               {/* {allClients.map(client => <FormControlLabel control={<Checkbox defaultChecked={this.props.group.clients.includes(client)} />} label={client.getName()} />)} */}
             </FormGroup>
           </DialogContent>
           <DialogActions>
-            <Button onClick={(event: object) => { this.onSettingsClose(event) }}>Cancel</Button>
-            <Button onClick={(event: object) => { this.onSettingsClose(event) }}>Apply</Button>
+            <Button onClick={() => { this.onSettingsClose(true) }}>OK</Button>
+            <Button onClick={() => { this.onSettingsClose(false) }}>Cancel</Button>
           </DialogActions>
         </Dialog>
       </div>
