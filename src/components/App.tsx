@@ -1,49 +1,17 @@
 import React from 'react';
-// import './App.css';
-import Group from './Group';
+import Server from './Server';
+import AboutDialog from './AboutDialog';
 import { SnapControl, Snapcast } from '../snapcontrol';
 import { AppBar, Box, Checkbox, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, IconButton } from '@mui/material';
 import { PlayArrow as PlayArrowIcon, Menu as MenuIcon } from '@mui/icons-material';
 
 
 
-type ServerProps = {
-  // using `interface` is also ok
-  server: Snapcast.Server;
-  snapcontrol: SnapControl
-};
-
-type ServerState = {
-  server: Snapcast.Server;
-};
-
-class Server extends React.Component<ServerProps, ServerState> {
-  // state: MyState = {
-  //   // optional second annotation for better type inference
-  //   count: this.props.count,
-  // };
-
-  render() {
-    console.log("Render Server");
-    // let groups = [];
-    // for (let i = 0; i < this.state.count; i++)
-    //   groups.push(<Group />);
-
-    return (
-      <Box sx={{ m: 1.5 }} >
-        {this.props.server.groups.map(group => <Group group={group} key={group.id} server={this.props.server} snapcontrol={this.props.snapcontrol} />)}
-        {/* this.props.server
-        {groups} */}
-      </Box>
-    );
-  }
-}
-
-
-
 type AppState = {
   server: Snapcast.Server;
   settingsOpen: boolean;
+  showOffline: boolean;
+  aboutOpen: boolean;
 };
 
 
@@ -53,6 +21,8 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
   state: AppState = {
     server: new Snapcast.Server(),
     settingsOpen: false,
+    showOffline: false,
+    aboutOpen: false,
   };
 
   onChange(server: Snapcast.Server) {
@@ -68,6 +38,11 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
   componentDidMount() {
     console.log("componentDidMount");
     this.props.snapcontrol.onChange = (server: Snapcast.Server) => this.onChange(server);
+    if (window.localStorage) {
+      const value = window.localStorage.getItem("showoffline") === "true";
+      console.log("show offline: " + value);
+      this.setState({ showOffline: value });
+    }
   }
 
   componentWillUnmount() {
@@ -83,19 +58,23 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
     >
       <List>
         <ListItem key="about" disablePadding>
-          <ListItemButton>
+          <ListItemButton onClick={() => { this.setState({ aboutOpen: true, settingsOpen: false }) }}>
             <ListItemText primary="About..." />
           </ListItemButton>
         </ListItem>
 
         <ListItem disablePadding>
-          <ListItemButton role={undefined}>
-            {/* onClick={handleToggle(value)} */}
+          <ListItemButton role={undefined} onClick={(event) => {
+            let showoffline = !this.state.showOffline;
+            if (window.localStorage)
+              window.localStorage.setItem("showoffline", showoffline ? "true" : "false");
+            this.setState({ showOffline: showoffline });
+          }} >
             <ListItemText id='label-show-offline' primary='Show offline clients' />
             <ListItemIcon>
               <Checkbox
                 edge="end"
-                defaultChecked
+                checked={this.state.showOffline}
                 tabIndex={-1}
                 disableRipple
                 inputProps={{ 'aria-labelledby': 'label-show-offline' }}
@@ -138,11 +117,12 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
         <Drawer
           anchor="top"
           open={this.state.settingsOpen} //</div>={state[anchor]}
-        // onClose={toggleDrawer(anchor, false)}
+          onClose={() => { this.setState({ settingsOpen: false }); }}
         >
           {this.list()}
         </Drawer>
-        <Server server={this.state.server} snapcontrol={this.props.snapcontrol} />
+        <Server server={this.state.server} snapcontrol={this.props.snapcontrol} showOffline={this.state.showOffline} />
+        <AboutDialog open={this.state.aboutOpen} onClose={() => { this.setState({ aboutOpen: false }) }} />
       </div >
     );
   }

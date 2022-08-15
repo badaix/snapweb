@@ -1,8 +1,8 @@
 import React from 'react';
 import { SnapControl, Snapcast } from '../snapcontrol';
-import { Box, Button, Grid, InputAdornment, Menu, MenuItem, Slider, Stack, TextField, Typography, IconButton } from '@mui/material';
+import { Alert, Box, Button, Grid, InputAdornment, Menu, MenuItem, Slider, Snackbar, Stack, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import { VolumeUp as VolumeUpIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { VolumeUp as VolumeUpIcon, MoreVert as MoreVertIcon, VerticalAlignBottom } from '@mui/icons-material';
 
 
 type ClientProps = {
@@ -15,6 +15,8 @@ type ClientState = {
   anchorEl: HTMLElement | null;
   open: boolean;
   detailsOpen: boolean;
+  deleted: boolean;
+  undoOpen: boolean;
   // volume: {
   //   muted: boolean;
   //   percent: number;
@@ -26,6 +28,8 @@ class Client extends React.Component<ClientProps, ClientState> {
     anchorEl: null,
     open: false,
     detailsOpen: false,
+    deleted: false,
+    undoOpen: false,
     // volume: this.props.client.config.volume
   };
 
@@ -62,10 +66,46 @@ class Client extends React.Component<ClientProps, ClientState> {
     this.setState({ anchorEl: null, open: false });
   };
 
+  onSnackbarClose(undo: boolean) {
+    console.log('onSnackbarClose, undo: ' + undo);
+    this.setState({ undoOpen: false });
+    if (!undo)
+      this.props.snapcontrol.deleteClient(this.props.client.id);
+    else
+      this.setState({ deleted: false, open: false });
+  };
+
   render() {
+    if (this.state.deleted) {
+      if (!this.state.undoOpen)
+        return null;
+
+      return (
+        <Snackbar
+          open={this.state.undoOpen}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          autoHideDuration={6000}
+          onClose={(_) => { this.onSnackbarClose(false) }}>
+          <Alert onClose={(_) => { this.onSnackbarClose(false) }} severity="info" sx={{ width: '100%' }}
+            action={
+              <Button color="inherit" size="small" onClick={(_) => { this.onSnackbarClose(true) }}>
+                Undo
+              </Button>}
+          >
+            Deleted {this.props.client.getName()}
+          </Alert>
+        </Snackbar >
+      );
+    }
+
+    let menuitems = [];
+    menuitems.push(<MenuItem onClick={() => { this.onSelected("details") }}>Details</MenuItem>);
+    if (!this.props.client.connected)
+      menuitems.push(<MenuItem onClick={() => { this.setState({ deleted: true, undoOpen: true }) }}>Delete</MenuItem>);
+
     console.log("Render Client " + this.props.client.host.name + ", id: " + this.props.client.id);
     return (
-      <Box sx={{ mr: 2 }}>
+      <Box sx={{ mr: 2, opacity: this.props.client.connected ? 1.0 : 0.5 }} >
         <Grid container spacing={2} justifyContent="center" alignItems="center" >
           <Grid item xs={11}>
             <Stack spacing={-2} direction="column">
@@ -94,8 +134,7 @@ class Client extends React.Component<ClientProps, ClientState> {
                 'aria-labelledby': 'basic-button',
               }}
             >
-              <MenuItem onClick={() => { this.onSelected("details") }}>Details</MenuItem>
-              {/* <MenuItem onClick={() => { this.onSelected("delete") }}>Delete</MenuItem> */}
+              {menuitems}
             </Menu>
           </Grid>
         </Grid>
