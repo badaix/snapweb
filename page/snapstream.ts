@@ -21,7 +21,7 @@ function setCookie(key: string, value: string, exdays: number = -1) {
 
 
 function getPersistentValue(key: string, defaultValue: string = ""): string {
-    if (!!window.localStorage) {
+    if (window.localStorage) {
         const value = window.localStorage.getItem(key);
         if (value !== null) {
             return value;

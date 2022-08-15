@@ -17,7 +17,8 @@ type GroupProps = {
   // using `interface` is also ok
   server: Snapcast.Server
   group: Snapcast.Group;
-  snapcontrol: SnapControl
+  snapcontrol: SnapControl;
+  showOffline: boolean;
 };
 
 type GroupState = {
@@ -98,9 +99,11 @@ class Group extends React.Component<GroupProps, GroupState> {
   render() {
     console.log("Render Group " + this.props.group.id);
     let clients = [];
-    for (let client of this.props.group.clients)
-      if (client.connected)
+    for (let client of this.props.group.clients) {
+      if (client.connected || this.props.showOffline) {
         clients.push(<Client key={client.id} client={client} snapcontrol={this.props.snapcontrol} />);
+      }
+    }
     if (clients.length === 0)
       return (null);
     let stream = this.props.server.getStream(this.props.group.stream_id);
