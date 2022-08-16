@@ -2,7 +2,7 @@ import React from 'react';
 import Client from './Client';
 import logo from './logo192.png';
 import { SnapControl, Snapcast } from '../snapcontrol';
-import { Box, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, TextField, Typography, IconButton } from '@mui/material';
+import { Alert, Box, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, Snackbar, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { PlayArrow as PlayArrowIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Settings as SettingsIcon } from '@mui/icons-material';
 
@@ -26,6 +26,7 @@ type GroupState = {
   settingsOpen: boolean;
   clients: GroupClient[];
   streamId: string;
+  deletedClients: Snapcast.Client[];
 };
 
 
@@ -34,7 +35,8 @@ class Group extends React.Component<GroupProps, GroupState> {
     anchorEl: null,
     settingsOpen: false,
     clients: [],
-    streamId: ""
+    streamId: "",
+    deletedClients: []
   };
 
   onStreamSelected(id: string) {
@@ -88,7 +90,7 @@ class Group extends React.Component<GroupProps, GroupState> {
     console.log("onChange: " + event.target.value);
   };
 
-  onGroupClientChange = (client: Snapcast.Client, inGroup: boolean) => {
+  onGroupClientChange(client: Snapcast.Client, inGroup: boolean) {
     console.log("onGroupClientChange: " + client.id + ", in group: " + inGroup);
     let clients = this.state.clients;
     let idx = this.state.clients.findIndex(element => element.client === client);
@@ -96,16 +98,56 @@ class Group extends React.Component<GroupProps, GroupState> {
     this.setState({ clients: clients });
   };
 
+  onClientDelete(client: Snapcast.Client) {
+    console.log("onClientDelete: " + client.getName());
+    let deletedClients = this.state.deletedClients;
+    if (!deletedClients.includes(client))
+      deletedClients.push(client);
+    this.setState({ deletedClients: deletedClients });
+  }
+
+  onSnackbarClose(client: Snapcast.Client, undo: boolean) {
+    console.log("onSnackbarClose, client: " + client.getName() + ", undo: " + undo);
+    if (!undo)
+      this.props.snapcontrol.deleteClient(client.id);
+
+    let deletedClients = this.state.deletedClients;
+    if (deletedClients.includes(client))
+      deletedClients.splice(deletedClients.indexOf(client), 1);
+
+    this.setState({ deletedClients: deletedClients });
+  };
+
+
+  snackbar = () => (
+    this.state.deletedClients.map(client =>
+      <Snackbar
+        open
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        autoHideDuration={6000}
+        key={'snackbar-' + client.id}
+        onClose={(_, reason: string) => { if (reason !== 'clickaway') this.onSnackbarClose(client, false) }}>
+        <Alert onClose={(_) => { this.onSnackbarClose(client, false) }} severity="info" sx={{ width: '100%' }}
+          action={
+            <Button color="inherit" size="small" onClick={(_) => { this.onSnackbarClose(client, true) }}>
+              Undo
+            </Button>}
+        >
+          Deleted {client.getName()}
+        </Alert>
+      </Snackbar >
+    ));
+
   render() {
     console.log("Render Group " + this.props.group.id);
     let clients = [];
     for (let client of this.props.group.clients) {
-      if (client.connected || this.props.showOffline) {
-        clients.push(<Client key={client.id} client={client} snapcontrol={this.props.snapcontrol} />);
+      if ((client.connected || this.props.showOffline) && !this.state.deletedClients.includes(client)) {
+        clients.push(<Client key={client.id} client={client} snapcontrol={this.props.snapcontrol} onDelete={() => { this.onClientDelete(client) }} />);
       }
     }
     if (clients.length === 0)
-      return (null);
+      return (<div>{this.snackbar()}</div>);
     let stream = this.props.server.getStream(this.props.group.stream_id);
     let artUrl = stream?.properties.metadata.artUrl || logo;
     let title = stream?.properties.metadata.title || "Unknown title";
@@ -230,6 +272,7 @@ class Group extends React.Component<GroupProps, GroupState> {
             <Button onClick={() => { this.onSettingsClose(false) }}>Cancel</Button>
           </DialogActions>
         </Dialog>
+        {this.snackbar()}
       </div>
     );
   }
