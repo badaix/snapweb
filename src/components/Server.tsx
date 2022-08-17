@@ -1,5 +1,4 @@
 import React from 'react';
-// import './App.css';
 import Group from './Group';
 import { SnapControl, Snapcast } from '../snapcontrol';
 import { Box } from '@mui/material';
