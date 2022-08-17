@@ -14,7 +14,6 @@ type GroupClient = {
 };
 
 type GroupProps = {
-  // using `interface` is also ok
   server: Snapcast.Server
   group: Snapcast.Group;
   snapcontrol: SnapControl;
@@ -39,14 +38,8 @@ class Group extends React.Component<GroupProps, GroupState> {
     deletedClients: []
   };
 
-  onStreamSelected(id: string) {
-    console.log("onStreamSelected: " + id);
-  };
-
-  // clients!: GroupClient[];
-
-  onSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
-    console.log("onSettingsClicked");
+  handleSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
+    console.log("handleSettingsClicked");
 
     let clients: GroupClient[] = [];
     for (let group of this.props.server.groups) {
@@ -61,8 +54,8 @@ class Group extends React.Component<GroupProps, GroupState> {
     this.setState({ anchorEl: event.currentTarget, settingsOpen: true, clients: clients, streamId: this.props.group.stream_id });// , settingsClients: clients });
   };
 
-  onSettingsClose(apply: boolean) {
-    console.log("onSettingsClose: " + apply);
+  handleSettingsClose(apply: boolean) {
+    console.log("handleSettingsClose: " + apply);
     if (apply) {
       let changed: boolean = false;
       for (let element of this.state.clients) {
@@ -86,28 +79,28 @@ class Group extends React.Component<GroupProps, GroupState> {
     this.setState({ settingsOpen: false });
   };
 
-  onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("onChange: " + event.target.value);
-  };
+  // handleStreamSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   console.log("handleStreamSelect: " + event.target.value);
+  // };
 
-  onGroupClientChange(client: Snapcast.Client, inGroup: boolean) {
-    console.log("onGroupClientChange: " + client.id + ", in group: " + inGroup);
+  handleGroupClientChange(client: Snapcast.Client, inGroup: boolean) {
+    console.log("handleGroupClientChange: " + client.id + ", in group: " + inGroup);
     let clients = this.state.clients;
     let idx = this.state.clients.findIndex(element => element.client === client);
     clients[idx].inGroup = inGroup;
     this.setState({ clients: clients });
   };
 
-  onClientDelete(client: Snapcast.Client) {
-    console.log("onClientDelete: " + client.getName());
+  handleClientDelete(client: Snapcast.Client) {
+    console.log("handleClientDelete: " + client.getName());
     let deletedClients = this.state.deletedClients;
     if (!deletedClients.includes(client))
       deletedClients.push(client);
     this.setState({ deletedClients: deletedClients });
   }
 
-  onSnackbarClose(client: Snapcast.Client, undo: boolean) {
-    console.log("onSnackbarClose, client: " + client.getName() + ", undo: " + undo);
+  handleSnackbarClose(client: Snapcast.Client, undo: boolean) {
+    console.log("handleSnackbarClose, client: " + client.getName() + ", undo: " + undo);
     if (!undo)
       this.props.snapcontrol.deleteClient(client.id);
 
@@ -126,10 +119,10 @@ class Group extends React.Component<GroupProps, GroupState> {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         autoHideDuration={6000}
         key={'snackbar-' + client.id}
-        onClose={(_, reason: string) => { if (reason !== 'clickaway') this.onSnackbarClose(client, false) }}>
-        <Alert onClose={(_) => { this.onSnackbarClose(client, false) }} severity="info" sx={{ width: '100%' }}
+        onClose={(_, reason: string) => { if (reason !== 'clickaway') this.handleSnackbarClose(client, false) }}>
+        <Alert onClose={(_) => { this.handleSnackbarClose(client, false) }} severity="info" sx={{ width: '100%' }}
           action={
-            <Button color="inherit" size="small" onClick={(_) => { this.onSnackbarClose(client, true) }}>
+            <Button color="inherit" size="small" onClick={(_) => { this.handleSnackbarClose(client, true) }}>
               Undo
             </Button>}
         >
@@ -143,7 +136,7 @@ class Group extends React.Component<GroupProps, GroupState> {
     let clients = [];
     for (let client of this.props.group.clients) {
       if ((client.connected || this.props.showOffline) && !this.state.deletedClients.includes(client)) {
-        clients.push(<Client key={client.id} client={client} snapcontrol={this.props.snapcontrol} onDelete={() => { this.onClientDelete(client) }} />);
+        clients.push(<Client key={client.id} client={client} snapcontrol={this.props.snapcontrol} onDelete={() => { this.handleClientDelete(client) }} />);
       }
     }
     if (clients.length === 0)
@@ -176,7 +169,7 @@ class Group extends React.Component<GroupProps, GroupState> {
               mb: 2
             }}>
 
-            <IconButton aria-label="Options" onClick={(event) => { this.onSettingsClicked(event); }}>
+            <IconButton aria-label="Options" onClick={(event) => { this.handleSettingsClicked(event); }}>
               <SettingsIcon />
             </IconButton>
             <Grid item justifyContent="center">
@@ -216,7 +209,6 @@ class Group extends React.Component<GroupProps, GroupState> {
               </Grid>
               <Grid item>
                 <FormControl variant="standard" fullWidth>
-                  {/* <InputLabel id="demo-simple-select-label">Stream</InputLabel> */}
                   <Select
                     id="stream"
                     value={this.props.group.stream_id}
@@ -248,7 +240,7 @@ class Group extends React.Component<GroupProps, GroupState> {
           {clients}
         </Card>
 
-        <Dialog fullWidth open={this.state.settingsOpen} onClose={() => { this.onSettingsClose(false) }}>
+        <Dialog fullWidth open={this.state.settingsOpen} onClose={() => { this.handleSettingsClose(false) }}>
           <DialogTitle>Group settings</DialogTitle>
           <DialogContent>
             <Divider textAlign="left">Stream</Divider>
@@ -262,14 +254,12 @@ class Group extends React.Component<GroupProps, GroupState> {
             </TextField>
             <Divider textAlign="left">Clients</Divider>
             <FormGroup>
-              {/* {allClients.map(client => <FormControlLabel control={<Checkbox defaultChecked={this.props.group.clients.includes(client)} />} label={client.getName()} />)} */}
-              {this.state.clients.map(client => <FormControlLabel control={<Checkbox checked={client.inGroup} key={"cb-" + client.client.id} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { this.onGroupClientChange(client.client, e.target.checked) }} />} label={client.client.getName()} key={"label-" + client.client.id} />)}
-              {/* {allClients.map(client => <FormControlLabel control={<Checkbox defaultChecked={this.props.group.clients.includes(client)} />} label={client.getName()} />)} */}
+              {this.state.clients.map(client => <FormControlLabel control={<Checkbox checked={client.inGroup} key={"cb-" + client.client.id} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { this.handleGroupClientChange(client.client, e.target.checked) }} />} label={client.client.getName()} key={"label-" + client.client.id} />)}
             </FormGroup>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => { this.onSettingsClose(true) }}>OK</Button>
-            <Button onClick={() => { this.onSettingsClose(false) }}>Cancel</Button>
+            <Button onClick={() => { this.handleSettingsClose(true) }}>OK</Button>
+            <Button onClick={() => { this.handleSettingsClose(false) }}>Cancel</Button>
           </DialogActions>
         </Dialog>
         {this.snackbar()}
