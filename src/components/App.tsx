@@ -25,19 +25,20 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
     aboutOpen: false,
   };
 
-  onChange(server: Snapcast.Server) {
+  handleChange(server: Snapcast.Server) {
     console.log("Update");
     this.setState({ server });
   }
 
-  onSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
-    console.log("onOptionsClicked");
+  handleSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
+    console.log("handleSettingsClicked");
     this.setState({ settingsOpen: true });
   };
 
   componentDidMount() {
     console.log("componentDidMount");
-    this.props.snapcontrol.onChange = (server: Snapcast.Server) => this.onChange(server);
+    this.props.snapcontrol.onChange = (server: Snapcast.Server) => this.handleChange(server);
+    this.handleChange(this.props.snapcontrol.server);
     if (window.localStorage) {
       const value = window.localStorage.getItem("showoffline") === "true";
       console.log("show offline: " + value);
@@ -97,7 +98,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
               color="inherit"
               aria-label="menu"
               sx={{ mr: 2 }}
-              onClick={(event) => { this.onSettingsClicked(event); }}
+              onClick={(event) => { this.handleSettingsClicked(event); }}
             >
               <MenuIcon />
             </IconButton>
