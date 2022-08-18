@@ -4,7 +4,7 @@ import AboutDialog from './AboutDialog';
 import { SnapControl, Snapcast } from '../snapcontrol';
 import { SnapStream } from '../snapstream';
 import { AppBar, Box, Checkbox, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, IconButton } from '@mui/material';
-import { PlayArrow as PlayArrowIcon, Menu as MenuIcon } from '@mui/icons-material';
+import { PlayArrow as PlayArrowIcon, Stop as StopIcon, Menu as MenuIcon } from '@mui/icons-material';
 
 
 
@@ -13,6 +13,7 @@ type AppState = {
   settingsOpen: boolean;
   showOffline: boolean;
   aboutOpen: boolean;
+  playing: boolean;
   // audio: HTMLAudioElement;
 };
 
@@ -25,6 +26,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
     settingsOpen: false,
     showOffline: false,
     aboutOpen: false,
+    playing: false,
     // snapstream: null,
   };
 
@@ -68,6 +70,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
       this.audio.pause();
       this.audio.src = '';
       document.body.removeChild(this.audio);
+      this.setState({ playing: false });
     }
     else {
       this.snapstream = new SnapStream("ws://192.168.0.3:1780");
@@ -78,6 +81,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
       this.audio.play().then(() => {
         this.props.snapcontrol.updateProperties(this.props.snapcontrol.getMyStreamId());
       });
+      this.setState({ playing: true });
     }
   }
 
@@ -144,7 +148,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
               sx={{ mr: 2 }}
               onClick={(_) => { this.handlePlayClicked(); }}
             >
-              <PlayArrowIcon fontSize="large" />
+              {this.state.playing ? <StopIcon fontSize="large" /> : <PlayArrowIcon fontSize="large" />}
             </IconButton>
           </Toolbar>
         </AppBar>
