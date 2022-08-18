@@ -2,6 +2,7 @@ import React from 'react';
 import Server from './Server';
 import AboutDialog from './AboutDialog';
 import { SnapControl, Snapcast } from '../snapcontrol';
+import { SnapStream } from '../snapstream';
 import { AppBar, Box, Checkbox, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, IconButton } from '@mui/material';
 import { PlayArrow as PlayArrowIcon, Menu as MenuIcon } from '@mui/icons-material';
 
@@ -12,6 +13,7 @@ type AppState = {
   settingsOpen: boolean;
   showOffline: boolean;
   aboutOpen: boolean;
+  // audio: HTMLAudioElement;
 };
 
 
@@ -23,16 +25,25 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
     settingsOpen: false,
     showOffline: false,
     aboutOpen: false,
+    // snapstream: null,
   };
+
+  snapstream: SnapStream | null = null;
+  audio: HTMLAudioElement = document.createElement('audio');
 
   handleChange(server: Snapcast.Server) {
     console.log("Update");
     this.setState({ server });
   }
 
-  handleSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
+  handleSettingsClicked() {
     console.log("handleSettingsClicked");
     this.setState({ settingsOpen: true });
+  };
+
+  handlePlayClicked() {
+    console.log("handlePlayClicked");
+    this.play();
   };
 
   componentDidMount() {
@@ -48,6 +59,26 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
 
   componentWillUnmount() {
     // clearInterval(this.timerID);
+  }
+
+  play() {
+    if (this.snapstream) {
+      this.snapstream.stop();
+      this.snapstream = null;
+      this.audio.pause();
+      this.audio.src = '';
+      document.body.removeChild(this.audio);
+    }
+    else {
+      this.snapstream = new SnapStream("ws://192.168.0.3:1780");
+      // User interacted with the page. Let's play audio...
+      document.body.appendChild(this.audio);
+      this.audio.src = "10-seconds-of-silence.mp3";
+      this.audio.loop = true;
+      this.audio.play().then(() => {
+        this.props.snapcontrol.updateProperties(this.props.snapcontrol.getMyStreamId());
+      });
+    }
   }
 
   list = () => (
@@ -98,7 +129,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
               color="inherit"
               aria-label="menu"
               sx={{ mr: 2 }}
-              onClick={(event) => { this.handleSettingsClicked(event); }}
+              onClick={(_) => { this.handleSettingsClicked(); }}
             >
               <MenuIcon />
             </IconButton>
@@ -110,7 +141,9 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
               edge="start"
               color="inherit"
               aria-label="menu"
-              sx={{ mr: 2 }} >
+              sx={{ mr: 2 }}
+              onClick={(_) => { this.handlePlayClicked(); }}
+            >
               <PlayArrowIcon fontSize="large" />
             </IconButton>
           </Toolbar>
