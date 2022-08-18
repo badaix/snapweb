@@ -81,9 +81,9 @@ class Client extends React.Component<ClientProps, ClientState> {
 
   render() {
     let menuitems = [];
-    menuitems.push(<MenuItem onClick={() => { this.handleDetailsClicked() }}>Details</MenuItem>);
+    menuitems.push(<MenuItem key='Menu-Details' onClick={() => { this.handleDetailsClicked() }}>Details</MenuItem>);
     if (!this.props.client.connected)
-      menuitems.push(<MenuItem onClick={() => { this.props.onDelete(); this.setState({ anchorEl: null, open: false }); }}>Delete</MenuItem>);
+      menuitems.push(<MenuItem key='Menu-Delete' onClick={() => { this.props.onDelete(); this.setState({ anchorEl: null, open: false }); }}>Delete</MenuItem>);
 
     console.log("Render Client " + this.props.client.host.name + ", id: " + this.props.client.id);
     return (
