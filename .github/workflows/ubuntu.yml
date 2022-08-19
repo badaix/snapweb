@@ -24,6 +24,7 @@ jobs:
       run: npm install
 
     - name: build
+      env: GENERATE_SOURCEMAP: false
       run: npm run build
 
     - name: archive artifacts
