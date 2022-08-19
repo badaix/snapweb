@@ -9,20 +9,25 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - uses: actions/setup-node@v3
       with:
         node-version: 16
+
     - name: clean cache
       run: npm cache clean --force
+
     - name: install
       run: npm ci
+
     - name: npm install
       run: npm install
+
     - name: build
       run: npm run build
 
-    # - name: Archive artifacts
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: develop_snapshot
-    #     path: /home/runner/work/snapweb/snapweb/dist
+    - name: archive artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: develop_snapshot
+        path: build
