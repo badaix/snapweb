@@ -8,15 +8,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: dependencies
-      run: |
-        sudo npm install -g typescript@latest 
-        sudo npm install --save @types/wicg-mediasession@1.1.0
-    - name: build
-      run: make
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
-        name: develop_snapshot
-        path: /home/runner/work/snapweb/snapweb/dist
+        node-version: 16
+    - name: Build
+      run: npm run build
+
+    # - name: Archive artifacts
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: develop_snapshot
+    #     path: /home/runner/work/snapweb/snapweb/dist
