@@ -1,4 +1,4 @@
-let audio: HTMLAudioElement = document.createElement('audio');
+// let audio: HTMLAudioElement = document.createElement('audio');
 
 namespace Snapcast {
 
