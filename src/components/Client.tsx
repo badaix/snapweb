@@ -2,7 +2,7 @@ import React from 'react';
 import { SnapControl, Snapcast } from '../snapcontrol';
 import { Box, Button, Grid, InputAdornment, Menu, MenuItem, Slider, Stack, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import { VolumeUp as VolumeUpIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { VolumeUp as VolumeUpIcon, VolumeOff as VolumeOffIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
 
 type ClientProps = {
@@ -78,6 +78,11 @@ class Client extends React.Component<ClientProps, ClientState> {
     this.props.snapcontrol.setClientLatency(this.props.client.id, latency);
   };
 
+  handleMuteClicked() {
+    console.log("handleMuteClicked");
+    this.props.snapcontrol.setVolume(this.props.client.id, this.props.client.config.volume.percent, !this.props.client.config.volume.muted);
+    this.setState({});
+  };
 
   render() {
     let menuitems = [];
@@ -96,8 +101,8 @@ class Client extends React.Component<ClientProps, ClientState> {
                 {this.props.client.config.name === "" ? this.props.client.host.name : this.props.client.config.name}
               </Typography>
               <Stack spacing={2} direction="row" alignItems="center">
-                <IconButton aria-label="Mute">
-                  <VolumeUpIcon />
+                <IconButton aria-label="Mute" onClick={() => { this.handleMuteClicked() }}>
+                  {this.props.client.config.volume.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
                 </IconButton>
                 <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + this.props.client.id} value={this.props.client.config.volume.percent} onChange={(_, value) => { this.handleVolumeChange(value as number) }} />
               </Stack>
