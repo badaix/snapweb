@@ -12,7 +12,13 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 16
-    - name: Build
+    - name: clean cache
+      run: npm cache clean --force
+    - name: install
+      run: npm ci
+    - name: npm install
+      run: npm install
+    - name: build
       run: npm run build
 
     # - name: Archive artifacts
