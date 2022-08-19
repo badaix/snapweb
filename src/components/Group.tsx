@@ -258,8 +258,8 @@ class Group extends React.Component<GroupProps, GroupState> {
             </FormGroup>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => { this.handleSettingsClose(true) }}>OK</Button>
             <Button onClick={() => { this.handleSettingsClose(false) }}>Cancel</Button>
+            <Button onClick={() => { this.handleSettingsClose(true) }}>OK</Button>
           </DialogActions>
         </Dialog>
         {this.snackbar()}

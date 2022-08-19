@@ -187,8 +187,8 @@ class Client extends React.Component<ClientProps, ClientState> {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => { this.handleDetailsClose(true) }}>OK</Button>
             <Button onClick={() => { this.handleDetailsClose(false) }}>Cancel</Button>
+            <Button onClick={() => { this.handleDetailsClose(true) }}>OK</Button>
           </DialogActions>
         </Dialog>
       </Box>
