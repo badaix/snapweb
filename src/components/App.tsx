@@ -14,7 +14,6 @@ type AppState = {
   showOffline: boolean;
   aboutOpen: boolean;
   playing: boolean;
-  // audio: HTMLAudioElement;
 };
 
 
@@ -27,7 +26,6 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
     showOffline: false,
     aboutOpen: false,
     playing: false,
-    // snapstream: null,
   };
 
   snapstream: SnapStream | null = null;
@@ -60,7 +58,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
   }
 
   componentWillUnmount() {
-    // clearInterval(this.timerID);
+    console.log("componentDidUnmount");
   }
 
   play() {
