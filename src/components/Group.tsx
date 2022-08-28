@@ -2,9 +2,9 @@ import React from 'react';
 import Client from './Client';
 import logo from './logo192.png';
 import { SnapControl, Snapcast } from '../snapcontrol';
-import { Alert, Box, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, Snackbar, TextField, Typography, IconButton } from '@mui/material';
+import { Alert, Box, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, Slider, Snackbar, Stack, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import { PlayArrow as PlayArrowIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Settings as SettingsIcon } from '@mui/icons-material';
+import { VolumeUp as VolumeUpIcon, /*VolumeOff as VolumeOffIcon,*/ PlayArrow as PlayArrowIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Settings as SettingsIcon } from '@mui/icons-material';
 
 
 type GroupClient = {
@@ -26,6 +26,7 @@ type GroupState = {
   clients: GroupClient[];
   streamId: string;
   deletedClients: Snapcast.Client[];
+  volume: number;
 };
 
 
@@ -35,8 +36,19 @@ class Group extends React.Component<GroupProps, GroupState> {
     settingsOpen: false,
     clients: [],
     streamId: "",
-    deletedClients: []
+    deletedClients: [],
+    volume: 0
   };
+
+  componentDidMount() {
+    console.log("componentDidMount");
+    let clients = this.getClients();
+    let volume = 0;
+    for (let client of clients)
+      volume += client.config.volume.percent;
+    volume /= clients.length;
+    this.setState({ volume: volume });
+  }
 
   handleSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
     console.log("handleSettingsClicked");
@@ -99,6 +111,17 @@ class Group extends React.Component<GroupProps, GroupState> {
     this.setState({ deletedClients: deletedClients });
   }
 
+  handleClientVolumeChange(client: Snapcast.Client) {
+    console.log("handleClientVolumeChange: " + client.getName());
+    let clients = this.getClients();
+    let volume: number = 0;
+    for (let client of clients) {
+      volume += client.config.volume.percent;
+    }
+    volume /= clients.length;
+    this.setState({ volume: volume });
+  }
+
   handleSnackbarClose(client: Snapcast.Client, undo: boolean) {
     console.log("handleSnackbarClose, client: " + client.getName() + ", undo: " + undo);
     if (!undo)
@@ -111,6 +134,56 @@ class Group extends React.Component<GroupProps, GroupState> {
     this.setState({ deletedClients: deletedClients });
   };
 
+  handleMuteClicked() {
+    console.log("handleMuteClicked");
+    // this.props.snapcontrol.setVolume(this.props.client.id, this.props.client.config.volume.percent, !this.props.client.config.volume.muted);
+    // this.setState({});
+  };
+
+  client_volumes: Map<string, number> = new Map<string, number>();
+  group_volume: number = 0;
+  volumeEntered: boolean = true;
+
+  handleVolumeChange(value: number) {
+    console.log("handleVolumeChange: " + value);
+    if (this.volumeEntered) {
+      this.client_volumes.clear();
+      this.group_volume = 0;
+      for (let client of this.getClients()) {
+        this.client_volumes.set(client.id, client.config.volume.percent);
+        this.group_volume += client.config.volume.percent;
+      }
+      this.group_volume /= this.client_volumes.size;
+      this.volumeEntered = false;
+    }
+
+    let delta = value - this.group_volume;
+    let ratio: number;
+    if (delta < 0)
+      ratio = (this.group_volume - value) / this.group_volume;
+    else
+      ratio = (value - this.group_volume) / (100 - this.group_volume);
+
+    for (let client of this.getClients()) {
+      let new_volume = this.client_volumes.get(client.id)!;
+      if (delta < 0)
+        new_volume -= ratio * new_volume;
+      else
+        new_volume += ratio * (100 - new_volume);
+
+      client.config.volume.percent = new_volume;
+      this.props.snapcontrol.setVolume(client.id, new_volume);
+    }
+
+    this.setState({ volume: value });
+  };
+
+  handleVolumeChangeCommitted(value: number) {
+    console.log("handleVolumeChangeCommitted: " + value);
+    // handle last change
+    // this.handleVolumeChange(value);
+    this.volumeEntered = true;
+  };
 
   snackbar = () => (
     this.state.deletedClients.map(client =>
@@ -131,16 +204,27 @@ class Group extends React.Component<GroupProps, GroupState> {
       </Snackbar >
     ));
 
-  render() {
-    console.log("Render Group " + this.props.group.id);
+
+  getClients(): Snapcast.Client[] {
     let clients = [];
     for (let client of this.props.group.clients) {
       if ((client.connected || this.props.showOffline) && !this.state.deletedClients.includes(client)) {
-        clients.push(<Client key={client.id} client={client} snapcontrol={this.props.snapcontrol} onDelete={() => { this.handleClientDelete(client) }} />);
+        clients.push(client);
       }
+    }
+    return clients;
+  }
+
+  render() {
+    console.log("Render Group " + this.props.group.id);
+    let clients = [];
+
+    for (let client of this.getClients()) {
+      clients.push(<Client key={client.id} client={client} snapcontrol={this.props.snapcontrol} onDelete={() => { this.handleClientDelete(client) }} onVolumeChange={() => { this.handleClientVolumeChange(client) }} />);
     }
     if (clients.length === 0)
       return (<div>{this.snackbar()}</div>);
+
     let stream = this.props.server.getStream(this.props.group.stream_id);
     let artUrl = stream?.properties.metadata.artUrl || logo;
     let title = stream?.properties.metadata.title || "Unknown title";
@@ -236,6 +320,15 @@ class Group extends React.Component<GroupProps, GroupState> {
               </Grid>
             </Grid>
           </Grid>
+          {clients.length > 1 &&
+            <Stack spacing={2} direction="row" alignItems="center">
+              <IconButton aria-label="Mute" onClick={() => { this.handleMuteClicked() }}>
+                {/* {this.props.client.config.volume.muted ? <VolumeOffIcon /> :  */}
+                <VolumeUpIcon />
+              </IconButton>
+              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + this.props.group.id} value={this.state.volume} onChange={(_, value) => { this.handleVolumeChange(value as number) }} onChangeCommitted={(_, value) => { this.handleVolumeChangeCommitted(value as number) }} />
+            </Stack>
+          }
           <Divider />
           {clients}
         </Card>
