@@ -5,7 +5,8 @@ import { SnapControl, Snapcast } from '../snapcontrol';
 import { SnapStream } from '../snapstream';
 import { AppBar, Box, Checkbox, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, IconButton } from '@mui/material';
 import { PlayArrow as PlayArrowIcon, Stop as StopIcon, Menu as MenuIcon } from '@mui/icons-material';
-
+const silence = require('./10-seconds-of-silence.mp3');
+const snapcast512 = require('./snapcast-512.png');
 
 
 type AppState = {
@@ -16,6 +17,7 @@ type AppState = {
   playing: boolean;
 };
 
+let audio = new Audio("./10-seconds-of-silence.mp3");
 
 class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
   // json = { "groups": [{ "clients": [{ "config": { "instance": 1, "latency": 0, "name": "Küche", "volume": { "muted": false, "percent": 41 } }, "connected": true, "host": { "arch": "armv7l", "ip": "::ffff:192.168.0.252", "mac": "b8:27:eb:45:e1:ae", "name": "kueche", "os": "Raspbian GNU/Linux 11 (bullseye)" }, "id": "b8:27:eb:45:e1:ae", "lastSeen": { "sec": 1659107107, "usec": 70451 }, "snapclient": { "name": "Snapclient", "protocolVersion": 2, "version": "0.26.0" } }, { "config": { "instance": 1, "latency": 0, "name": "Wohnzimmer", "volume": { "muted": false, "percent": 81 } }, "connected": true, "host": { "arch": "armv7l", "ip": "::ffff:192.168.0.3", "mac": "dc:a6:32:3f:bd:1c", "name": "raspberrypi", "os": "Raspbian GNU/Linux 11 (bullseye)" }, "id": "dc:a6:32:3f:bd:1c", "lastSeen": { "sec": 1659107106, "usec": 967903 }, "snapclient": { "name": "Snapclient", "protocolVersion": 2, "version": "0.26.0" } }, { "config": { "instance": 1, "latency": 0, "name": "", "volume": { "muted": false, "percent": 36 } }, "connected": false, "host": { "arch": "web", "ip": "192.168.0.38", "mac": "00:00:00:00:00:00", "name": "Snapweb client", "os": "Linux x86_64" }, "id": "2cb68ccc-94bb-444a-9837-12b80cb4ef64", "lastSeen": { "sec": 1659073670, "usec": 52728 }, "snapclient": { "name": "Snapweb", "protocolVersion": 2, "version": "0.4.0" } }, { "config": { "instance": 1, "latency": 0, "name": "Arbeitszimmer", "volume": { "muted": false, "percent": 73 } }, "connected": true, "host": { "arch": "armv7l", "ip": "::ffff:192.168.0.8", "mac": "74:da:38:3e:d2:56", "name": "arbeitszimmer", "os": "Raspbian GNU/Linux 10 (buster)" }, "id": "74:da:38:3e:d2:56", "lastSeen": { "sec": 1659107106, "usec": 344276 }, "snapclient": { "name": "Snapclient", "protocolVersion": 2, "version": "0.26.0" } }, { "config": { "instance": 1, "latency": 0, "name": "", "volume": { "muted": false, "percent": 28 } }, "connected": false, "host": { "arch": "arm64-v8a", "ip": "::ffff:192.168.0.192", "mac": "00:00:00:00:00:00", "name": "Pixel 4a", "os": "Android 12" }, "id": "d91f7722-44c7-4d52-b63e-984611238b75", "lastSeen": { "sec": 1659076681, "usec": 458282 }, "snapclient": { "name": "Snapclient", "protocolVersion": 2, "version": "0.26.0" } }], "id": "e02e0600-e68c-b128-147b-58ca0a063ecf", "muted": false, "name": "", "stream_id": "default" }, { "clients": [{ "config": { "instance": 1, "latency": 0, "name": "", "volume": { "muted": false, "percent": 2 } }, "connected": false, "host": { "arch": "web", "ip": "192.168.0.10", "mac": "00:00:00:00:00:00", "name": "Snapweb client", "os": "Win32" }, "id": "6bf61c54-a88c-4b97-8447-e186a52c673d", "lastSeen": { "sec": 1658131455, "usec": 112522 }, "snapclient": { "name": "Snapweb", "protocolVersion": 2, "version": "0.4.0" } }], "id": "1d5d515b-d5c0-2831-6415-c85225c4315f", "muted": false, "name": "", "stream_id": "default" }, { "clients": [{ "config": { "instance": 1, "latency": 0, "name": "", "volume": { "muted": false, "percent": 60 } }, "connected": false, "host": { "arch": "web", "ip": "192.168.0.10", "mac": "00:00:00:00:00:00", "name": "Snapweb client", "os": "Win32" }, "id": "7ce9a092-a6d7-4508-b5d3-310fb5c73a32", "lastSeen": { "sec": 1658135991, "usec": 462267 }, "snapclient": { "name": "Snapweb", "protocolVersion": 2, "version": "0.4.0" } }], "id": "78a849df-1025-bb10-cd7e-c7751bb1642c", "muted": false, "name": "", "stream_id": "default" }, { "clients": [{ "config": { "instance": 1, "latency": 0, "name": "", "volume": { "muted": false, "percent": 54 } }, "connected": false, "host": { "arch": "web", "ip": "192.168.0.192", "mac": "00:00:00:00:00:00", "name": "Snapweb client", "os": "Linux armv8l" }, "id": "1497ade9-c94b-4528-bc2c-b61c5d26bc38", "lastSeen": { "sec": 1658734688, "usec": 964264 }, "snapclient": { "name": "Snapweb", "protocolVersion": 2, "version": "0.4.0" } }], "id": "2c4fd25e-c1a3-0123-79d0-969425e5c0c2", "muted": false, "name": "", "stream_id": "default" }, { "clients": [{ "config": { "instance": 1, "latency": 0, "name": "", "volume": { "muted": false, "percent": 100 } }, "connected": false, "host": { "arch": "web", "ip": "192.168.0.189", "mac": "00:00:00:00:00:00", "name": "Snapweb client", "os": "Linux armv8l" }, "id": "979c8e19-ed8c-4fe7-a0e2-568a069b1549", "lastSeen": { "sec": 1659103069, "usec": 235493 }, "snapclient": { "name": "Snapweb", "protocolVersion": 2, "version": "0.4.0" } }], "id": "b5d6c40c-86d1-a952-f11b-d97254b9a3ca", "muted": false, "name": "", "stream_id": "default" }], "server": { "host": { "arch": "armv7l", "ip": "", "mac": "", "name": "raspberrypi", "os": "Raspbian GNU/Linux 11 (bullseye)" }, "snapserver": { "controlProtocolVersion": 1, "name": "Snapserver", "protocolVersion": 1, "version": "0.26.0" } }, "streams": [{ "id": "default", "properties": { "canControl": true, "canGoNext": true, "canGoPrevious": true, "canPause": true, "canPlay": true, "canSeek": false, "loopStatus": "none", "metadata": { "artUrl": "http://cdn-profiles.tunein.com/s60240/images/logoq.png?t=636326", "artist": ["Radio Båstad 96.1 (Top 40 & Pop Music)"], "title": "Radio Bastad", "url": "tunein:station:s60240" }, "mute": false, "playbackStatus": "playing", "position": 0.9070000052452087, "shuffle": false, "volume": 100 }, "status": "playing", "uri": { "fragment": "", "host": "", "path": "/", "query": { "chunk_ms": "20", "codec": "flac", "controlscript": "/home/pi/meta_mopidy.py", "controlscriptparams": "--mopidy-host=192.168.0.3", "device": "hw:0,1,1", "name": "default", "sampleformat": "44100:16:2" }, "raw": "alsa:////?chunk_ms=20&codec=flac&controlscript=/home/pi/meta_mopidy.py&controlscriptparams=--mopidy-host=192.168.0.3&device=hw:0,1,1&name=default&sampleformat=44100:16:2", "scheme": "alsa" } }, { "id": "Spotify", "properties": { "canControl": true, "canGoNext": true, "canGoPrevious": true, "canPause": true, "canPlay": true, "canSeek": true, "loopStatus": "none", "metadata": { "album": "BREATHE", "artUrl": "http://i.scdn.co/image/ab67616d00001e020e6264910a1693e12310289d", "artist": ["Felix Jaehn", "VIZE", "Miss Li"], "contentCreated": "2021-10-01", "discNumber": 1, "duration": 159.96200561523438, "title": "Close Your Eyes", "trackId": "F0D74146287C4BD08E3427CE7C7D4533", "trackNumber": 2, "url": "spotify:track:7kswSnEiwuwuOQngMvpflV" }, "mute": false, "playbackStatus": "paused", "position": 0, "rate": 1, "shuffle": false, "volume": 100 }, "status": "idle", "uri": { "fragment": "", "host": "", "path": "//home/pi/Develop/librespot-java/librespot-api.sh", "query": { "chunk_ms": "20", "codec": "flac", "controlscript": "/home/pi/meta_librespot-java.py", "name": "Spotify", "sampleformat": "44100:16:2" }, "raw": "process://///home/pi/Develop/librespot-java/librespot-api.sh?chunk_ms=20&codec=flac&controlscript=/home/pi/meta_librespot-java.py&name=Spotify&sampleformat=44100:16:2", "scheme": "process" } }, { "id": "Meta", "properties": { "canControl": true, "canGoNext": true, "canGoPrevious": true, "canPause": true, "canPlay": true, "canSeek": true, "loopStatus": "none", "metadata": { "album": "BREATHE", "artUrl": "http://i.scdn.co/image/ab67616d00001e020e6264910a1693e12310289d", "artist": ["Felix Jaehn", "VIZE", "Miss Li"], "contentCreated": "2021-10-01", "discNumber": 1, "duration": 159.96200561523438, "title": "Close Your Eyes", "trackId": "F0D74146287C4BD08E3427CE7C7D4533", "trackNumber": 2, "url": "spotify:track:7kswSnEiwuwuOQngMvpflV" }, "mute": false, "playbackStatus": "paused", "position": 0, "rate": 1, "shuffle": false, "volume": 100 }, "status": "playing", "uri": { "fragment": "", "host": "", "path": "/Spotify/default", "query": { "chunk_ms": "20", "codec": "flac", "name": "Meta", "sampleformat": "44100:16:2" }, "raw": "meta:////Spotify/default?chunk_ms=20&codec=flac&name=Meta&sampleformat=44100:16:2", "scheme": "meta" } }] };
@@ -29,26 +31,170 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
   };
 
   snapstream: SnapStream | null = null;
-  audio: HTMLAudioElement = document.createElement('audio');
+  // audio: HTMLAudioElement = document.createElement('audio');
 
   handleChange(server: Snapcast.Server) {
     console.log("Update");
-    this.setState({ server });
+    this.setState({ server }, () => {
+      this.updateMediaSession();
+    });
   }
+
+  // handleStreamChange(id: string) {
+  //   console.log("handleStreamChange");
+  //   this.setState({ server }, () => {
+  //     this.updateMediaSession();
+  //   });
+  // }
 
   handleSettingsClicked() {
     console.log("handleSettingsClicked");
     this.setState({ settingsOpen: true });
   };
 
+  getMyStreamId(): string {
+    try {
+      let group = this.props.snapcontrol.getGroupFromClient(SnapStream.getClientId());
+      return this.props.snapcontrol.getStream(group.stream_id).id;
+    } catch (e) {
+      return "";
+    }
+  };
+
+  updateMediaSession() {
+    if (!this.snapstream)
+      return;
+    try {
+      let streamId = this.getMyStreamId();
+      let properties = this.props.snapcontrol.getStream(streamId).properties;
+      let metadata = properties.metadata;
+      let title: string = metadata.title || "Unknown Title";
+      let artist: string = (metadata.artist !== undefined) ? metadata.artist.join(', ') : "Unknown Artist";
+      let album: string = metadata.album || "";
+      let artwork: Array<MediaImage> = [{ src: snapcast512, sizes: '512x512', type: 'image/png' }];
+      if (metadata.artUrl !== undefined) {
+        artwork = [
+          { src: metadata.artUrl!, sizes: '96x96', type: 'image/png' },
+          { src: metadata.artUrl!, sizes: '128x128', type: 'image/png' },
+          { src: metadata.artUrl!, sizes: '192x192', type: 'image/png' },
+          { src: metadata.artUrl!, sizes: '256x256', type: 'image/png' },
+          { src: metadata.artUrl!, sizes: '384x384', type: 'image/png' },
+          { src: metadata.artUrl!, sizes: '512x512', type: 'image/png' },
+        ]
+      } // || 'snapcast-512.png';
+      console.log('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
+      navigator.mediaSession!.metadata = new MediaMetadata({
+        title: title,
+        artist: artist,
+        album: album,
+        artwork: artwork
+      });
+
+      let mediaSession = navigator.mediaSession!;
+      let play_state: MediaSessionPlaybackState = "none";
+      if (properties.playbackStatus !== undefined) {
+        if (properties.playbackStatus === "playing") {
+          audio.play();
+          play_state = "playing";
+        }
+        else if (properties.playbackStatus === "paused") {
+          audio.pause();
+          play_state = "paused";
+        }
+        else if (properties.playbackStatus === "stopped") {
+          audio.pause();
+          play_state = "none";
+        }
+      }
+
+      mediaSession.playbackState = play_state;
+      mediaSession.setActionHandler('play', properties.canPlay ? () => { this.props.snapcontrol.control(streamId, 'play') } : null);
+      mediaSession.setActionHandler('pause', properties.canPause ? () => { this.props.snapcontrol.control(streamId, 'pause') } : null);
+      mediaSession.setActionHandler('previoustrack', properties.canGoPrevious ? () => { this.props.snapcontrol.control(streamId, 'previous') } : null);
+      mediaSession.setActionHandler('nexttrack', properties.canGoNext ? () => { this.props.snapcontrol.control(streamId, 'next') } : null);
+      try {
+        mediaSession.setActionHandler('stop', properties.canControl ? () => { this.props.snapcontrol.control(streamId, 'stop') } : null);
+      } catch (error) {
+        console.log('Warning! The "stop" media session action is not supported.');
+      }
+      let defaultSkipTime: number = 10; // Time to skip in seconds by default
+      mediaSession.setActionHandler('seekbackward', properties.canSeek ?
+        (event: MediaSessionActionDetails) => {
+          let offset: number = (event.seekOffset || defaultSkipTime) * -1;
+          if (properties.position !== undefined)
+            Math.max(properties.position! + offset, 0);
+          this.props.snapcontrol.control(streamId, 'seek', { 'offset': offset })
+        } : null);
+
+      mediaSession.setActionHandler('seekforward', properties.canSeek ? (event: MediaSessionActionDetails) => {
+        let offset: number = event.seekOffset || defaultSkipTime;
+        if ((metadata.duration !== undefined) && (properties.position !== undefined))
+          Math.min(properties.position! + offset, metadata.duration!);
+        this.props.snapcontrol.control(streamId, 'seek', { 'offset': offset })
+      } : null);
+
+      try {
+        mediaSession.setActionHandler('seekto', properties.canSeek ? (event: MediaSessionActionDetails) => {
+          let position: number = event.seekTime || 0;
+          if (metadata.duration !== undefined)
+            Math.min(position, metadata.duration!);
+          this.props.snapcontrol.control(streamId, 'setPosition', { 'position': position })
+        } : null);
+      } catch (error) {
+        console.log('Warning! The "seekto" media session action is not supported.');
+      }
+
+      if ((metadata.duration !== undefined) && (properties.position !== undefined) && (properties.position! <= metadata.duration!)) {
+        if ('setPositionState' in mediaSession) {
+          console.log('Updating position state: ' + properties.position! + '/' + metadata.duration!);
+          mediaSession.setPositionState!({
+            duration: metadata.duration!,
+            playbackRate: 1.0,
+            position: properties.position!
+          });
+        }
+      }
+      else {
+        mediaSession.setPositionState!({
+          duration: 0,
+          playbackRate: 1.0,
+          position: 0
+        });
+      }
+    }
+    catch (e) {
+      console.log('updateMediaSession failed: ' + e);
+      return;
+    }
+
+  }
+
   handlePlayClicked() {
     console.log("handlePlayClicked");
-    this.play();
-  };
+    if (this.snapstream) {
+      this.snapstream.stop();
+      this.snapstream = null;
+      audio.pause();
+      audio.src = '';
+      // document.body.removeChild(audio);
+      this.setState({ playing: false });
+    }
+    else {
+      this.snapstream = new SnapStream("ws://192.168.0.3:1780");
+      audio.src = silence;
+      audio.loop = true;
+      audio.play().then(() => {
+        this.setState({ playing: true });
+        // this.props.snapcontrol.updateProperties(this.props.snapcontrol.getMyStreamId());
+        this.updateMediaSession();
+      });
+    }
+  }
 
   componentDidMount() {
     console.log("componentDidMount");
     this.props.snapcontrol.onChange = (server: Snapcast.Server) => this.handleChange(server);
+    // this.props.snapcontrol.onStreamChange = (id: string) => this.handleStreamChange(id);
     this.handleChange(this.props.snapcontrol.server);
     if (window.localStorage) {
       const value = window.localStorage.getItem("showoffline") === "true";
@@ -59,28 +205,6 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
 
   componentWillUnmount() {
     console.log("componentDidUnmount");
-  }
-
-  play() {
-    if (this.snapstream) {
-      this.snapstream.stop();
-      this.snapstream = null;
-      this.audio.pause();
-      this.audio.src = '';
-      document.body.removeChild(this.audio);
-      this.setState({ playing: false });
-    }
-    else {
-      this.snapstream = new SnapStream("ws://192.168.0.3:1780");
-      // User interacted with the page. Let's play audio...
-      document.body.appendChild(this.audio);
-      this.audio.src = "10-seconds-of-silence.mp3";
-      this.audio.loop = true;
-      this.audio.play().then(() => {
-        this.props.snapcontrol.updateProperties(this.props.snapcontrol.getMyStreamId());
-      });
-      this.setState({ playing: true });
-    }
   }
 
   list = () => (
