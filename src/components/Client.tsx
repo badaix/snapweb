@@ -9,6 +9,7 @@ type ClientProps = {
   client: Snapcast.Client;
   snapcontrol: SnapControl
   onDelete: () => void;
+  onVolumeChange: () => void;
 };
 
 type ClientState = {
@@ -37,6 +38,7 @@ class Client extends React.Component<ClientProps, ClientState> {
     this.props.client.config.volume.percent = value;
     this.props.snapcontrol.setVolume(this.props.client.id, value, false);
     this.setState({});
+    this.props.onVolumeChange();
   };
 
   handleOptionsClicked(event: React.MouseEvent<HTMLButtonElement>) {
