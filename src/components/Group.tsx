@@ -243,94 +243,74 @@ class Group extends React.Component<GroupProps, GroupState> {
           my: 2,
           flexGrow: 1
         }}>
-          <Grid
-            container
-            direction="row"
-            wrap="nowrap"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{
-              mb: 2
-            }}>
+          {/* <Stack spacing={2} direction="column" alignItems="center"> */}
+          <Stack spacing={0} direction="column" alignItems="left">
+            <Grid
+              container
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <FormControl variant="standard">
+                <Select
+                  id="stream"
+                  value={this.props.group.stream_id}
+                  label="Stream"
+                  onChange={(event) => {
+                    let stream: string = event.target.value;
+                    this.setState({ streamId: stream });
+                    this.props.snapcontrol.setStream(this.props.group.id, stream);
+                  }}
+                >
+                  {this.props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
+                </Select>
+              </FormControl>
 
-            <IconButton aria-label="Options" onClick={(event) => { this.handleSettingsClicked(event); }}>
-              <SettingsIcon />
-            </IconButton>
-            <Grid item justifyContent="center">
+              <Box sx={{ display: "flex", alignItems: "center", pl: 1, pb: 1 }}>
+                <IconButton aria-label="previous">
+                  <SkipPreviousIcon />
+                </IconButton>
+                <IconButton aria-label="play/pause">
+                  <PlayArrowIcon />
+                  {/* sx={{ height: 38, width: 38 }} /> */}
+                </IconButton>
+                <IconButton aria-label="next">
+                  <SkipNextIcon />
+                </IconButton>
+              </Box>
+
+              <IconButton aria-label="Options" onClick={(event) => { this.handleSettingsClicked(event); }}>
+                <SettingsIcon />
+              </IconButton>
+            </Grid>
+            <Stack spacing={2} direction="row" alignItems="center" >
               <CardMedia
                 component="img"
-                sx={{ width: 64 }}
+                sx={{ width: 56 }}
                 image={artUrl}
-                alt="Live from space album cover"
+                alt={title + " cover"}
               />
-            </Grid>
-            <Grid item xs={12} sm container wrap="nowrap">
-              <Grid
-                item
-                container
-                direction="column"
-                spacing={0}
-                sx={{ ml: 3 }}
-                justifyContent="center"
-              >
-                <Box component="div" sx={{ textOverflow: 'ellipsis' }}>
-                  <Typography
-                    gutterBottom
-                    variant="subtitle1"
-                    align="left"
-                    sx={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box'
-                    }}
-                  >
-                    {title}
-                  </Typography>
-                </Box>
+              <Stack spacing={0} direction="column" sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                <Typography noWrap variant="subtitle1" gutterBottom align="left">
+                  {title}
+                </Typography>
                 <Typography noWrap variant="body1" gutterBottom align="left">
                   {artist}
                 </Typography>
-              </Grid>
-              <Grid item>
-                <FormControl variant="standard" fullWidth>
-                  <Select
-                    id="stream"
-                    value={this.props.group.stream_id}
-                    label="Stream"
-                    onChange={(event) => {
-                      let stream: string = event.target.value;
-                      this.setState({ streamId: stream });
-                      this.props.snapcontrol.setStream(this.props.group.id, stream);
-                    }}
-                  >
-                    {this.props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
-                  </Select>
-                </FormControl>
-                <Box sx={{ display: "flex", alignItems: "center", pl: 1, pb: 1 }}>
-                  <IconButton aria-label="previous">
-                    <SkipPreviousIcon />
-                  </IconButton>
-                  <IconButton aria-label="play/pause">
-                    <PlayArrowIcon sx={{ height: 38, width: 38 }} />
-                  </IconButton>
-                  <IconButton aria-label="next">
-                    <SkipNextIcon />
-                  </IconButton>
-                </Box>
-              </Grid>
-            </Grid>
-          </Grid>
-          {clients.length > 1 &&
-            <Stack spacing={2} direction="row" alignItems="center">
-              <IconButton aria-label="Mute" onClick={() => { this.handleMuteClicked() }}>
-                {/* {this.props.client.config.volume.muted ? <VolumeOffIcon /> :  */}
-                <VolumeUpIcon />
-              </IconButton>
-              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + this.props.group.id} value={this.state.volume} onChange={(_, value) => { this.handleVolumeChange(value as number) }} onChangeCommitted={(_, value) => { this.handleVolumeChangeCommitted(value as number) }} />
+              </Stack>
             </Stack>
-          }
+            {clients.length > 1 &&
+              <Stack spacing={2} direction="row" alignItems="center">
+                <IconButton aria-label="Mute" onClick={() => { this.handleMuteClicked() }}>
+                  <VolumeUpIcon />
+                </IconButton>
+                <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + this.props.group.id} value={this.state.volume} onChange={(_, value) => { this.handleVolumeChange(value as number) }} onChangeCommitted={(_, value) => { this.handleVolumeChangeCommitted(value as number) }} />
+              </Stack>
+            }
+          </Stack>
           <Divider />
           {clients}
+
         </Card>
 
         <Dialog fullWidth open={this.state.settingsOpen} onClose={() => { this.handleSettingsClose(false) }}>
@@ -356,7 +336,7 @@ class Group extends React.Component<GroupProps, GroupState> {
           </DialogActions>
         </Dialog>
         {this.snackbar()}
-      </div>
+      </div >
     );
   }
 }
