@@ -94,15 +94,18 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
       let play_state: MediaSessionPlaybackState = "none";
       if (properties.playbackStatus !== undefined) {
         if (properties.playbackStatus === "playing") {
-          audio.play();
+          console.log('updateMediaSession: playing');
+          // audio.play();
           play_state = "playing";
         }
         else if (properties.playbackStatus === "paused") {
-          audio.pause();
+          console.log('updateMediaSession: paused');
+          // audio.pause();
           play_state = "paused";
         }
         else if (properties.playbackStatus === "stopped") {
-          audio.pause();
+          console.log('updateMediaSession: stopped');
+          // audio.pause();
           play_state = "none";
         }
       }
@@ -170,16 +173,17 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
   }
 
   handlePlayClicked() {
-    console.log("handlePlayClicked");
     if (this.snapstream) {
+      console.log("handlePlayClicked stop");
       this.snapstream.stop();
       this.snapstream = null;
+      this.setState({ playing: false });
       audio.pause();
       audio.src = '';
       // document.body.removeChild(audio);
-      this.setState({ playing: false });
     }
     else {
+      console.log("handlePlayClicked play");
       this.snapstream = new SnapStream("ws://192.168.0.3:1780");
       audio.src = silence;
       audio.loop = true;
