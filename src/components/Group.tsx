@@ -2,9 +2,9 @@ import React from 'react';
 import Client from './Client';
 import logo from './logo192.png';
 import { SnapControl, Snapcast } from '../snapcontrol';
-import { Alert, Box, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, Slider, Snackbar, Stack, TextField, Typography, IconButton } from '@mui/material';
+import { Alert, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, Slider, Snackbar, Stack, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import { VolumeUp as VolumeUpIcon, /*VolumeOff as VolumeOffIcon,*/ PlayArrow as PlayArrowIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Settings as SettingsIcon } from '@mui/icons-material';
+import { VolumeUp as VolumeUpIcon, /*VolumeOff as VolumeOffIcon,*/ PlayArrow as PlayArrowIcon, Pause as PauseIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Settings as SettingsIcon } from '@mui/icons-material';
 
 
 type GroupClient = {
@@ -185,6 +185,13 @@ class Group extends React.Component<GroupProps, GroupState> {
     this.volumeEntered = true;
   };
 
+  handlePlayPauseClicked() {
+    if (this.props.server.getStream(this.props.group.stream_id)?.properties.playbackStatus === "playing")
+      this.props.snapcontrol.control(this.props.group.stream_id, 'pause');
+    else
+      this.props.snapcontrol.control(this.props.group.stream_id, 'play');
+  }
+
   snackbar = () => (
     this.state.deletedClients.map(client =>
       <Snackbar
@@ -251,50 +258,53 @@ class Group extends React.Component<GroupProps, GroupState> {
               justifyContent="space-between"
               alignItems="center"
             >
-              <FormControl variant="standard">
-                <Select
-                  id="stream"
-                  value={this.props.group.stream_id}
-                  label="Stream"
-                  onChange={(event) => {
-                    let stream: string = event.target.value;
-                    this.setState({ streamId: stream });
-                    this.props.snapcontrol.setStream(this.props.group.id, stream);
-                  }}
-                >
-                  {this.props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
-                </Select>
-              </FormControl>
+              <Stack direction="row" justifyContent="center" alignItems="center" >
+                <IconButton aria-label="Options" onClick={(event) => { this.handleSettingsClicked(event); }}>
+                  <SettingsIcon />
+                </IconButton>
 
-              <Box sx={{ display: "flex", alignItems: "center", pl: 1, pb: 1 }}>
-                <IconButton aria-label="previous">
+                <FormControl variant="standard">
+                  <Select
+                    id="stream"
+                    value={this.props.group.stream_id}
+                    label="Stream"
+                    onChange={(event) => {
+                      let stream: string = event.target.value;
+                      this.setState({ streamId: stream });
+                      this.props.snapcontrol.setStream(this.props.group.id, stream);
+                    }}
+                  >
+                    {this.props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Stack>
+
+              <Stack direction="row" justifyContent="center" alignItems="center" >
+                <IconButton aria-label="previous" onClick={() => { this.props.snapcontrol.control(this.props.group.stream_id, 'previous') }}>
                   <SkipPreviousIcon />
                 </IconButton>
-                <IconButton aria-label="play/pause">
-                  <PlayArrowIcon />
-                  {/* sx={{ height: 38, width: 38 }} /> */}
+                <IconButton aria-label="play/pause" onClick={() => { this.handlePlayPauseClicked(); }}>
+                  {this.props.server.getStream(this.props.group.stream_id)?.properties.playbackStatus === "playing" ? <PauseIcon /> : <PlayArrowIcon />}
+                  {/* sx={{ height: 32, width: 32 }} /> */}
                 </IconButton>
-                <IconButton aria-label="next">
+                <IconButton aria-label="next" onClick={() => { this.props.snapcontrol.control(this.props.group.stream_id, 'next') }}>
                   <SkipNextIcon />
                 </IconButton>
-              </Box>
+              </Stack>
 
-              <IconButton aria-label="Options" onClick={(event) => { this.handleSettingsClicked(event); }}>
-                <SettingsIcon />
-              </IconButton>
             </Grid>
             <Stack spacing={2} direction="row" alignItems="center" >
               <CardMedia
                 component="img"
-                sx={{ width: 56 }}
+                sx={{ width: 48 }}
                 image={artUrl}
                 alt={title + " cover"}
               />
-              <Stack spacing={0} direction="column" sx={{ flexGrow: 1, overflow: 'hidden' }}>
-                <Typography noWrap variant="subtitle1" gutterBottom align="left">
+              <Stack spacing={0} direction="column" justifyContent="center" sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                <Typography noWrap variant="subtitle1" align="left">
                   {title}
                 </Typography>
-                <Typography noWrap variant="body1" gutterBottom align="left">
+                <Typography noWrap variant="body1" align="left">
                   {artist}
                 </Typography>
               </Stack>
@@ -311,7 +321,7 @@ class Group extends React.Component<GroupProps, GroupState> {
           <Divider />
           {clients}
 
-        </Card>
+        </Card >
 
         <Dialog fullWidth open={this.state.settingsOpen} onClose={() => { this.handleSettingsClose(false) }}>
           <DialogTitle>Group settings</DialogTitle>
