@@ -4,7 +4,7 @@ import logo from './logo192.png';
 import { SnapControl, Snapcast } from '../snapcontrol';
 import { Alert, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, Slider, Snackbar, Stack, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import { VolumeUp as VolumeUpIcon, /*VolumeOff as VolumeOffIcon,*/ PlayArrow as PlayArrowIcon, Pause as PauseIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Settings as SettingsIcon } from '@mui/icons-material';
+import { VolumeUp as VolumeUpIcon, VolumeOff as VolumeOffIcon, PlayArrow as PlayArrowIcon, Pause as PauseIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Settings as SettingsIcon } from '@mui/icons-material';
 
 
 type GroupClient = {
@@ -136,8 +136,9 @@ class Group extends React.Component<GroupProps, GroupState> {
 
   handleMuteClicked() {
     console.log("handleMuteClicked");
-    // this.props.snapcontrol.setVolume(this.props.client.id, this.props.client.config.volume.percent, !this.props.client.config.volume.muted);
-    // this.setState({});
+    this.props.group.muted = !this.props.group.muted;
+    this.props.snapcontrol.muteGroup(this.props.group.id, this.props.group.muted);
+    this.setState({});
   };
 
   client_volumes: Map<string, number> = new Map<string, number>();
@@ -312,7 +313,7 @@ class Group extends React.Component<GroupProps, GroupState> {
             {clients.length > 1 &&
               <Stack spacing={2} direction="row" alignItems="center">
                 <IconButton aria-label="Mute" onClick={() => { this.handleMuteClicked() }}>
-                  <VolumeUpIcon />
+                  {this.props.group.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
                 </IconButton>
                 <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + this.props.group.id} value={this.state.volume} onChange={(_, value) => { this.handleVolumeChange(value as number) }} onChangeCommitted={(_, value) => { this.handleVolumeChangeCommitted(value as number) }} />
               </Stack>
