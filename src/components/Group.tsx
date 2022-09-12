@@ -40,8 +40,7 @@ class Group extends React.Component<GroupProps, GroupState> {
     volume: 0
   };
 
-  componentDidMount() {
-    console.log("componentDidMount");
+  updateVolume() {
     let clients = this.getClients();
     let volume = 0;
     for (let client of clients)
@@ -50,8 +49,20 @@ class Group extends React.Component<GroupProps, GroupState> {
     this.setState({ volume: volume });
   }
 
+  componentDidMount() {
+    console.debug("componentDidMount");
+    this.updateVolume();
+  }
+
+  componentDidUpdate(prevProps: GroupProps, prevState: GroupState) {
+    console.debug("componentDidUpdate");
+    // State didn't change => props must have changed => update the volume
+    if (prevState === this.state)
+      this.updateVolume();
+  }
+
   handleSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
-    console.log("handleSettingsClicked");
+    console.debug("handleSettingsClicked");
 
     let clients: GroupClient[] = [];
     for (let group of this.props.server.groups) {
@@ -67,7 +78,7 @@ class Group extends React.Component<GroupProps, GroupState> {
   };
 
   handleSettingsClose(apply: boolean) {
-    console.log("handleSettingsClose: " + apply);
+    console.debug("handleSettingsClose: " + apply);
     if (apply) {
       let changed: boolean = false;
       for (let element of this.state.clients) {
@@ -96,7 +107,7 @@ class Group extends React.Component<GroupProps, GroupState> {
   // };
 
   handleGroupClientChange(client: Snapcast.Client, inGroup: boolean) {
-    console.log("handleGroupClientChange: " + client.id + ", in group: " + inGroup);
+    console.debug("handleGroupClientChange: " + client.id + ", in group: " + inGroup);
     let clients = this.state.clients;
     let idx = this.state.clients.findIndex(element => element.client === client);
     clients[idx].inGroup = inGroup;
@@ -104,7 +115,7 @@ class Group extends React.Component<GroupProps, GroupState> {
   };
 
   handleClientDelete(client: Snapcast.Client) {
-    console.log("handleClientDelete: " + client.getName());
+    console.debug("handleClientDelete: " + client.getName());
     let deletedClients = this.state.deletedClients;
     if (!deletedClients.includes(client))
       deletedClients.push(client);
@@ -112,18 +123,12 @@ class Group extends React.Component<GroupProps, GroupState> {
   }
 
   handleClientVolumeChange(client: Snapcast.Client) {
-    console.log("handleClientVolumeChange: " + client.getName());
-    let clients = this.getClients();
-    let volume: number = 0;
-    for (let client of clients) {
-      volume += client.config.volume.percent;
-    }
-    volume /= clients.length;
-    this.setState({ volume: volume });
+    console.debug("handleClientVolumeChange: " + client.getName());
+    this.updateVolume();
   }
 
   handleSnackbarClose(client: Snapcast.Client, undo: boolean) {
-    console.log("handleSnackbarClose, client: " + client.getName() + ", undo: " + undo);
+    console.debug("handleSnackbarClose, client: " + client.getName() + ", undo: " + undo);
     if (!undo)
       this.props.snapcontrol.deleteClient(client.id);
 
@@ -135,7 +140,7 @@ class Group extends React.Component<GroupProps, GroupState> {
   };
 
   handleMuteClicked() {
-    console.log("handleMuteClicked");
+    console.debug("handleMuteClicked");
     this.props.group.muted = !this.props.group.muted;
     this.props.snapcontrol.muteGroup(this.props.group.id, this.props.group.muted);
     this.setState({});
@@ -146,7 +151,7 @@ class Group extends React.Component<GroupProps, GroupState> {
   volumeEntered: boolean = true;
 
   handleVolumeChange(value: number) {
-    console.log("handleVolumeChange: " + value);
+    console.debug("handleVolumeChange: " + value);
     if (this.volumeEntered) {
       this.client_volumes.clear();
       this.group_volume = 0;
@@ -180,7 +185,7 @@ class Group extends React.Component<GroupProps, GroupState> {
   };
 
   handleVolumeChangeCommitted(value: number) {
-    console.log("handleVolumeChangeCommitted: " + value);
+    console.debug("handleVolumeChangeCommitted: " + value);
     // handle last change
     // this.handleVolumeChange(value);
     this.volumeEntered = true;
@@ -224,7 +229,7 @@ class Group extends React.Component<GroupProps, GroupState> {
   }
 
   render() {
-    console.log("Render Group " + this.props.group.id);
+    console.debug("Render Group " + this.props.group.id);
     let clients = [];
 
     for (let client of this.getClients()) {
@@ -237,7 +242,7 @@ class Group extends React.Component<GroupProps, GroupState> {
     let artUrl = stream?.properties.metadata.artUrl || logo;
     let title = stream?.properties.metadata.title || "Unknown title";
     let artist = stream?.properties.metadata.artist || "Unknown artist";
-    console.log("Art URL: " + artUrl);
+    console.debug("Art URL: " + artUrl);
 
     let allClients = [];
     for (let group of this.props.server.groups)
