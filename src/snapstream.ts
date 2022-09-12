@@ -135,9 +135,9 @@ class CodecMessage extends BaseMessage {
         let decoder = new TextDecoder("utf-8");
         this.codec = decoder.decode(buffer.slice(30, 30 + codecSize));
         let payloadSize = view.getInt32(30 + codecSize, true);
-        console.log("payload size: " + payloadSize);
+        console.debug("payload size: " + payloadSize);
         this.payload = buffer.slice(34 + codecSize, 34 + codecSize + payloadSize);
-        console.log("payload: " + this.payload);
+        console.debug("payload: " + this.payload);
     }
 
     codec: string = "";
