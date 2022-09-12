@@ -613,7 +613,7 @@ class SnapControl {
             msg.params = params;
 
         let msgJson = JSON.stringify(msg);
-        console.log("Sending: " + msgJson);
+        console.debug("Sending: " + msgJson);
         this.connection.send(msgJson);
         return this.msg_id;
     }
@@ -622,7 +622,7 @@ class SnapControl {
         let refresh: boolean = false;
         let json_msg = JSON.parse(msg);
         let is_response: boolean = (json_msg.id !== undefined);
-        console.log("Received " + (is_response ? "response" : "notification") + ", json: " + JSON.stringify(json_msg))
+        console.debug("Received " + (is_response ? "response" : "notification") + ", json: " + JSON.stringify(json_msg))
         if (is_response) {
             if (json_msg.id === this.status_req_id) {
                 this.server = new Snapcast.Server(json_msg.result.server);
@@ -648,10 +648,10 @@ class SnapControl {
         }
         if (refresh) {
             if (this.onChange) {
-                console.log("onChange");
+                console.debug("onChange");
                 this.onChange(this.server);
             } else {
-                console.log("no onChange");
+                console.debug("no onChange");
             }
         }
     }

@@ -34,7 +34,7 @@ class Client extends React.Component<ClientProps, ClientState> {
   };
 
   handleVolumeChange(value: number) {
-    console.log("handleVolumeChange: " + value);
+    console.debug("handleVolumeChange: " + value);
     this.props.client.config.volume.percent = value;
     this.props.snapcontrol.setVolume(this.props.client.id, value, false);
     this.setState({});
@@ -42,7 +42,7 @@ class Client extends React.Component<ClientProps, ClientState> {
   };
 
   handleOptionsClicked(event: React.MouseEvent<HTMLButtonElement>) {
-    console.log("handleOptionsClicked");
+    console.debug("handleOptionsClicked");
     this.setState({ anchorEl: event.currentTarget, open: true, name: this.props.client.config.name, tmpLatency: this.props.client.config.latency, latency: this.props.client.config.latency });
   };
 
@@ -53,35 +53,35 @@ class Client extends React.Component<ClientProps, ClientState> {
   handleDetailsClose(apply: boolean) {
     this.setState({ detailsOpen: false });
     if (apply) {
-      console.log('handleDetailsClose, setting latency to ' + this.state.tmpLatency + ', name: ' + this.state.name);
+      console.debug('handleDetailsClose, setting latency to ' + this.state.tmpLatency + ', name: ' + this.state.name);
       this.props.snapcontrol.setClientName(this.props.client.id, this.state.name);
       this.props.snapcontrol.setClientLatency(this.props.client.id, this.state.tmpLatency);
       this.setState({ name: this.props.client.config.name, latency: this.state.tmpLatency });
     } else {
-      console.log('handleDetailsClose, setting latency from ' + this.state.tmpLatency + ' to ' + this.state.latency);
+      console.debug('handleDetailsClose, setting latency from ' + this.state.tmpLatency + ' to ' + this.state.latency);
       this.props.snapcontrol.setClientLatency(this.props.client.id, this.state.latency);
       this.setState({ name: this.props.client.config.name, tmpLatency: this.state.latency });
     }
   };
 
   handleDetailsClicked() {
-    console.log("handleDetailsClicked");
+    console.debug("handleDetailsClicked");
     this.setState({ detailsOpen: true, anchorEl: null, open: false });
   };
 
   handleNameChange(name: string) {
-    console.log('handleNameChange: ' + name);
+    console.debug('handleNameChange: ' + name);
     this.setState({ name: name });
   };
 
   handleLatencyChange(latency: number) {
-    console.log('handleLatencyChange: ' + latency);
+    console.debug('handleLatencyChange: ' + latency);
     this.setState({ tmpLatency: latency });
     this.props.snapcontrol.setClientLatency(this.props.client.id, latency);
   };
 
   handleMuteClicked() {
-    console.log("handleMuteClicked");
+    console.debug("handleMuteClicked");
     this.props.snapcontrol.setVolume(this.props.client.id, this.props.client.config.volume.percent, !this.props.client.config.volume.muted);
     this.setState({});
   };
@@ -92,7 +92,7 @@ class Client extends React.Component<ClientProps, ClientState> {
     if (!this.props.client.connected)
       menuitems.push(<MenuItem key='Menu-Delete' onClick={() => { this.props.onDelete(); this.setState({ anchorEl: null, open: false }); }}>Delete</MenuItem>);
 
-    console.log("Render Client " + this.props.client.host.name + ", id: " + this.props.client.id);
+    console.debug("Render Client " + this.props.client.host.name + ", id: " + this.props.client.id);
     return (
       <Box sx={{ mr: 2, opacity: this.props.client.connected ? 1.0 : 0.5 }} >
         <Grid container spacing={2} justifyContent="center" alignItems="center" >

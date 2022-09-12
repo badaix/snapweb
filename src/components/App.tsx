@@ -34,21 +34,21 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
   // audio: HTMLAudioElement = document.createElement('audio');
 
   handleChange(server: Snapcast.Server) {
-    console.log("Update");
+    console.debug("Update");
     this.setState({ server }, () => {
       this.updateMediaSession();
     });
   }
 
   // handleStreamChange(id: string) {
-  //   console.log("handleStreamChange");
+  //   console.debug("handleStreamChange");
   //   this.setState({ server }, () => {
   //     this.updateMediaSession();
   //   });
   // }
 
   handleSettingsClicked() {
-    console.log("handleSettingsClicked");
+    console.debug("handleSettingsClicked");
     this.setState({ settingsOpen: true });
   };
 
@@ -82,7 +82,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
           { src: metadata.artUrl!, sizes: '512x512', type: 'image/png' },
         ]
       } // || 'snapcast-512.png';
-      console.log('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
+      console.debug('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
       navigator.mediaSession!.metadata = new MediaMetadata({
         title: title,
         artist: artist,
@@ -94,17 +94,17 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
       let play_state: MediaSessionPlaybackState = "none";
       if (properties.playbackStatus !== undefined) {
         if (properties.playbackStatus === "playing") {
-          console.log('updateMediaSession: playing');
+          console.debug('updateMediaSession: playing');
           // audio.play();
           play_state = "playing";
         }
         else if (properties.playbackStatus === "paused") {
-          console.log('updateMediaSession: paused');
+          console.debug('updateMediaSession: paused');
           // audio.pause();
           play_state = "paused";
         }
         else if (properties.playbackStatus === "stopped") {
-          console.log('updateMediaSession: stopped');
+          console.debug('updateMediaSession: stopped');
           // audio.pause();
           play_state = "none";
         }
@@ -118,7 +118,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
       try {
         mediaSession.setActionHandler('stop', properties.canControl ? () => { this.props.snapcontrol.control(streamId, 'stop') } : null);
       } catch (error) {
-        console.log('Warning! The "stop" media session action is not supported.');
+        console.debug('Warning! The "stop" media session action is not supported.');
       }
       let defaultSkipTime: number = 10; // Time to skip in seconds by default
       mediaSession.setActionHandler('seekbackward', properties.canSeek ?
@@ -144,12 +144,12 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
           this.props.snapcontrol.control(streamId, 'setPosition', { 'position': position })
         } : null);
       } catch (error) {
-        console.log('Warning! The "seekto" media session action is not supported.');
+        console.debug('Warning! The "seekto" media session action is not supported.');
       }
 
       if ((metadata.duration !== undefined) && (properties.position !== undefined) && (properties.position! <= metadata.duration!)) {
         if ('setPositionState' in mediaSession) {
-          console.log('Updating position state: ' + properties.position! + '/' + metadata.duration!);
+          console.debug('Updating position state: ' + properties.position! + '/' + metadata.duration!);
           mediaSession.setPositionState!({
             duration: metadata.duration!,
             playbackRate: 1.0,
@@ -166,7 +166,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
       }
     }
     catch (e) {
-      console.log('updateMediaSession failed: ' + e);
+      console.debug('updateMediaSession failed: ' + e);
       return;
     }
 
@@ -174,7 +174,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
 
   handlePlayClicked() {
     if (this.snapstream) {
-      console.log("handlePlayClicked stop");
+      console.debug("handlePlayClicked stop");
       this.snapstream.stop();
       this.snapstream = null;
       this.setState({ playing: false });
@@ -183,7 +183,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
       // document.body.removeChild(audio);
     }
     else {
-      console.log("handlePlayClicked play");
+      console.debug("handlePlayClicked play");
       this.snapstream = new SnapStream("ws://192.168.0.3:1780");
       audio.src = silence;
       audio.loop = true;
@@ -196,19 +196,19 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
   }
 
   componentDidMount() {
-    console.log("componentDidMount");
+    console.debug("componentDidMount");
     this.props.snapcontrol.onChange = (server: Snapcast.Server) => this.handleChange(server);
     // this.props.snapcontrol.onStreamChange = (id: string) => this.handleStreamChange(id);
     this.handleChange(this.props.snapcontrol.server);
     if (window.localStorage) {
       const value = window.localStorage.getItem("showoffline") === "true";
-      console.log("show offline: " + value);
+      console.debug("show offline: " + value);
       this.setState({ showOffline: value });
     }
   }
 
   componentWillUnmount() {
-    console.log("componentDidUnmount");
+    console.debug("componentDidUnmount");
   }
 
   list = () => (
