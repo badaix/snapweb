@@ -626,7 +626,7 @@ class SnapControl {
 
 
 let snapcontrol!: SnapControl;
-let snapstream: SnapStream | null = null;
+let snapstream: SnapStream = new SnapStream(config.baseUrl);
 let hide_offline: boolean = true;
 let autoplay_done: boolean = false;
 let audio: HTMLAudioElement = document.createElement('audio');
@@ -641,7 +641,7 @@ function show() {
     console.log("Snapweb version " + (versionElem ? versionElem.content : "null"));
 
     let play_img: string;
-    if (snapstream) {
+    if (isPlaying()) {
         play_img = 'stop.png';
     } else {
         play_img = 'play.png';
@@ -799,7 +799,11 @@ function show() {
     (document.getElementById('show') as HTMLInputElement).innerHTML = content;
     let playElem = (document.getElementById('play-button') as HTMLElement);
     playElem.onclick = () => {
-        play();
+        if (isPlaying()) {
+            stop();
+        } else {
+            play();
+        }
     };
 
     for (let group of snapcontrol.server.groups) {
@@ -879,24 +883,26 @@ function setVolume(id: string, mute: boolean) {
         show();
 }
 
+function isPlaying() {
+    return document.getElementsByTagName("audio").length > 0;
+}
+
+function stop() {
+    snapstream.stop();
+    audio.pause();
+    audio.src = "";
+    document.body.removeChild(audio);
+}
+
 function play() {
-    if (snapstream) {
-        snapstream.stop();
-        snapstream = null;
-        audio.pause();
-        audio.src = '';
-        document.body.removeChild(audio);
-    }
-    else {
-        snapstream = new SnapStream(config.baseUrl);
-        // User interacted with the page. Let's play audio...
-        document.body.appendChild(audio);
-        audio.src = "10-seconds-of-silence.mp3";
-        audio.loop = true;
-        audio.play().then(() => {
-            snapcontrol.updateProperties(snapcontrol.getMyStreamId());
-        });
-    }
+    // User interacted with the page. Let's play audio...
+    snapstream.resume();
+    document.body.appendChild(audio);
+    audio.src = "10-seconds-of-silence.mp3";
+    audio.loop = true;
+    audio.play().then(() => {
+        snapcontrol.updateProperties(snapcontrol.getMyStreamId());
+    });
 }
 
 function setMuteGroup(id: string, mute: boolean) {

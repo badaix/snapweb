@@ -826,6 +826,10 @@ class SnapStream {
         }
     }
 
+    public resume() {
+        this.ctx.resume();
+    }
+
     private setupAudioContext(): boolean {
         let AudioContext = window.AudioContext // Default
             || window.webkitAudioContext // Safari and old versions of Chrome
