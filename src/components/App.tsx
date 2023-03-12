@@ -1,6 +1,7 @@
 import React from 'react';
 import Server from './Server';
 import AboutDialog from './AboutDialog';
+import { config } from "../config";
 import { SnapControl, Snapcast } from '../snapcontrol';
 import { SnapStream } from '../snapstream';
 import { AppBar, Box, Checkbox, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, IconButton } from '@mui/material';
@@ -184,7 +185,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
     }
     else {
       console.debug("handlePlayClicked play");
-      this.snapstream = new SnapStream("ws://192.168.0.3:1780");
+      this.snapstream = new SnapStream(config.baseUrl);
       audio.src = silence;
       audio.loop = true;
       audio.play().then(() => {
