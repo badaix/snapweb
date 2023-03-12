@@ -83,7 +83,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
           { src: metadata.artUrl!, sizes: '512x512', type: 'image/png' },
         ]
       } // || 'snapcast-512.png';
-      console.debug('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
+      console.info('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
       navigator.mediaSession!.metadata = new MediaMetadata({
         title: title,
         artist: artist,
@@ -181,6 +181,7 @@ class App extends React.Component<{ snapcontrol: SnapControl }, AppState> {
       this.setState({ playing: false });
       audio.pause();
       audio.src = '';
+      // this.updateMediaSession();
       // document.body.removeChild(audio);
     }
     else {
