@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import { config } from "./config";
 import App from './components/App';
 import reportWebVitals from './reportWebVitals';
 import { SnapControl } from './snapcontrol';
@@ -38,7 +39,7 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
-let snapcontrol = new SnapControl("ws://192.168.0.3:1780");
+let snapcontrol = new SnapControl(config.baseUrl);
 
 
 root.render(
