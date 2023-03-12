@@ -240,8 +240,9 @@ class Group extends React.Component<GroupProps, GroupState> {
 
     let stream = this.props.server.getStream(this.props.group.stream_id);
     let artUrl = stream?.properties.metadata.artUrl || logo;
-    let title = stream?.properties.metadata.title || "Unknown title";
-    let artist = stream?.properties.metadata.artist || "Unknown artist";
+    let title = stream?.properties.metadata.title || "Unknown Title";
+    let artist: string = (stream?.properties.metadata.artist) ? stream!.properties.metadata.artist!.join(', ') : "Unknown Artist";
+
     console.debug("Art URL: " + artUrl);
 
     let allClients = [];

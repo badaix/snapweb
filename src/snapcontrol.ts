@@ -622,7 +622,7 @@ class SnapControl {
         let refresh: boolean = false;
         let json_msg = JSON.parse(msg);
         let is_response: boolean = (json_msg.id !== undefined);
-        console.debug("Received " + (is_response ? "response" : "notification") + ", json: " + JSON.stringify(json_msg))
+        // console.debug("Received " + (is_response ? "response" : "notification") + ", json: " + JSON.stringify(json_msg))
         if (is_response) {
             if (json_msg.id === this.status_req_id) {
                 this.server = new Snapcast.Server(json_msg.result.server);
