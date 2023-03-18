@@ -1,4 +1,5 @@
 import Flac from './3rd-party/libflac'
+import packageJson from '../package.json';
 
 declare global {
 // declare window.webkitAudioContext for the ts compiler
@@ -866,11 +867,10 @@ class SnapStream {
 
             hello.mac = "00:00:00:00:00:00";
             hello.arch = "web";
-            hello.os = navigator.platform;
+            hello.os = navigator?.platform || "unknown";
             hello.hostname = "Snapweb client";
             hello.uniqueId = SnapStream.getClientId();
-            const versionElem = document.getElementsByTagName("meta").namedItem("version");
-            hello.version = versionElem ? versionElem.content : "0.0.0";
+            hello.version = packageJson.version;
 
             this.sendMessage(hello);
             this.syncTime();
