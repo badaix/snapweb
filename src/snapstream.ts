@@ -1,16 +1,17 @@
 import Flac from './3rd-party/libflac'
-import packageJson from '../package.json';
+
+const appVersion = require('../package.json').version; 
 
 declare global {
-// declare window.webkitAudioContext for the ts compiler
-interface Window {
-    webkitAudioContext: typeof AudioContext
-}
+    // declare window.webkitAudioContext for the ts compiler
+    interface Window {
+        webkitAudioContext: typeof AudioContext
+    }
 
-// declare AudioContext.outputLatency for the ts compiler
-interface AudioContext extends BaseAudioContext {
-    readonly outputLatency: number;
-}
+    // declare AudioContext.outputLatency for the ts compiler
+    interface AudioContext extends BaseAudioContext {
+        readonly outputLatency: number;
+    }
 }
 
 
@@ -870,7 +871,7 @@ class SnapStream {
             hello.os = navigator?.platform || "unknown";
             hello.hostname = "Snapweb client";
             hello.uniqueId = SnapStream.getClientId();
-            hello.version = packageJson.version;
+            hello.version = appVersion;
 
             this.sendMessage(hello);
             this.syncTime();
