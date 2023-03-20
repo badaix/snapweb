@@ -1,6 +1,6 @@
 import Flac from './3rd-party/libflac'
 
-const appVersion = require('../package.json').version; 
+const appVersion = require('../package.json').version;
 
 declare global {
     // declare window.webkitAudioContext for the ts compiler
@@ -986,7 +986,7 @@ class SnapStream {
     public stop() {
         window.clearInterval(this.syncHandle);
         this.stopAudio();
-        if ([WebSocket.OPEN, WebSocket.CONNECTING].includes(this.streamsocket.readyState)) {
+        if (this.streamsocket.readyState === WebSocket.OPEN || this.streamsocket.readyState === WebSocket.CONNECTING) {
             this.streamsocket.onclose = () => { };
             this.streamsocket.close();
         }
