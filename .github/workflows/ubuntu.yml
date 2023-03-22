@@ -14,14 +14,14 @@ jobs:
       with:
         node-version: 16
 
+    - name: update npm
+      run: npm install -g npm@latest
+
     - name: clean cache
       run: npm cache clean --force
 
     - name: install
       run: npm ci
-
-    - name: npm install
-      run: npm install
 
     - name: build
       env: 
