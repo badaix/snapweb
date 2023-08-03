@@ -12,7 +12,7 @@ jobs:
 
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 20
 
     - name: update npm
       run: npm install -g npm@latest
