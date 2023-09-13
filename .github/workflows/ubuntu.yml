@@ -15,7 +15,9 @@ jobs:
         node-version: 20
 
     - name: update npm
-      run: npm install -g npm@latest
+      run: |
+        npm install -g npm@latest
+        npx --yes update-browserslist-db@latest
 
     - name: clean cache
       run: npm cache clean --force
