@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useLayoutEffect } from 'react';
 import Client from './Client';
 import logo from './logo192.png';
 import { SnapControl, Snapcast } from '../snapcontrol';
@@ -40,17 +40,10 @@ export default function Group(props: GroupProps) {
     setVolume(volume);
   }
 
-  useEffect(() => {
-    console.debug("componentDidMount");
+  useLayoutEffect(() => {
+    console.debug("useLayoutEffect");
     updateVolume();
   });
-
-  // function componentDidUpdate(prevProps: GroupProps, prevState: GroupState) {
-  //   console.debug("componentDidUpdate");
-  //   // State didn't change => props must have changed => update the volume
-  //   if (prevState === this.state)
-  //     this.updateVolume();
-  // }
 
   function handleSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
     console.debug("handleSettingsClicked");
@@ -94,10 +87,6 @@ export default function Group(props: GroupProps) {
     }
     setSettingsOpen(false);
   };
-
-  // handleStreamSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   console.log("handleStreamSelect: " + event.target.value);
-  // };
 
   function handleGroupClientChange(client: Snapcast.Client, inGroup: boolean) {
     console.debug("handleGroupClientChange: " + client.id + ", in group: " + inGroup);
