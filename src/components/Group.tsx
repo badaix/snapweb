@@ -99,6 +99,7 @@ export default function Group(props: GroupProps) {
     let idx = newclients.findIndex(element => element.client === client);
     newclients[idx].inGroup = inGroup;
     setClients(newclients);
+    setUpdate(update + 1);
   };
 
   function handleClientDelete(client: Snapcast.Client) {
@@ -107,6 +108,7 @@ export default function Group(props: GroupProps) {
     if (!newDeletedClients.includes(client))
       newDeletedClients.push(client);
     setDeletedClients(newDeletedClients);
+    setUpdate(update + 1);
   }
 
   function handleClientVolumeChange(client: Snapcast.Client) {
@@ -124,6 +126,7 @@ export default function Group(props: GroupProps) {
       newDeletedClients.splice(newDeletedClients.indexOf(client), 1);
 
     setDeletedClients(newDeletedClients);
+    setUpdate(update + 1);
   };
 
   function handleMuteClicked() {
