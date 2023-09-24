@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useState, useLayoutEffect } from 'react';
 import Client from './Client';
 import logo from './logo192.png';
@@ -21,6 +21,11 @@ type GroupProps = {
   showOffline: boolean;
 };
 
+type GroupVolumeChange = {
+  volumeEntered: boolean;
+  client_volumes: Map<string, number>;
+  group_volume: number;
+};
 
 export default function Group(props: GroupProps) {
   const [update, setUpdate] = useState(0);
@@ -29,7 +34,7 @@ export default function Group(props: GroupProps) {
   const [streamId, setStreamId] = useState("");
   const [deletedClients, setDeletedClients] = useState<Snapcast.Client[]>([]);
   const [volume, setVolume] = useState(0);
-
+  const groupVolumeChange = useRef<GroupVolumeChange>({ volumeEntered: true, client_volumes: new Map<string, number>(), group_volume: 0 });
 
   function updateVolume() {
     let clients = getClients();
@@ -128,32 +133,28 @@ export default function Group(props: GroupProps) {
     setUpdate(update + 1);
   };
 
-  let client_volumes: Map<string, number> = new Map<string, number>();
-  let group_volume: number = 0;
-  let volumeEntered: boolean = true;
-
   function handleVolumeChange(value: number) {
     console.debug("handleVolumeChange: " + value);
-    if (volumeEntered) {
-      client_volumes.clear();
-      group_volume = 0;
+    if (groupVolumeChange.current.volumeEntered) {
+      groupVolumeChange.current.client_volumes.clear();
+      groupVolumeChange.current.group_volume = 0;
       for (let client of getClients()) {
-        client_volumes.set(client.id, client.config.volume.percent);
-        group_volume += client.config.volume.percent;
+        groupVolumeChange.current.client_volumes.set(client.id, client.config.volume.percent);
+        groupVolumeChange.current.group_volume += client.config.volume.percent;
       }
-      group_volume /= client_volumes.size;
-      volumeEntered = false;
+      groupVolumeChange.current.group_volume /= groupVolumeChange.current.client_volumes.size;
+      groupVolumeChange.current.volumeEntered = false;
     }
 
-    let delta = value - group_volume;
+    let delta = value - groupVolumeChange.current.group_volume;
     let ratio: number;
     if (delta < 0)
-      ratio = (group_volume - value) / group_volume;
+      ratio = (groupVolumeChange.current.group_volume - value) / groupVolumeChange.current.group_volume;
     else
-      ratio = (value - group_volume) / (100 - group_volume);
+      ratio = (value - groupVolumeChange.current.group_volume) / (100 - groupVolumeChange.current.group_volume);
 
     for (let client of getClients()) {
-      let new_volume = client_volumes.get(client.id)!;
+      let new_volume = groupVolumeChange.current.client_volumes.get(client.id)!;
       if (delta < 0)
         new_volume -= ratio * new_volume;
       else
@@ -168,9 +169,7 @@ export default function Group(props: GroupProps) {
 
   function handleVolumeChangeCommitted(value: number) {
     console.debug("handleVolumeChangeCommitted: " + value);
-    // handle last change
-    // this.handleVolumeChange(value);
-    volumeEntered = true;
+    groupVolumeChange.current.volumeEntered = true;
   };
 
   function handlePlayPauseClicked() {
