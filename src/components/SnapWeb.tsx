@@ -1,25 +1,86 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Server from './Server';
 import AboutDialog from './AboutDialog';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { config } from "../config";
 import { SnapControl, Snapcast } from '../snapcontrol';
 import { SnapStream } from '../snapstream';
 import { AppBar, Box, Checkbox, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, IconButton } from '@mui/material';
 import { PlayArrow as PlayArrowIcon, Stop as StopIcon, Menu as MenuIcon } from '@mui/icons-material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 const silence = require('./10-seconds-of-silence.mp3');
 const snapcast512 = require('./snapcast-512.png');
 
 
-type AppProps = {
+const lightTheme = createTheme({
+  palette: {
+    primary: {
+      light: '#757ce8',
+      main: '#607d8b',
+      dark: '#002884',
+      contrastText: '#fff',
+    },
+    secondary: {
+      light: '#ff7961',
+      main: '#f44336',
+      dark: '#ba000d',
+      contrastText: '#000',
+    },
+  },
+  typography: {
+    subtitle1: {
+      fontSize: 17,
+    },
+    body1: {
+      fontWeight: 500,
+    },
+    h5: {
+      fontWeight: 300,
+    }
+  }
+});
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      light: '#757ce8',
+      main: '#607d8b',
+      dark: '#002884',
+      contrastText: '#fff',
+    },
+    secondary: {
+      light: '#ff7961',
+      main: '#f44336',
+      dark: '#ba000d',
+      contrastText: '#000',
+    },
+  },
+  typography: {
+    subtitle1: {
+      fontSize: 17,
+    },
+    body1: {
+      fontWeight: 500,
+    },
+    h5: {
+      fontWeight: 300,
+    }
+  }
+});
+
+type SnapWebProps = {
   snapcontrol: SnapControl;
 };
 
 
-export default function App(props: AppProps) {
+export default function SnapWeb(props: SnapWebProps) {
   const [update, setUpdate] = useState(0);
   const [server, setServer] = useState(new Snapcast.Server());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showOffline, setShowOffline] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const snapstreamRef = useRef<SnapStream | null>(null);
@@ -185,14 +246,22 @@ export default function App(props: AppProps) {
     }
   }, [isPlaying]);
 
-  useEffect(() => {
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  useLayoutEffect(() => {
     console.debug("componentDidMount");
     if (window.localStorage) {
-      const value = window.localStorage.getItem("showoffline") === "true";
+      let value = window.localStorage.getItem("showoffline") === "true";
       console.debug("show offline: " + value);
       setShowOffline(value);
+      console.info("prefersDarkMode: " + prefersDarkMode);
+
+      if (window.localStorage.getItem("darkmode") == null)
+        window.localStorage.setItem("darkmode", prefersDarkMode ? "true" : "false");
+      value = window.localStorage.getItem("darkmode") === "true";
+      console.debug("dark mode: " + value);
+      setDarkMode(value);
     }
-  }, []);
+  }, [prefersDarkMode]);
 
 
   function list() {
@@ -229,50 +298,73 @@ export default function App(props: AppProps) {
               </ListItemIcon>
             </ListItemButton>
           </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton role={undefined} onClick={(event) => {
+              let darkmode = !darkMode;
+              if (window.localStorage)
+                window.localStorage.setItem("darkmode", darkmode ? "true" : "false");
+              setDarkMode(darkmode);
+            }} >
+              <ListItemText id='label-dark-mode' primary='Dark mode' />
+              <ListItemIcon>
+                <Checkbox
+                  edge="end"
+                  checked={darkMode}
+                  tabIndex={-1}
+                  disableRipple
+                  inputProps={{ 'aria-labelledby': 'label-dark-mode' }}
+                />
+              </ListItemIcon>
+            </ListItemButton>
+          </ListItem>
         </List>
       </Box>
     );
   }
 
   return (
-    <div className="App">
-      <AppBar position="sticky" >
-        <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-            onClick={(_) => { setSettingsOpen(true); }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Snapcast
-          </Typography>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-            onClick={(_) => { setIsPlaying(!isPlaying); }}
-          >
-            {isPlaying ? <StopIcon fontSize="large" /> : <PlayArrowIcon fontSize="large" />}
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        anchor="top"
-        open={settingsOpen} //</div>={state[anchor]}
-        onClose={() => { setSettingsOpen(false); }}
-      >
-        {list()}
-      </Drawer>
-      <Server server={server} snapcontrol={props.snapcontrol} showOffline={showOffline} />
-      <AboutDialog open={aboutOpen} onClose={() => { setAboutOpen(false); }} />
-    </div >
+    <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
+      <CssBaseline />
+      <div className="SnapWeb">
+        <AppBar position="sticky" >
+          <Toolbar>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              sx={{ mr: 2 }}
+              onClick={(_) => { setSettingsOpen(true); }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              Snapcast
+            </Typography>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              sx={{ mr: 2 }}
+              onClick={(_) => { setIsPlaying(!isPlaying); }}
+            >
+              {isPlaying ? <StopIcon fontSize="large" /> : <PlayArrowIcon fontSize="large" />}
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+        <Drawer
+          anchor="top"
+          open={settingsOpen} //</div>={state[anchor]}
+          onClose={() => { setSettingsOpen(false); }}
+        >
+          {list()}
+        </Drawer>
+        <Server server={server} snapcontrol={props.snapcontrol} showOffline={showOffline} />
+        <AboutDialog open={aboutOpen} onClose={() => { setAboutOpen(false); }} />
+      </div >
+    </ThemeProvider>
   );
 }
 
