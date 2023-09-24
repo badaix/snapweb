@@ -2,38 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import { config } from "./config";
-import App from './components/App';
+import SnapWeb from './components/SnapWeb';
 import reportWebVitals from './reportWebVitals';
 import { SnapControl } from './snapcontrol';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      light: '#757ce8',
-      main: '#607d8b',
-      dark: '#002884',
-      contrastText: '#fff',
-    },
-    secondary: {
-      light: '#ff7961',
-      main: '#f44336',
-      dark: '#ba000d',
-      contrastText: '#000',
-    },
-  },
-  typography: {
-    subtitle1: {
-      fontSize: 17,
-    },
-    body1: {
-      fontWeight: 500,
-    },
-    h5: {
-      fontWeight: 300,
-    }
-  }
-});
+
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -44,9 +17,7 @@ let snapcontrol = new SnapControl(config.baseUrl);
 
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <App snapcontrol={snapcontrol} />
-    </ThemeProvider>
+    <SnapWeb snapcontrol={snapcontrol} />
   </React.StrictMode>
 );
 
