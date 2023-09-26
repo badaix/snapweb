@@ -253,7 +253,7 @@ export default function SnapWeb(props: SnapWebProps) {
       let value = window.localStorage.getItem("showoffline") === "true";
       console.debug("show offline: " + value);
       setShowOffline(value);
-      console.info("prefersDarkMode: " + prefersDarkMode);
+      console.debug("prefersDarkMode: " + prefersDarkMode);
 
       if (window.localStorage.getItem("darkmode") == null)
         window.localStorage.setItem("darkmode", prefersDarkMode ? "true" : "false");
