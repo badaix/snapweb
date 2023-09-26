@@ -23,12 +23,14 @@ export default function AboutDialog(props: { open: boolean, onClose: () => void 
 
             <body>
 
-              <p>Copyright &copy; 2014 - 2021
-                <a href="mailto:snapcast@badaix.de">BadAix</a>
+              <p>Version {process.env.REACT_APP_VERSION}
+              </p>
+              <p>Copyright &copy; 2014 - 2023
+                <a href="mailto:snapcast@badaix.de"> BadAix</a>
               </p>
               <p>Author:
-                <a href="https://de.linkedin.com/pub/johannes-pohl/65/6a6/253">Johannes Pohl</a> and
-                <a href="https://github.com/badaix/snapcast/graphs/contributors">contributors</a>
+                <a href="https://de.linkedin.com/pub/johannes-pohl/65/6a6/253"> Johannes Pohl</a> and
+                <a href="https://github.com/badaix/snapcast/graphs/contributors"> contributors</a>
               </p>
 
               <div>
@@ -52,7 +54,7 @@ export default function AboutDialog(props: { open: boolean, onClose: () => void 
                 <h2>Sources</h2>
 
                 <p>The sources to this application can be retrieved at
-                  <a href="https://github.com/badaix/snapcast">https://github.com/badaix/snapcast</a>.</p>
+                  <a href="https://github.com/badaix/snapweb">https://github.com/badaix/snapweb</a>.</p>
 
                 <h2>Libraries</h2>
 

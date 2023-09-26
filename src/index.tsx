@@ -14,6 +14,7 @@ const root = ReactDOM.createRoot(
 
 let snapcontrol = new SnapControl(config.baseUrl);
 
+console.log(`Welcome to ${process.env.REACT_APP_NAME} ${process.env.REACT_APP_VERSION}`)
 
 root.render(
   <React.StrictMode>
