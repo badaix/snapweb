@@ -99,6 +99,7 @@ export default function Group(props: GroupProps) {
     let idx = newclients.findIndex(element => element.client === client);
     newclients[idx].inGroup = inGroup;
     setClients(newclients);
+    // dummy update, since the array was just mutated
     setUpdate(update + 1);
   };
 
@@ -108,6 +109,7 @@ export default function Group(props: GroupProps) {
     if (!newDeletedClients.includes(client))
       newDeletedClients.push(client);
     setDeletedClients(newDeletedClients);
+    // dummy update, since the array was just mutated
     setUpdate(update + 1);
   }
 
