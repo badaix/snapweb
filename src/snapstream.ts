@@ -1,5 +1,7 @@
 import Flac from 'libflacjs/dist/libflac.js'
 
+import { AudioContext, IAudioBuffer, IAudioContext, IAudioBufferSourceNode, IGainNode } from 'standardized-audio-context'
+
 const appVersion = require('../package.json').version;
 
 declare global {
@@ -7,13 +9,13 @@ declare global {
     interface Window {
         webkitAudioContext: typeof AudioContext
     }
-
-    // declare AudioContext.outputLatency for the ts compiler
-    interface AudioContext extends BaseAudioContext {
-        readonly outputLatency: number;
-    }
 }
 
+// declare AudioContext.outputLatency for the ts compiler
+interface IAudioContextPatched extends IAudioContext {
+    readonly getOutputTimestamp?: () => AudioTimestamp;
+    readonly outputLatency: number;
+}
 
 function setCookie(key: string, value: string, exdays: number = -1) {
     let d = new Date();
@@ -417,7 +419,7 @@ class AudioStream {
                 console.log("Chunk too young, returning silence");
             } else {
                 if (Math.abs(age) > 5) {
-                    // We are 5ms apart, do a hard sync, i.e. don't play faster/slower, 
+                    // We are 5ms apart, do a hard sync, i.e. don't play faster/slower,
                     // but seek to the desired position instead
                     while (this.chunk && age > this.chunk.duration()) {
                         console.log("Chunk too old, dropping (age: " + age.toFixed(2) + " > " + this.chunk.duration().toFixed(2) + ")");
@@ -448,7 +450,7 @@ class AudioStream {
                 //     console.debug("Age > 0, rate: " + rate);
                 //     // we are late (age > 0), this means we are not playing fast enough
                 //     // => the real sample rate seems to be lower, we have to drop some frames
-                //     this.setRealSampleRate(this.sampleFormat.rate * rate); // 0.9999);    
+                //     this.setRealSampleRate(this.sampleFormat.rate * rate); // 0.9999);
                 // }
                 // else if (age < -0.1) {
                 //     let rate = -age * 0.0005;
@@ -456,7 +458,7 @@ class AudioStream {
                 //     console.debug("Age < 0, rate: " + rate);
                 //     // we are early (age > 0), this means we are playing too fast
                 //     // => the real sample rate seems to be higher, we have to insert some frames
-                //     this.setRealSampleRate(this.sampleFormat.rate * rate); // 0.9999);    
+                //     this.setRealSampleRate(this.sampleFormat.rate * rate); // 0.9999);
                 // }
                 // else {
                 //     this.setRealSampleRate(this.sampleFormat.rate);
@@ -542,13 +544,13 @@ class AudioStream {
 
 
 class TimeProvider {
-    constructor(ctx: AudioContext | undefined = undefined) {
+    constructor(ctx?: IAudioContextPatched) {
         if (ctx) {
             this.setAudioContext(ctx);
         }
     }
 
-    setAudioContext(ctx: AudioContext) {
+    setAudioContext(ctx: IAudioContextPatched) {
         this.ctx = ctx;
         this.reset();
     }
@@ -576,9 +578,10 @@ class TimeProvider {
         if (!this.ctx) {
             return window.performance.now();
         } else {
+            const ctx = this.ctx as IAudioContextPatched;
             // Use the more accurate getOutputTimestamp if available, fallback to ctx.currentTime otherwise.
-            const contextTime = !!this.ctx.getOutputTimestamp ? this.ctx.getOutputTimestamp().contextTime : undefined;
-            return (contextTime !== undefined ? contextTime : this.ctx.currentTime) * 1000;
+            const contextTime = !!ctx.getOutputTimestamp ? ctx.getOutputTimestamp().contextTime : undefined;
+            return (contextTime !== undefined ? contextTime : ctx.currentTime) * 1000;
         }
     }
 
@@ -596,7 +599,7 @@ class TimeProvider {
 
     diffBuffer: Array<number> = new Array<number>();
     diff: number = 0;
-    ctx: AudioContext | undefined;
+    ctx?: AudioContext;
 }
 
 
@@ -773,9 +776,8 @@ class FlacDecoder extends Decoder {
     cacheInfo: { isCachedChunk: boolean, cachedBlocks: number } = { isCachedChunk: false, cachedBlocks: 0 };
 }
 
-
 class PlayBuffer {
-    constructor(buffer: AudioBuffer, playTime: number, source: AudioBufferSourceNode, destination: AudioNode) {
+    constructor(buffer: IAudioBuffer, playTime: number, source: IAudioBufferSourceNode<IAudioContext>, destination: IGainNode<IAudioContext>) {
         this.buffer = buffer;
         this.playTime = playTime;
         this.source = source;
@@ -793,9 +795,9 @@ class PlayBuffer {
         this.source.start(this.playTime);
     }
 
-    buffer: AudioBuffer;
+    buffer: IAudioBuffer;
     playTime: number;
-    source: AudioBufferSourceNode;
+    source: IAudioBufferSourceNode<IAudioContext>;
     num: number = 0;
 }
 
@@ -828,11 +830,11 @@ class SnapStream {
         }
     }
 
-    private setupAudioContext(): boolean {
-        let AudioContext = window.AudioContext // Default
-            || window.webkitAudioContext // Safari and old versions of Chrome
-            || false;
+    public resume() {
+        this.ctx.resume();
+    }
 
+    private setupAudioContext(): boolean {
         if (AudioContext) {
             let options: AudioContextOptions | undefined;
             options = { latencyHint: "playback", sampleRate: this.sampleFormat ? this.sampleFormat.rate : undefined };
@@ -843,7 +845,7 @@ class SnapStream {
                 options = undefined;
             }
 
-            this.ctx = new AudioContext(options);
+            this.ctx = new AudioContext(options) as IAudioContextPatched;
             this.gainNode = this.ctx.createGain();
             this.gainNode.connect(this.ctx.destination);
         } else {
@@ -911,20 +913,21 @@ class SnapStream {
                         this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
                     }
 
-                    if (window.AudioContext) {
-                        // we are not using webkitAudioContext, so it's safe to setup a new AudioContext with the new samplerate
-                        // since this code is not triggered by direct user input, we cannt create a webkitAudioContext here
-                        this.stopAudio();
-                        this.setupAudioContext();
-                    }
+                    // NOTE: this breaks iOS audio output on v15.7.5 at least
+                    // if (window.AudioContext) {
+                    //     // we are not using webkitAudioContext, so it's safe to setup a new AudioContext with the new samplerate
+                    //     // since this code is not triggered by direct user input, we cannt create a webkitAudioContext here
+                    //     this.stopAudio();
+                    //     this.setupAudioContext();
+                    // }
 
                     this.ctx.resume();
                     this.timeProvider.setAudioContext(this.ctx);
                     this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
                     // this.timeProvider = new TimeProvider(this.ctx);
                     this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
-                    this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx.outputLatency : 0)
-                    console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency + ", latency: " + this.latency);
+                    this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx!.outputLatency : 0)
+                    console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx!.outputLatency + ", latency: " + this.latency);
                     this.play();
                 }
             }
@@ -1031,8 +1034,8 @@ class SnapStream {
 
     timeProvider: TimeProvider;
     stream: AudioStream | undefined;
-    ctx!: AudioContext; // | undefined;
-    gainNode!: GainNode;
+    ctx!: IAudioContextPatched; // | undefined;
+    gainNode!: IGainNode<IAudioContext>;
     serverSettings: ServerSettingsMessage | undefined;
     decoder: Decoder | undefined;
     sampleFormat: SampleFormat | undefined;
