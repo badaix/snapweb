@@ -217,12 +217,12 @@ export default function Group(props: GroupProps) {
   }
 
   console.debug("Render Group " + props.group.id);
-  let clienten = [];
+  let groupClients = [];
 
   for (let client of getClients()) {
-    clienten.push(<Client key={client.id} client={client} snapcontrol={props.snapcontrol} onDelete={() => { handleClientDelete(client) }} onVolumeChange={() => { handleClientVolumeChange(client) }} />);
+    groupClients.push(<Client key={client.id} client={client} snapcontrol={props.snapcontrol} onDelete={() => { handleClientDelete(client) }} onVolumeChange={() => { handleClientVolumeChange(client) }} />);
   }
-  if (clienten.length === 0)
+  if (groupClients.length === 0)
     return (<div>{snackbar()}</div>);
 
   let stream = props.server.getStream(props.group.stream_id);
@@ -303,7 +303,7 @@ export default function Group(props: GroupProps) {
               </Typography>
             </Stack>
           </Stack>
-          {clienten.length > 1 &&
+          {groupClients.length > 1 &&
             <Stack spacing={2} direction="row" alignItems="center">
               <IconButton aria-label="Mute" onClick={() => { handleMuteClicked() }}>
                 {props.group.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
@@ -314,7 +314,7 @@ export default function Group(props: GroupProps) {
         </Stack>
         <Divider />
         <>
-          {clienten}
+          {groupClients}
         </>
 
       </Card >
