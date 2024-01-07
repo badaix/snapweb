@@ -3,7 +3,7 @@ import { useState, useLayoutEffect } from 'react';
 import Client from './Client';
 import logo from './logo192.png';
 import { SnapControl, Snapcast } from '../snapcontrol';
-import { Alert, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, Slider, Snackbar, Stack, TextField, Typography, IconButton } from '@mui/material';
+import { Alert, Box, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, Slider, Snackbar, Stack, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { VolumeUp as VolumeUpIcon, VolumeOff as VolumeOffIcon, PlayArrow as PlayArrowIcon, Pause as PauseIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Settings as SettingsIcon } from '@mui/icons-material';
 
@@ -311,8 +311,12 @@ export default function Group(props: GroupProps) {
               <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + props.group.id} value={volume} onChange={(_, value) => { handleVolumeChange(value as number) }} onChangeCommitted={(_, value) => { handleVolumeChangeCommitted(value as number) }} />
             </Stack>
           }
+          {groupClients.length === 1 &&
+            <Box sx={{ py: 0.5 }} />
+          }
         </Stack>
         <Divider />
+        <Box sx={{ py: 0.5 }} />
         <>
           {groupClients}
         </>
