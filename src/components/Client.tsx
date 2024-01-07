@@ -93,9 +93,9 @@ export default function Client(props: ClientProps) {
   console.debug("Render Client " + props.client.host.name + ", id: " + props.client.id);
 
   return (
-    <Box sx={{ mr: 2, opacity: props.client.connected ? 1.0 : 0.5 }} >
+    <Box sx={{ opacity: props.client.connected ? 1.0 : 0.5 }} >
       <Grid container spacing={2} justifyContent="center" alignItems="center" >
-        <Grid item xs={11}>
+        <Grid item xs={true}>
           <Stack spacing={-2} direction="column">
             {/* item style={{ flexGrow: "1" }}> */}
             <Typography variant="subtitle1" align='left' gutterBottom>
@@ -109,7 +109,7 @@ export default function Client(props: ClientProps) {
             </Stack>
           </Stack>
         </Grid>
-        <Grid item xs={1}>
+        <Grid item>
           <IconButton aria-label="Options" onClick={(event) => { handleOptionsClicked(event); }}>
             <MoreVertIcon />
           </IconButton>
