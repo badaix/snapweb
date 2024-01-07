@@ -120,18 +120,18 @@ export default function SnapWeb(props: SnapWebProps) {
       let streamId = getMyStreamId();
       let properties = props.snapcontrol.getStream(streamId).properties;
       let metadata = properties.metadata;
-      let title: string = metadata.title || "Unknown Title";
-      let artist: string = (metadata.artist !== undefined) ? metadata.artist.join(', ') : "Unknown Artist";
-      let album: string = metadata.album || "";
+      let title: string = metadata?.title || "Unknown Title";
+      let artist: string = (metadata?.artist !== undefined) ? metadata?.artist.join(', ') : "Unknown Artist";
+      let album: string = metadata?.album || "";
       let artwork: Array<MediaImage> = [{ src: snapcast512, sizes: '512x512', type: 'image/png' }];
-      if (metadata.artUrl !== undefined) {
+      if (metadata?.artUrl !== undefined) {
         artwork = [
-          { src: metadata.artUrl!, sizes: '96x96', type: 'image/png' },
-          { src: metadata.artUrl!, sizes: '128x128', type: 'image/png' },
-          { src: metadata.artUrl!, sizes: '192x192', type: 'image/png' },
-          { src: metadata.artUrl!, sizes: '256x256', type: 'image/png' },
-          { src: metadata.artUrl!, sizes: '384x384', type: 'image/png' },
-          { src: metadata.artUrl!, sizes: '512x512', type: 'image/png' },
+          { src: metadata.artUrl, sizes: '96x96', type: 'image/png' },
+          { src: metadata.artUrl, sizes: '128x128', type: 'image/png' },
+          { src: metadata.artUrl, sizes: '192x192', type: 'image/png' },
+          { src: metadata.artUrl, sizes: '256x256', type: 'image/png' },
+          { src: metadata.artUrl, sizes: '384x384', type: 'image/png' },
+          { src: metadata.artUrl, sizes: '512x512', type: 'image/png' },
         ]
       } // || 'snapcast-512.png';
       console.info('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
@@ -183,7 +183,7 @@ export default function SnapWeb(props: SnapWebProps) {
 
       mediaSession.setActionHandler('seekforward', properties.canSeek ? (event: MediaSessionActionDetails) => {
         let offset: number = event.seekOffset || defaultSkipTime;
-        if ((metadata.duration !== undefined) && (properties.position !== undefined))
+        if ((metadata?.duration !== undefined) && (properties.position !== undefined))
           Math.min(properties.position! + offset, metadata.duration!);
         props.snapcontrol.control(streamId, 'seek', { 'offset': offset })
       } : null);
@@ -191,7 +191,7 @@ export default function SnapWeb(props: SnapWebProps) {
       try {
         mediaSession.setActionHandler('seekto', properties.canSeek ? (event: MediaSessionActionDetails) => {
           let position: number = event.seekTime || 0;
-          if (metadata.duration !== undefined)
+          if (metadata?.duration !== undefined)
             Math.min(position, metadata.duration!);
           props.snapcontrol.control(streamId, 'setPosition', { 'position': position })
         } : null);
@@ -199,11 +199,11 @@ export default function SnapWeb(props: SnapWebProps) {
         console.debug('Warning! The "seekto" media session action is not supported.');
       }
 
-      if ((metadata.duration !== undefined) && (properties.position !== undefined) && (properties.position! <= metadata.duration!)) {
+      if ((metadata?.duration !== undefined) && (properties.position !== undefined) && (properties.position! <= metadata.duration!)) {
         if ('setPositionState' in mediaSession) {
           console.debug('Updating position state: ' + properties.position! + '/' + metadata.duration!);
           mediaSession.setPositionState!({
-            duration: metadata.duration!,
+            duration: metadata.duration,
             playbackRate: 1.0,
             position: properties.position!
           });
