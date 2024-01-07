@@ -226,9 +226,9 @@ export default function Group(props: GroupProps) {
     return (<div>{snackbar()}</div>);
 
   let stream = props.server.getStream(props.group.stream_id);
-  let artUrl = stream?.properties.metadata.artUrl || logo;
-  let title = stream?.properties.metadata.title || "Unknown Title";
-  let artist: string = (stream?.properties.metadata.artist) ? stream!.properties.metadata.artist!.join(', ') : "Unknown Artist";
+  let artUrl = stream?.properties.metadata?.artUrl || logo;
+  let title = stream?.properties.metadata?.title || "Unknown Title";
+  let artist: string = (stream?.properties.metadata?.artist) ? stream!.properties.metadata.artist.join(', ') : "Unknown Artist";
 
   console.debug("Art URL: " + artUrl);
 
@@ -273,36 +273,39 @@ export default function Group(props: GroupProps) {
               </FormControl>
             </Stack>
 
-            <Stack direction="row" justifyContent="center" alignItems="center" >
-              <IconButton aria-label="previous" onClick={() => { props.snapcontrol.control(props.group.stream_id, 'previous') }}>
-                <SkipPreviousIcon />
-              </IconButton>
-              <IconButton aria-label="play/pause" onClick={() => { handlePlayPauseClicked(); }}>
-                {props.server.getStream(props.group.stream_id)?.properties.playbackStatus === "playing" ? <PauseIcon /> : <PlayArrowIcon />}
-                {/* sx={{ height: 32, width: 32 }} /> */}
-              </IconButton>
-              <IconButton aria-label="next" onClick={() => { props.snapcontrol.control(props.group.stream_id, 'next') }}>
-                <SkipNextIcon />
-              </IconButton>
-            </Stack>
-
+            {stream?.properties.canControl &&
+              <Stack direction="row" justifyContent="center" alignItems="center" >
+                <IconButton aria-label="previous" onClick={() => { props.snapcontrol.control(props.group.stream_id, 'previous') }}>
+                  <SkipPreviousIcon />
+                </IconButton>
+                <IconButton aria-label="play/pause" onClick={() => { handlePlayPauseClicked(); }}>
+                  {props.server.getStream(props.group.stream_id)?.properties.playbackStatus === "playing" ? <PauseIcon /> : <PlayArrowIcon />}
+                  {/* sx={{ height: 32, width: 32 }} /> */}
+                </IconButton>
+                <IconButton aria-label="next" onClick={() => { props.snapcontrol.control(props.group.stream_id, 'next') }}>
+                  <SkipNextIcon />
+                </IconButton>
+              </Stack>
+            }
           </Grid>
-          <Stack spacing={2} direction="row" alignItems="center" >
-            <CardMedia
-              component="img"
-              sx={{ width: 48 }}
-              image={artUrl}
-              alt={title + " cover"}
-            />
-            <Stack spacing={0} direction="column" justifyContent="center" sx={{ flexGrow: 1, overflow: 'hidden' }}>
-              <Typography noWrap variant="subtitle1" align="left">
-                {title}
-              </Typography>
-              <Typography noWrap variant="body1" align="left">
-                {artist}
-              </Typography>
+          {stream?.properties.metadata &&
+            <Stack spacing={2} direction="row" alignItems="center" >
+              <CardMedia
+                component="img"
+                sx={{ width: 48 }}
+                image={artUrl}
+                alt={title + " cover"}
+              />
+              <Stack spacing={0} direction="column" justifyContent="center" sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                <Typography noWrap variant="subtitle1" align="left">
+                  {title}
+                </Typography>
+                <Typography noWrap variant="body1" align="left">
+                  {artist}
+                </Typography>
+              </Stack>
             </Stack>
-          </Stack>
+          }
           {groupClients.length > 1 &&
             <Stack spacing={2} direction="row" alignItems="center">
               <IconButton aria-label="Mute" onClick={() => { handleMuteClicked() }}>

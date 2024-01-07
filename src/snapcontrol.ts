@@ -141,7 +141,7 @@ namespace Snapcast {
             if (json.metadata !== undefined) {
                 this.metadata = new Metadata(json.metadata);
             } else {
-                this.metadata = new Metadata({});
+                this.metadata = undefined;
             }
         }
 
@@ -159,7 +159,7 @@ namespace Snapcast {
         canPause: boolean = false;
         canSeek: boolean = false;
         canControl: boolean = false;
-        metadata!: Metadata;
+        metadata?: Metadata;
     }
 
     export class Stream {
