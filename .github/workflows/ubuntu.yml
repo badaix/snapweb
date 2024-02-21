@@ -15,7 +15,7 @@ jobs:
       run: env
 
     - name: Get dependencies
-      run: sudo apt-get update && apt-get install -yq debhelper
+      run: sudo apt-get update && sudo apt-get install -yq debhelper
       env:
         DEBIAN_FRONTEND: noninteractive
 
