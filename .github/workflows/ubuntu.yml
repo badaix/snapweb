@@ -8,13 +8,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Get dependencies
-      run: apt-get update && apt-get install -yq wget debhelper
-      env:
-        DEBIAN_FRONTEND: noninteractive
-
     - name: Checkout
       uses: actions/checkout@v4
+
+    - name: Print environment
+      run: env
+
+    - name: Get dependencies
+      run: sudo apt-get update && apt-get install -yq debhelper
+      env:
+        DEBIAN_FRONTEND: noninteractive
 
     - name: Setup node
       uses: actions/setup-node@v4
