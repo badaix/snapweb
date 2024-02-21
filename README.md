@@ -5,6 +5,7 @@ mobile devices, with the look and feel of
 [Snapdroid](https://github.com/badaix/snapdroid)
 
 ## Develop
+
 1. Add your snapserver host as a local environment var
     ```bash
     echo 'REACT_APP_SNAPSERVER_HOST = localhost:1780' > .env.local
@@ -19,6 +20,7 @@ mobile devices, with the look and feel of
     ```
 
 ## Build for production
+
 1. Install dependencies: `npm ci`
 1. Build: `npm run build`
 1. Copy the created `build` directory to some path on your snapserver host and
