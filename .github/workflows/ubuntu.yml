@@ -8,35 +8,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: checkout
+    - name: Get dependencies
+      run: apt-get update && apt-get install -yq wget debhelper
+      env:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Checkout
       uses: actions/checkout@v4
 
-    - name: setup node
+    - name: Setup node
       uses: actions/setup-node@v4
       with:
         node-version: 20
 
-    - name: update npm
+    - name: Update npm
       run: npm install -g npm@latest
 
-    - name: clean cache
+    - name: Clean npm cache
       run: npm cache clean --force
 
-    - name: install
+    - name: Install
       run: npm ci
 
-    - name: build
+    - name: Build
       env: 
         GENERATE_SOURCEMAP: "false"
       run: npm run build
 
-    - name: archive artifacts
+    - name: Archive artifacts
       uses: actions/upload-artifact@v4
       with:
         name: develop_snapshot
         path: build
 
-    - name: create changelog
+    - name: Create changelog
       run: |
         $GITHUB_WORKSPACE/debian/changelog_md2deb.py $GITHUB_WORKSPACE/changelog.md > $GITHUB_WORKSPACE/debian/changelog
         cat $GITHUB_WORKSPACE/debian/changelog
@@ -47,7 +52,8 @@ jobs:
       run: |
         fakeroot make -f debian/rules clean
         fakeroot make -f debian/rules binary
-    - name: archive deb artifacts
+
+    - name: Archive deb artifacts
       uses: actions/upload-artifact@v4
       with:
         name: snapweb
