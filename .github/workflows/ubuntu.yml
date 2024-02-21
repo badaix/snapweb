@@ -11,8 +11,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Print environment
-      run: env
+    - name: Setup environment
+      run: |
+        echo "PARENT_DIR=$(dirname $GITHUB_WORKSPACE)" >> $GITHUB_ENV
+        env
 
     - name: Get dependencies
       run: sudo apt-get update && sudo apt-get install -yq debhelper
