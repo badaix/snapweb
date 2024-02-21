@@ -8,9 +8,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: checkout
+      uses: actions/checkout@v4
 
-    - uses: actions/setup-node@v3
+    - name: setup node
+    - uses: actions/setup-node@v4
       with:
         node-version: 20
 
@@ -29,7 +31,24 @@ jobs:
       run: npm run build
 
     - name: archive artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: develop_snapshot
         path: build
+
+    - name: create changelog
+      run: |
+        $GITHUB_WORKSPACE/debian/changelog_md2deb.py $GITHUB_WORKSPACE/changelog.md > $GITHUB_WORKSPACE/debian/changelog
+        cat $GITHUB_WORKSPACE/debian/changelog
+
+    - name: Create deb package
+      env:
+        GENERATE_SOURCEMAP: "false"
+      run: |
+        fakeroot make -f debian/rules clean
+        fakeroot make -f debian/rules binary
+    - name: archive deb artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: snapweb
+        path: ${{env.PARENT_DIR}}/snapweb_*.deb
