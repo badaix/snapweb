@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Snapweb
+Upstream-Contact: Johannes Pohl <snapweb@badaix.de>
+Source: https://github.com/badaix/snapweb
+
+Files: *
+Copyright: 2020-2024 Johannes Pohl
+License: GPL-3+
