@@ -14,6 +14,7 @@ jobs:
     - name: Setup environment
       run: |
         echo "PARENT_DIR=$(dirname $GITHUB_WORKSPACE)" >> $GITHUB_ENV
+        run: echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
         env
 
     - name: Get dependencies
@@ -43,7 +44,7 @@ jobs:
     - name: Archive raw artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: snapweb_raw_${{ github.sha }}
+        name: snapweb_raw_${{env.SHA_SHORT}}
         path: build
         compression-level: 9
 
@@ -62,5 +63,5 @@ jobs:
     - name: Archive deb artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: snapweb_debian_package
+        name: snapweb_debian_package_${{env.SHA_SHORT}}
         path: ${{env.PARENT_DIR}}/snapweb_*.deb
