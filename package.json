@@ -7,11 +7,11 @@
     "@emotion/styled": "^11.9.3",
     "@mui/icons-material": "^5.8.4",
     "@mui/material": "^5.9.1",
-    "@testing-library/jest-dom": "^5.16.4",
-    "@testing-library/react": "^13.3.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.11.45",
+    "@testing-library/jest-dom": "^6.1.4",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.5.1",
+    "@types/jest": "^29.5.6",
+    "@types/node": "^20.8.7",
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
     "libflacjs": "^5.4.0",
@@ -19,8 +19,8 @@
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
     "standardized-audio-context": "^25.3.46",
-    "typescript": "^4.7.4",
-    "web-vitals": "^2.1.4"
+    "typescript": "^4.9.5",
+    "web-vitals": "^3.5.0"
   },
   "scripts": {
     "start": "WATCHPACK_POLLING=true react-scripts start",
