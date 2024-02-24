@@ -4,17 +4,22 @@
 
 ### Features
 
-- Dark mode
+- Dark mode (Issue #38)
 - Show track title, artist and album art
 - Stream control: Play, pause, previous, next
+- Support for showing disconnected devices (Issue #7)
+- Show license and version information (Issue #15)
+- Improved iOS playback (Issue #18, PR #45)
 
 ### Bugfixes
+
+- HTML input is sanitized (Issue #36)
 
 ### General
 
 - Rewrite of the GUI with React
 
-_Johannes Pohl <snapweb@badaix.de>  Sun, 05 Feb 2023 00:13:37 +0200_
+_Johannes Pohl <snapweb@badaix.de>  Sat, 24 Feb 2024 00:13:37 +0200_
 
 ## Version 0.5.0
 
@@ -48,11 +53,11 @@ _Johannes Pohl <snapweb@badaix.de>  Wed, 22 Dec 2021 00:13:37 +0200_
 
 ### Features
 
+- Recreate AudioContext if the stream changes
+
 ### Bugfixes
 
 ### General
-
-- Recreate AudioContext if the stream changes
 
 _Johannes Pohl <snapweb@badaix.de>  Sat, 15 May 2021 00:13:37 +0200_
 

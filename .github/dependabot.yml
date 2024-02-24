@@ -10,7 +10,7 @@ updates:
   target-branch: develop
   versioning-strategy: increase
   groups:
-    all:
+    dependencies:
       patterns:
       - "*"
   ignore:
