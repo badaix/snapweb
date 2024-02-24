@@ -7,8 +7,15 @@ updates:
     day: saturday
     time: "10:00"
   open-pull-requests-limit: 10
-  target-branch: react
+  target-branch: develop
   versioning-strategy: increase
+  groups:
+    all:
+      patterns:
+      - "*"
+  ignore:
+    - dependency-name: "typescript"
+      update-types: ["version-update:semver-major"]
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
@@ -16,4 +23,4 @@ updates:
     day: saturday
     time: "10:00"
   open-pull-requests-limit: 10
-  target-branch: react
+  target-branch: develop
