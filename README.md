@@ -29,6 +29,8 @@ mobile devices, with the look and feel of
    `http://<snapserver host>:1780`
 1. Enjoy :)
 
+Prebuilt versions can be downloaded as zip archive or debian package in [Releases](https://github.com/badaix/snapweb/releases).
+
 ## Setup as WebApp
 
 On Android open `http://<snapserver host>:1780` in Chrome and select in the menu
@@ -36,15 +38,18 @@ On Android open `http://<snapserver host>:1780` in Chrome and select in the menu
 
 ## Screenshot
 
-_TODO: update me!_
-![Snapweb](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb.png)
+Screenshots are taken on a Pixel 7 in Chrome DevTools
+
+### Light theme
+
+![Snapweb](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png)
+
+### Dark theme
+
+![Snapweb](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_dark.png)
 
 ## Contributing
 
-_TODO: update me!_
-This web client is the author's first JavaScript/TypeScript
-project and is rather a proof of concept for the Snapserver's
-[WebSocket API](https://github.com/badaix/snapcast/blob/master/doc/json_rpc_api/v2_0_0.md).\
 Since my time and my web development skills are limited, pull requests are
 highly appreciated. Please check the list of
 [open issues](https://github.com/badaix/snapweb/issues).\
@@ -55,11 +60,3 @@ High prio issues:
 
 - Missing opus support [#8](https://github.com/badaix/snapweb/issues/8)
 - Missing Vorbis support [#14](https://github.com/badaix/snapweb/issues/14)
-- Missing toggle to show/hide offline clients
-  [#7](https://github.com/badaix/snapweb/issues/7)
-- Missing "About" dialog showing the version number and license
-  [#15](https://github.com/badaix/snapweb/issues/15)
-- Missing version number [#15](https://github.com/badaix/snapweb/issues/15)
-
-Please consider that one of the design goals is to keep the client small and
-simple, i.e. to use plain TypeScript/CSS without any frameworks.
