@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
+const version = process.env.REACT_APP_VERSION + (process.env.REACT_APP_GITREV ? " (rev " + process.env.REACT_APP_GITREV.substring(0, 8) + ")" : "");
+
 export default function AboutDialog(props: { open: boolean, onClose: () => void }) {
   return (
     <div>
@@ -23,22 +25,16 @@ export default function AboutDialog(props: { open: boolean, onClose: () => void 
 
             <body>
 
-              <p>Version {process.env.REACT_APP_VERSION}
+              <p>Version {version}
               </p>
-              <p>Copyright &copy; 2014 - 2023
-                <a href="mailto:snapcast@badaix.de"> BadAix</a>
+              <p>Copyright &copy; 2014 - 2024 <a href="mailto:snapcast@badaix.de">BadAix</a>
               </p>
-              <p>Author:
-                <a href="https://de.linkedin.com/pub/johannes-pohl/65/6a6/253"> Johannes Pohl</a> and
-                <a href="https://github.com/badaix/snapcast/graphs/contributors"> contributors</a>
-              </p>
+              <p>Author: <a href="https://de.linkedin.com/pub/johannes-pohl/65/6a6/253">Johannes Pohl</a> and <a href="https://github.com/badaix/snapcast/graphs/contributors">contributors</a></p>
 
               <div>
                 <h2>License</h2>
 
-                <p>Snapcast is licensed under the
-                  <a href="#gpl">GNU General Public License, version 3 or later
-                  </a> (herein referred to as GPL).</p>
+                <p>Snapcast is licensed under the <a href="#gpl">GNU General Public License, version 3 or later </a> (herein referred to as GPL).</p>
 
                 <h2>How Can I Help?</h2>
 
@@ -47,14 +43,9 @@ export default function AboutDialog(props: { open: boolean, onClose: () => void 
 
                 <p>Donate on <a href="https://www.paypal.me/badaix">PayPal</a></p>
 
-                <p>You can donate Bitcoins here:
-                  <a href="bitcoin:1Cm9WL99fyYSPbLvgnGbRihjb1GYZ5aZFz?label=Snapcast%20Donation">1Cm9WL99fyYSPbLvgnGbRihjb1GYZ5aZFz</a>
-                </p>
-
                 <h2>Sources</h2>
 
-                <p>The sources to this application can be retrieved at
-                  <a href="https://github.com/badaix/snapweb">https://github.com/badaix/snapweb</a>.</p>
+                <p>The sources to this application can be retrieved at <a href="https://github.com/badaix/snapweb">https://github.com/badaix/snapweb</a>.</p>
 
                 <h2>Libraries</h2>
 

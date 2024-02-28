@@ -39,7 +39,9 @@ jobs:
     - name: Build
       env: 
         GENERATE_SOURCEMAP: "false"
-      run: npm run build
+      run: |
+        echo REACT_APP_GITREV=\"${{ github.sha }}\" >> .env
+        npm run build
 
     - name: Archive raw artifacts
       uses: actions/upload-artifact@v4
