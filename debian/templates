@@ -1,0 +1,13 @@
+Template: snapweb/patch_config
+Type: boolean
+Description: Patch snapserver configuration?
+ The configuration parameter "http/doc_root" in "/etc/snapserver.conf" must point to "/usr/share/snapweb".
+
+Template: snapweb/change_config
+Type: note
+Description: Please change your Snapserver configuration
+ To activate Snapweb, you need to change your Snapserver configuration,
+ usually located at /etc/snapserver.conf, to point to Snapweb.
+ Change the "doc_root" parameter in the "[http]" section to
+ "doc_root = /usr/share/snapweb" and restart the snapserver.
+ 

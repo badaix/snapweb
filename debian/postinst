@@ -1,0 +1,10 @@
+#!/bin/sh -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# Check if snapserver.conf does not exist or if doc_root does not point to Snapweb
+if [ ! -f /etc/snapserver.conf ] || ! cat /etc/snapserver.conf | tr -d ' ' | grep -xq 'doc_root=/usr/share/snapweb'; then
+    db_input high snapweb/change_config || true
+    db_go
+fi
