@@ -38,15 +38,10 @@ On Android open `http://<snapserver host>:1780` in Chrome and select in the menu
 
 ## Screenshot
 
-Screenshots are taken on a Pixel 7 in Chrome DevTools
+Screenshot is taken on a Pixel 7 emulation in Chrome DevTools
 
-### Light theme
-
-![Snapweb](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png)
-
-### Dark theme
-
-![Snapweb](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_dark.png)
+![Snapweb-Dark](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_dark.png#gh-dark-mode-only)
+![Snapweb-Light](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png#gh-light-mode-only)
 
 ## Contributing
 
