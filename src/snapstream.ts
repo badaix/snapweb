@@ -913,13 +913,16 @@ class SnapStream {
                         this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
                     }
 
-                    // NOTE: this breaks iOS audio output on v15.7.5 at least
-                    // if (window.AudioContext) {
-                    //     // we are not using webkitAudioContext, so it's safe to setup a new AudioContext with the new samplerate
-                    //     // since this code is not triggered by direct user input, we cannt create a webkitAudioContext here
-                    //     this.stopAudio();
-                    //     this.setupAudioContext();
-                    // }
+                    // NOTE (curiousercreative): this breaks iOS audio output on v15.7.5 at least
+                    if (window.AudioContext) {
+                        if (this.sampleFormat.rate !== this.ctx.sampleRate.valueOf()) {
+                            console.log("Stream samplerate != audio context samplerate (" + this.sampleFormat.rate + " != " + this.ctx.sampleRate.valueOf() + "), switching audio context to " + this.sampleFormat.rate + " Hz")
+                            // we are not using webkitAudioContext, so it's safe to setup a new AudioContext with the new samplerate
+                            // since this code is not triggered by direct user input, we cannt create a webkitAudioContext here
+                            this.stopAudio();
+                            this.setupAudioContext();
+                        }
+                    }
 
                     this.ctx.resume();
                     this.timeProvider.setAudioContext(this.ctx);
