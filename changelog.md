@@ -1,6 +1,6 @@
 # Snapweb changelog
 
-## Version 0.6.0-beta.2
+## Version 0.6.0
 
 ### Features
 
