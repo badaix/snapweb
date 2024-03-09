@@ -1,6 +1,6 @@
-const host = process.env.REACT_APP_SNAPSERVER_HOST || window.location.host;
+const host = import.meta.env.VITE_SNAPSERVER_HOST || window.location.host;
 
-let config = {
+const config = {
   baseUrl: (window.location.protocol === "https:" ? "wss://" : "ws://") + host,
 };
 

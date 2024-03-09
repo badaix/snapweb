@@ -323,7 +323,7 @@ class SnapControl {
         }
     }
 
-    public updateProperties(stream_id: string) {
+    public updateProperties(_stream_id: string) {
     }
     //     if (!('mediaSession' in navigator)) {
     //         console.log('updateProperties: mediaSession not supported');

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useState, useLayoutEffect } from 'react';
 import Client from './Client';
-import logo from './logo192.png';
+import logo from '../assets/logo192.png';
 import { SnapControl, Snapcast } from '../snapcontrol';
 import { Alert, Box, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, Slider, Snackbar, Stack, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
@@ -50,7 +50,7 @@ export default function Group(props: GroupProps) {
     updateVolume();
   });
 
-  function handleSettingsClicked(event: React.MouseEvent<HTMLButtonElement>) {
+  function handleSettingsClicked(_event: React.MouseEvent<HTMLButtonElement>) {
     console.debug("handleSettingsClicked");
 
     let clients: GroupClient[] = [];

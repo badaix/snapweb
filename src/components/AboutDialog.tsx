@@ -1,7 +1,6 @@
-import * as React from 'react';
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
-const version = process.env.REACT_APP_VERSION + (process.env.REACT_APP_GITREV ? " (rev " + process.env.REACT_APP_GITREV.substring(0, 8) + ")" : "");
+const version = import.meta.env.VITE_APP_NAME_VERSION + (import.meta.env.VITE_APP_NAME_GITREV ? " (rev " + import.meta.env.VITE_APP_NAME_GITREV.substring(0, 8) + ")" : "");
 
 export default function AboutDialog(props: { open: boolean, onClose: () => void }) {
   return (
@@ -20,35 +19,22 @@ export default function AboutDialog(props: { open: boolean, onClose: () => void 
           >
             <head>
               <title>Snapweb licenses</title>
-              <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+              <meta httpEquiv="content-type" content="text/html;charset=utf-8" />
             </head>
 
             <body>
-
-              <p>Version {version}
-              </p>
-              <p>Copyright &copy; 2020 - 2024 <a href="mailto:snapweb@badaix.de">BadAix</a>
-              </p>
+              <p>Version {version}</p>
+              <p>Copyright &copy; 2020 - 2024 <a href="mailto:snapweb@badaix.de">BadAix</a></p>
               <p>Author: <a href="https://de.linkedin.com/pub/johannes-pohl/65/6a6/253">Johannes Pohl</a> and <a href="https://github.com/badaix/snapweb/graphs/contributors">contributors</a></p>
-
               <div>
                 <h2>License</h2>
-
                 <p>Snapweb is licensed under the <a href="#gpl">GNU General Public License, version 3 or later </a> (herein referred to as GPL).</p>
-
                 <h2>How Can I Help?</h2>
-
-                <p>If you find Snapcast and Snapweb useful, then I'd really appreciate it if you'd consider contributing to the project however you can.
-                  Donating is the easiest.</p>
-
+                <p>If you find Snapcast and Snapweb useful, then I'd really appreciate it if you'd consider contributing to the project however you can. Donating is the easiest.</p>
                 <p>Donate on <a href="https://www.paypal.me/badaix">PayPal</a></p>
-
                 <h2>Sources</h2>
-
                 <p>The sources to this application can be retrieved at <a href="https://github.com/badaix/snapweb">https://github.com/badaix/snapweb</a>.</p>
-
                 <h2>Libraries</h2>
-
                 <p>Snapweb uses external libraries that make extensive use of the following persons' or companies' code:
                   <table>
                     <tr>

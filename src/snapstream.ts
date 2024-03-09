@@ -1,8 +1,6 @@
 import Flac from 'libflacjs/dist/libflac.js'
-
 import { AudioContext, IAudioBuffer, IAudioContext, IAudioBufferSourceNode, IGainNode } from 'standardized-audio-context'
 
-const appVersion = require('../package.json').version;
 
 declare global {
     // declare window.webkitAudioContext for the ts compiler
@@ -22,7 +20,7 @@ function setCookie(key: string, value: string, exdays: number = -1) {
     if (exdays < 0)
         exdays = 10 * 365;
     d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-    let expires = "expires=" + d.toUTCString();
+    const expires = "expires=" + d.toUTCString();
     document.cookie = key + "=" + value + ";" + expires + ";sameSite=Strict;path=/";
 }
 
@@ -248,8 +246,8 @@ class HelloMessage extends JsonMessage {
 
     mac: string = "";
     hostname: string = "";
-    version: string = "0.0.0";
-    clientName = "Snapweb";
+    version: string = import.meta.env.VITE_APP_VERSION;
+    clientName = import.meta.env.VITE_APP_NAME;
     os: string = "";
     arch: string = "web";
     instance: number = 1;
@@ -866,14 +864,13 @@ class SnapStream {
 
         this.streamsocket.onopen = () => {
             console.log("on open");
-            let hello = new HelloMessage();
+            const hello = new HelloMessage();
 
             hello.mac = "00:00:00:00:00:00";
             hello.arch = "web";
             hello.os = navigator?.platform || "unknown";
             hello.hostname = "Snapweb client";
             hello.uniqueId = SnapStream.getClientId();
-            hello.version = appVersion;
 
             this.sendMessage(hello);
             this.syncTime();

@@ -9,8 +9,8 @@ import { AppBar, Box, Checkbox, Drawer, List, ListItem, ListItemButton, ListItem
 import { PlayArrow as PlayArrowIcon, Stop as StopIcon, Menu as MenuIcon } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-const silence = require('./10-seconds-of-silence.mp3');
-const snapcast512 = require('./snapcast-512.png');
+import silence from '../assets/10-seconds-of-silence.mp3';
+import snapcast512 from '../assets/snapcast-512.png';
 
 
 const lightTheme = createTheme({
@@ -280,7 +280,7 @@ export default function SnapWeb(props: SnapWebProps) {
           </ListItem>
 
           <ListItem disablePadding>
-            <ListItemButton role={undefined} onClick={(event) => {
+            <ListItemButton role={undefined} onClick={(_event) => {
               let showoffline = !showOffline;
               if (window.localStorage)
                 window.localStorage.setItem("showoffline", showoffline ? "true" : "false");
@@ -300,7 +300,7 @@ export default function SnapWeb(props: SnapWebProps) {
           </ListItem>
 
           <ListItem disablePadding>
-            <ListItemButton role={undefined} onClick={(event) => {
+            <ListItemButton role={undefined} onClick={(_event) => {
               let darkmode = !darkMode;
               if (window.localStorage)
                 window.localStorage.setItem("darkmode", darkmode ? "true" : "false");
