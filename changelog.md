@@ -1,5 +1,17 @@
 # Snapweb changelog
 
+## Version 0.7.0
+
+### Features
+
+### Bugfixes
+
+### General
+
+- Switch from Create React App (deprecated) to Vite
+
+_Johannes Pohl <snapweb@badaix.de>  Sat, 24 Feb 2024 00:13:37 +0200_
+
 ## Version 0.6.0
 
 ### Features

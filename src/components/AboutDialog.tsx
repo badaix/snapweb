@@ -1,6 +1,6 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
-const version = import.meta.env.VITE_APP_NAME_VERSION + (import.meta.env.VITE_APP_NAME_GITREV ? " (rev " + import.meta.env.VITE_APP_NAME_GITREV.substring(0, 8) + ")" : "");
+const version = import.meta.env.VITE_APP_VERSION + (import.meta.env.VITE_APP_GITREV ? " (rev " + import.meta.env.VITE_APP_GITREV.substring(0, 8) + ")" : "");
 
 export default function AboutDialog(props: { open: boolean, onClose: () => void }) {
   return (

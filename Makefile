@@ -4,7 +4,7 @@ build:
 	npm run build
 
 clean:
-	rm -rf build
+	rm -rf dist
 
 install:
-	cd build && find . -type f -exec install -Dm 644 "{}" "$(DESTDIR)/usr/share/snapweb/{}" \;
+	cd dist && find . -type f -exec install -Dm 644 "{}" "$(DESTDIR)/usr/share/snapweb/{}" \;
