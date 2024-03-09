@@ -31,9 +31,9 @@ namespace Snapcast {
         fromJson(json: any) {
             this.id = json.id;
             this.host = new Host(json.host);
-            let jsnapclient = json.snapclient;
+            const jsnapclient = json.snapclient;
             this.snapclient = { name: jsnapclient.name, protocolVersion: jsnapclient.protocolVersion, version: jsnapclient.version }
-            let jconfig = json.config;
+            const jconfig = json.config;
             this.config = { instance: jconfig.instance, latency: jconfig.latency, name: jconfig.name, volume: { muted: jconfig.volume.muted, percent: jconfig.volume.percent } }
             this.lastSeen = { sec: json.lastSeen.sec, usec: json.lastSeen.usec }
             this.connected = Boolean(json.connected);
@@ -77,7 +77,7 @@ namespace Snapcast {
             this.id = json.id;
             this.stream_id = json.stream_id;
             this.muted = Boolean(json.muted);
-            for (let client of json.clients)
+            for (const client of json.clients)
                 this.clients.push(new Client(client));
         }
 
@@ -88,7 +88,7 @@ namespace Snapcast {
         clients: Client[] = [];
 
         getClient(id: string): Client | null {
-            for (let client of this.clients) {
+            for (const client of this.clients) {
                 if (client.id === id)
                     return client;
             }
@@ -175,7 +175,7 @@ namespace Snapcast {
             } else {
                 this.properties = new Properties({});
             }
-            let juri = json.uri;
+            const juri = json.uri;
             this.uri = { raw: juri.raw, scheme: juri.scheme, host: juri.host, path: juri.path, fragment: juri.fragment, query: juri.query }
         }
 
@@ -202,12 +202,12 @@ namespace Snapcast {
 
         fromJson(json: any) {
             this.groups = []
-            for (let jgroup of json.groups)
+            for (const jgroup of json.groups)
                 this.groups.push(new Group(jgroup));
-            let jsnapserver: any = json.server.snapserver;
+                const jsnapserver: any = json.server.snapserver;
             this.server = { host: new Host(json.server.host), snapserver: { controlProtocolVersion: jsnapserver.controlProtocolVersion, name: jsnapserver.name, protocolVersion: jsnapserver.protocolVersion, version: jsnapserver.version } };
             this.streams = []
-            for (let jstream of json.streams) {
+            for (const jstream of json.streams) {
                 this.streams.push(new Stream(jstream));
             }
         }
@@ -225,8 +225,8 @@ namespace Snapcast {
         streams: Stream[] = [];
 
         getClient(id: string): Client | null {
-            for (let group of this.groups) {
-                let client = group.getClient(id);
+            for (const group of this.groups) {
+                const client = group.getClient(id);
                 if (client)
                     return client;
             }
@@ -234,7 +234,7 @@ namespace Snapcast {
         }
 
         getGroup(id: string): Group | null {
-            for (let group of this.groups) {
+            for (const group of this.groups) {
                 if (group.id === id)
                     return group;
             }
@@ -242,7 +242,7 @@ namespace Snapcast {
         }
 
         getStream(id: string): Stream | null {
-            for (let stream of this.streams) {
+            for (const stream of this.streams) {
                 if (stream.id === id)
                     return stream;
             }
@@ -251,7 +251,7 @@ namespace Snapcast {
     }
 }
 
-interface OnChange { (server: Snapcast.Server): void };
+interface OnChange { (_server: Snapcast.Server): void }
 // interface OnStreamChange { (id: string): void };
 
 class SnapControl {
@@ -279,8 +279,7 @@ class SnapControl {
         let stream!: Snapcast.Stream;
         switch (notification.method) {
             case 'Client.OnVolumeChanged':
-                let client = this.getClient(notification.params.id);
-                client.config.volume = notification.params.volume;
+                this.getClient(notification.params.id).config.volume = notification.params.volume;
                 // updateGroupVolume(this.getGroupFromClient(client.id));
                 return true;
             case 'Client.OnLatencyChanged':
@@ -473,7 +472,7 @@ class SnapControl {
     // }
 
     public getClient(client_id: string): Snapcast.Client {
-        let client = this.server.getClient(client_id);
+        const client = this.server.getClient(client_id);
         if (client == null) {
             throw new Error(`client ${client_id} was null`);
         }
@@ -481,7 +480,7 @@ class SnapControl {
     }
 
     public getGroup(group_id: string): Snapcast.Group {
-        let group = this.server.getGroup(group_id);
+        const group = this.server.getGroup(group_id);
         if (group == null) {
             throw new Error(`group ${group_id} was null`);
         }
@@ -493,7 +492,7 @@ class SnapControl {
             return 0;
         let group_vol: number = 0;
         let client_count: number = 0;
-        for (let client of group.clients) {
+        for (const client of group.clients) {
             if (online && !client.connected)
                 continue;
             group_vol += client.config.volume.percent;
@@ -505,15 +504,15 @@ class SnapControl {
     }
 
     public getGroupFromClient(client_id: string): Snapcast.Group {
-        for (let group of this.server.groups)
-            for (let client of group.clients)
+        for (const group of this.server.groups)
+            for (const client of group.clients)
                 if (client.id === client_id)
                     return group;
         throw new Error(`group for client ${client_id} was null`);
     }
 
     public getStreamFromClient(client_id: string): Snapcast.Stream {
-        let group: Snapcast.Group = this.getGroupFromClient(client_id);
+        const group: Snapcast.Group = this.getGroupFromClient(client_id);
         return this.getStream(group.stream_id);
     }
 
@@ -528,7 +527,7 @@ class SnapControl {
     // }
 
     public getStream(stream_id: string): Snapcast.Stream {
-        let stream = this.server.getStream(stream_id);
+        const stream = this.server.getStream(stream_id);
         if (stream == null) {
             throw new Error(`stream ${stream_id} was null`);
         }
@@ -537,7 +536,7 @@ class SnapControl {
 
     public setVolume(client_id: string, percent: number, mute?: boolean) {
         percent = Math.max(0, Math.min(100, percent));
-        let client = this.getClient(client_id);
+        const client = this.getClient(client_id);
         client.config.volume.percent = percent;
         if (mute !== undefined)
             client.config.volume.muted = mute;
@@ -545,8 +544,8 @@ class SnapControl {
     }
 
     public setClientName(client_id: string, name: string) {
-        let client = this.getClient(client_id);
-        let current_name: string = (client.config.name !== "") ? client.config.name : client.host.name;
+        const client = this.getClient(client_id);
+        const current_name: string = (client.config.name !== "") ? client.config.name : client.host.name;
         if (name !== current_name) {
             this.sendRequest('Client.SetName', { id: client_id, name: name });
             client.config.name = name;
@@ -554,8 +553,8 @@ class SnapControl {
     }
 
     public setClientLatency(client_id: string, latency: number) {
-        let client = this.getClient(client_id);
-        let current_latency: number = client.config.latency;
+        const client = this.getClient(client_id);
+        const current_latency: number = client.config.latency;
         if (latency !== current_latency) {
             this.sendRequest('Client.SetLatency', { id: client_id, latency: latency });
             client.config.latency = latency;
@@ -596,7 +595,7 @@ class SnapControl {
     }
 
     public control(stream_id: string, command: string, params?: any) {
-        let json: any = { id: stream_id, command: command };
+        const json: any = { id: stream_id, command: command };
         if (params) {
             json.params = params;
         }
@@ -604,7 +603,7 @@ class SnapControl {
     }
 
     private sendRequest(method: string, params?: any): number {
-        let msg: any = {
+        const msg: any = {
             id: ++this.msg_id,
             jsonrpc: '2.0',
             method: method
@@ -612,7 +611,7 @@ class SnapControl {
         if (params)
             msg.params = params;
 
-        let msgJson = JSON.stringify(msg);
+        const msgJson = JSON.stringify(msg);
         console.debug("Sending: " + msgJson);
         this.connection.send(msgJson);
         return this.msg_id;
@@ -620,8 +619,8 @@ class SnapControl {
 
     private onMessage(msg: string) {
         let refresh: boolean = false;
-        let json_msg = JSON.parse(msg);
-        let is_response: boolean = (json_msg.id !== undefined);
+        const json_msg = JSON.parse(msg);
+        const is_response: boolean = (json_msg.id !== undefined);
         // console.debug("Received " + (is_response ? "response" : "notification") + ", json: " + JSON.stringify(json_msg))
         if (is_response) {
             if (json_msg.id === this.status_req_id) {
@@ -633,7 +632,7 @@ class SnapControl {
         }
         else {
             if (Array.isArray(json_msg)) {
-                for (let notification of json_msg) {
+                for (const notification of json_msg) {
                     refresh = this.onNotification(notification) || refresh;
                 }
             } else {

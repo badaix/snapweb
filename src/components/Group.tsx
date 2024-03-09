@@ -37,9 +37,9 @@ export default function Group(props: GroupProps) {
   const groupVolumeChange = useRef<GroupVolumeChange>({ volumeEntered: true, client_volumes: new Map<string, number>(), group_volume: 0 });
 
   function updateVolume() {
-    let clients = getClients();
+    const clients = getClients();
     let volume = 0;
-    for (let client of clients)
+    for (const client of clients)
       volume += client.config.volume.percent;
     volume /= clients.length;
     setVolume(volume);
@@ -53,10 +53,10 @@ export default function Group(props: GroupProps) {
   function handleSettingsClicked(_event: React.MouseEvent<HTMLButtonElement>) {
     console.debug("handleSettingsClicked");
 
-    let clients: GroupClient[] = [];
-    for (let group of props.server.groups) {
-      for (let client of group.clients) {
-        let inGroup: boolean = props.group.clients.includes(client);
+    const clients: GroupClient[] = [];
+    for (const group of props.server.groups) {
+      for (const client of group.clients) {
+        const inGroup: boolean = props.group.clients.includes(client);
         clients.push({ client: client, inGroup: inGroup, wasInGroup: inGroup });
       }
     }
@@ -66,13 +66,13 @@ export default function Group(props: GroupProps) {
     setSettingsOpen(true);
     setClients(clients);
     setStreamId(props.group.stream_id)
-  };
+  }
 
   function handleSettingsClose(apply: boolean) {
     console.debug("handleSettingsClose: " + apply);
     if (apply) {
       let changed: boolean = false;
-      for (let element of clients) {
+      for (const element of clients) {
         if (element.inGroup !== element.wasInGroup) {
           changed = true;
           break;
@@ -80,8 +80,8 @@ export default function Group(props: GroupProps) {
       }
 
       if (changed) {
-        let groupClients: string[] = [];
-        for (let element of clients)
+        const groupClients: string[] = [];
+        for (const element of clients)
           if (element.inGroup)
             groupClients.push(element.client.id);
         props.snapcontrol.setClients(props.group.id, groupClients);
@@ -91,21 +91,21 @@ export default function Group(props: GroupProps) {
         props.snapcontrol.setStream(props.group.id, streamId);
     }
     setSettingsOpen(false);
-  };
+  }
 
   function handleGroupClientChange(client: Snapcast.Client, inGroup: boolean) {
     console.debug("handleGroupClientChange: " + client.id + ", in group: " + inGroup);
-    let newclients = clients;
-    let idx = newclients.findIndex(element => element.client === client);
+    const newclients = clients;
+    const idx = newclients.findIndex(element => element.client === client);
     newclients[idx].inGroup = inGroup;
     setClients(newclients);
     // dummy update, since the array was just mutated
     setUpdate(update + 1);
-  };
+  }
 
   function handleClientDelete(client: Snapcast.Client) {
     console.debug("handleClientDelete: " + client.getName());
-    let newDeletedClients = deletedClients;
+    const newDeletedClients = deletedClients;
     if (!newDeletedClients.includes(client))
       newDeletedClients.push(client);
     setDeletedClients(newDeletedClients);
@@ -123,27 +123,27 @@ export default function Group(props: GroupProps) {
     if (!undo)
       props.snapcontrol.deleteClient(client.id);
 
-    let newDeletedClients = deletedClients;
+    const newDeletedClients = deletedClients;
     if (newDeletedClients.includes(client))
       newDeletedClients.splice(newDeletedClients.indexOf(client), 1);
 
     setDeletedClients(newDeletedClients);
     setUpdate(update + 1);
-  };
+  }
 
   function handleMuteClicked() {
     console.debug("handleMuteClicked");
     props.group.muted = !props.group.muted;
     props.snapcontrol.muteGroup(props.group.id, props.group.muted);
     setUpdate(update + 1);
-  };
+  }
 
   function handleVolumeChange(value: number) {
     console.debug("handleVolumeChange: " + value);
     if (groupVolumeChange.current.volumeEntered) {
       groupVolumeChange.current.client_volumes.clear();
       groupVolumeChange.current.group_volume = 0;
-      for (let client of getClients()) {
+      for (const client of getClients()) {
         groupVolumeChange.current.client_volumes.set(client.id, client.config.volume.percent);
         groupVolumeChange.current.group_volume += client.config.volume.percent;
       }
@@ -151,14 +151,14 @@ export default function Group(props: GroupProps) {
       groupVolumeChange.current.volumeEntered = false;
     }
 
-    let delta = value - groupVolumeChange.current.group_volume;
+    const delta = value - groupVolumeChange.current.group_volume;
     let ratio: number;
     if (delta < 0)
       ratio = (groupVolumeChange.current.group_volume - value) / groupVolumeChange.current.group_volume;
     else
       ratio = (value - groupVolumeChange.current.group_volume) / (100 - groupVolumeChange.current.group_volume);
 
-    for (let client of getClients()) {
+    for (const client of getClients()) {
       let new_volume = groupVolumeChange.current.client_volumes.get(client.id)!;
       if (delta < 0)
         new_volume -= ratio * new_volume;
@@ -170,12 +170,12 @@ export default function Group(props: GroupProps) {
     }
 
     setVolume(value);
-  };
+  }
 
   function handleVolumeChangeCommitted(value: number) {
     console.debug("handleVolumeChangeCommitted: " + value);
     groupVolumeChange.current.volumeEntered = true;
-  };
+  }
 
   function handlePlayPauseClicked() {
     if (props.server.getStream(props.group.stream_id)?.properties.playbackStatus === "playing")
@@ -203,12 +203,12 @@ export default function Group(props: GroupProps) {
           </Alert>
         </Snackbar >)
     )
-  };
+  }
 
 
   function getClients(): Snapcast.Client[] {
-    let clients = [];
-    for (let client of props.group.clients) {
+    const clients = [];
+    for (const client of props.group.clients) {
       if ((client.connected || props.showOffline) && !deletedClients.includes(client)) {
         clients.push(client);
       }
@@ -217,24 +217,24 @@ export default function Group(props: GroupProps) {
   }
 
   console.debug("Render Group " + props.group.id);
-  let groupClients = [];
+  const groupClients = [];
 
-  for (let client of getClients()) {
+  for (const client of getClients()) {
     groupClients.push(<Client key={client.id} client={client} snapcontrol={props.snapcontrol} onDelete={() => { handleClientDelete(client) }} onVolumeChange={() => { handleClientVolumeChange(client) }} />);
   }
   if (groupClients.length === 0)
     return (<div>{snackbar()}</div>);
 
-  let stream = props.server.getStream(props.group.stream_id);
-  let artUrl = stream?.properties.metadata?.artUrl || logo;
-  let title = stream?.properties.metadata?.title || "Unknown Title";
-  let artist: string = (stream?.properties.metadata?.artist) ? stream!.properties.metadata.artist.join(', ') : "Unknown Artist";
+  const stream = props.server.getStream(props.group.stream_id);
+  const artUrl = stream?.properties.metadata?.artUrl || logo;
+  const title = stream?.properties.metadata?.title || "Unknown Title";
+  const artist: string = (stream?.properties.metadata?.artist) ? stream!.properties.metadata.artist.join(', ') : "Unknown Artist";
 
   console.debug("Art URL: " + artUrl);
 
-  let allClients = [];
-  for (let group of props.server.groups)
-    for (let client of group.clients)
+  const allClients = [];
+  for (const group of props.server.groups)
+    for (const client of group.clients)
       allClients.push(client);
 
   return (
@@ -263,7 +263,7 @@ export default function Group(props: GroupProps) {
                   value={props.group.stream_id}
                   label="Stream"
                   onChange={(event) => {
-                    let stream: string = event.target.value;
+                    const stream: string = event.target.value;
                     setStreamId(stream);
                     props.snapcontrol.setStream(props.group.id, stream);
                   }}

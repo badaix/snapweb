@@ -105,24 +105,24 @@ export default function SnapWeb(props: SnapWebProps) {
 
   function getMyStreamId(): string {
     try {
-      let group = props.snapcontrol.getGroupFromClient(SnapStream.getClientId());
+      const group = props.snapcontrol.getGroupFromClient(SnapStream.getClientId());
       return props.snapcontrol.getStream(group.stream_id).id;
     } catch (e) {
       return "";
     }
-  };
+  }
 
   function updateMediaSession() {
     console.debug('updateMediaSession');
     if (!snapstreamRef.current)
       return;
     try {
-      let streamId = getMyStreamId();
-      let properties = props.snapcontrol.getStream(streamId).properties;
-      let metadata = properties.metadata;
-      let title: string = metadata?.title || "Unknown Title";
-      let artist: string = (metadata?.artist !== undefined) ? metadata?.artist.join(', ') : "Unknown Artist";
-      let album: string = metadata?.album || "";
+      const streamId = getMyStreamId();
+      const properties = props.snapcontrol.getStream(streamId).properties;
+      const metadata = properties.metadata;
+      const title: string = metadata?.title || "Unknown Title";
+      const artist: string = (metadata?.artist !== undefined) ? metadata?.artist.join(', ') : "Unknown Artist";
+      const album: string = metadata?.album || "";
       let artwork: Array<MediaImage> = [{ src: snapcast512, sizes: '512x512', type: 'image/png' }];
       if (metadata?.artUrl !== undefined) {
         artwork = [
@@ -142,7 +142,7 @@ export default function SnapWeb(props: SnapWebProps) {
         artwork: artwork
       });
 
-      let mediaSession = navigator.mediaSession!;
+      const mediaSession = navigator.mediaSession!;
       let play_state: MediaSessionPlaybackState = "none";
       if (properties.playbackStatus !== undefined) {
         if (properties.playbackStatus === "playing") {
@@ -172,17 +172,17 @@ export default function SnapWeb(props: SnapWebProps) {
       } catch (error) {
         console.debug('Warning! The "stop" media session action is not supported.');
       }
-      let defaultSkipTime: number = 10; // Time to skip in seconds by default
+      const defaultSkipTime: number = 10; // Time to skip in seconds by default
       mediaSession.setActionHandler('seekbackward', properties.canSeek ?
         (event: MediaSessionActionDetails) => {
-          let offset: number = (event.seekOffset || defaultSkipTime) * -1;
+          const offset: number = (event.seekOffset || defaultSkipTime) * -1;
           if (properties.position !== undefined)
             Math.max(properties.position! + offset, 0);
           props.snapcontrol.control(streamId, 'seek', { 'offset': offset })
         } : null);
 
       mediaSession.setActionHandler('seekforward', properties.canSeek ? (event: MediaSessionActionDetails) => {
-        let offset: number = event.seekOffset || defaultSkipTime;
+        const offset: number = event.seekOffset || defaultSkipTime;
         if ((metadata?.duration !== undefined) && (properties.position !== undefined))
           Math.min(properties.position! + offset, metadata.duration!);
         props.snapcontrol.control(streamId, 'seek', { 'offset': offset })
@@ -190,7 +190,7 @@ export default function SnapWeb(props: SnapWebProps) {
 
       try {
         mediaSession.setActionHandler('seekto', properties.canSeek ? (event: MediaSessionActionDetails) => {
-          let position: number = event.seekTime || 0;
+          const position: number = event.seekTime || 0;
           if (metadata?.duration !== undefined)
             Math.min(position, metadata.duration!);
           props.snapcontrol.control(streamId, 'setPosition', { 'position': position })
@@ -281,7 +281,7 @@ export default function SnapWeb(props: SnapWebProps) {
 
           <ListItem disablePadding>
             <ListItemButton role={undefined} onClick={(_event) => {
-              let showoffline = !showOffline;
+              const showoffline = !showOffline;
               if (window.localStorage)
                 window.localStorage.setItem("showoffline", showoffline ? "true" : "false");
               setShowOffline(showoffline);
@@ -301,7 +301,7 @@ export default function SnapWeb(props: SnapWebProps) {
 
           <ListItem disablePadding>
             <ListItemButton role={undefined} onClick={(_event) => {
-              let darkmode = !darkMode;
+              const darkmode = !darkMode;
               if (window.localStorage)
                 window.localStorage.setItem("darkmode", darkmode ? "true" : "false");
               setDarkMode(darkmode);

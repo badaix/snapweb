@@ -29,7 +29,7 @@ export default function Client(props: ClientProps) {
     props.snapcontrol.setVolume(props.client.id, value, false);
     // setState({});
     props.onVolumeChange();
-  };
+  }
 
   function handleOptionsClicked(event: React.MouseEvent<HTMLButtonElement>) {
     console.debug("handleOptionsClicked");
@@ -38,12 +38,12 @@ export default function Client(props: ClientProps) {
     setName(props.client.config.name);
     setTmpLatency(props.client.config.latency);
     setLatency(props.client.config.latency);
-  };
+  }
 
   function handleMenuClose() {
     setAnchorEl(null)
     setOpen(false);
-  };
+  }
 
   function handleDetailsClose(apply: boolean) {
     setDetailsOpen(false);
@@ -59,33 +59,33 @@ export default function Client(props: ClientProps) {
       setName(props.client.config.name)
       setTmpLatency(latency);
     }
-  };
+  }
 
   function handleDetailsClicked() {
     console.debug("handleDetailsClicked");
     setDetailsOpen(true);
     setAnchorEl(null);
     setOpen(false);
-  };
+  }
 
   function handleNameChange(name: string) {
     console.debug('handleNameChange: ' + name);
     setName(name);
-  };
+  }
 
   function handleLatencyChange(latency: number) {
     console.debug('handleLatencyChange: ' + latency);
     setTmpLatency(latency);
     props.snapcontrol.setClientLatency(props.client.id, latency);
-  };
+  }
 
   function handleMuteClicked() {
     console.debug("handleMuteClicked");
     props.snapcontrol.setVolume(props.client.id, props.client.config.volume.percent, !props.client.config.volume.muted);
     setUpdate(update + 1);
-  };
+  }
 
-  let menuitems = [];
+  const menuitems = [];
   menuitems.push(<MenuItem key='Menu-Details' onClick={() => { handleDetailsClicked() }}>Details</MenuItem>);
   if (!props.client.connected)
     menuitems.push(<MenuItem key='Menu-Delete' onClick={() => { props.onDelete(); setAnchorEl(null); setOpen(false); }}>Delete</MenuItem>);

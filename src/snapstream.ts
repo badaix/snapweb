@@ -16,7 +16,7 @@ interface IAudioContextPatched extends IAudioContext {
 }
 
 function setCookie(key: string, value: string, exdays: number = -1) {
-    let d = new Date();
+    const d = new Date();
     if (exdays < 0)
         exdays = 10 * 365;
     d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
@@ -35,9 +35,9 @@ function getPersistentValue(key: string, defaultValue: string = ""): string {
         return defaultValue;
     }
     // Fallback to cookies if localStorage is not available.
-    let name = key + "=";
-    let decodedCookie = decodeURIComponent(document.cookie);
-    let ca = decodedCookie.split(';');
+    const name = key + "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
     for (let c of ca) {
         c = c.trimLeft();
         if (c.indexOf(name) === 0) {
@@ -55,7 +55,7 @@ function getChromeVersion(): number | null {
 
 function uuidv4(): string {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c === 'x' ? r : ((r & 0x3) | 0x8);
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : ((r & 0x3) | 0x8);
         return v.toString(16);
     });
 }
@@ -83,7 +83,7 @@ class Tv {
 
 class BaseMessage {
     deserialize(buffer: ArrayBuffer) {
-        let view = new DataView(buffer);
+        const view = new DataView(buffer);
         this.type = view.getUint16(0, true);
         this.id = view.getUint16(2, true);
         this.refersTo = view.getUint16(4, true);
@@ -94,8 +94,8 @@ class BaseMessage {
 
     serialize(): ArrayBuffer {
         this.size = 26 + this.getSize();
-        let buffer = new ArrayBuffer(this.size);
-        let view = new DataView(buffer);
+        const buffer = new ArrayBuffer(this.size);
+        const view = new DataView(buffer);
         view.setUint16(0, this.type, true);
         view.setUint16(2, this.id, true);
         view.setUint16(4, this.refersTo, true);
@@ -132,11 +132,11 @@ class CodecMessage extends BaseMessage {
 
     deserialize(buffer: ArrayBuffer) {
         super.deserialize(buffer);
-        let view = new DataView(buffer);
-        let codecSize = view.getInt32(26, true);
-        let decoder = new TextDecoder("utf-8");
+        const view = new DataView(buffer);
+        const codecSize = view.getInt32(26, true);
+        const decoder = new TextDecoder("utf-8");
         this.codec = decoder.decode(buffer.slice(30, 30 + codecSize));
-        let payloadSize = view.getInt32(30 + codecSize, true);
+        const payloadSize = view.getInt32(30 + codecSize, true);
         console.debug("payload size: " + payloadSize);
         this.payload = buffer.slice(34 + codecSize, 34 + codecSize + payloadSize);
         console.debug("payload: " + this.payload);
@@ -158,13 +158,13 @@ class TimeMessage extends BaseMessage {
 
     deserialize(buffer: ArrayBuffer) {
         super.deserialize(buffer);
-        let view = new DataView(buffer);
+        const view = new DataView(buffer);
         this.latency = new Tv(view.getInt32(26, true), view.getInt32(30, true));
     }
 
     serialize(): ArrayBuffer {
-        let buffer = super.serialize();
-        let view = new DataView(buffer);
+        const buffer = super.serialize();
+        const view = new DataView(buffer);
         view.setInt32(26, this.latency.sec, true);
         view.setInt32(30, this.latency.usec, true);
         return buffer;
@@ -188,27 +188,27 @@ class JsonMessage extends BaseMessage {
 
     deserialize(buffer: ArrayBuffer) {
         super.deserialize(buffer);
-        let view = new DataView(buffer);
-        let size = view.getUint32(26, true);
-        let decoder = new TextDecoder();
+        const view = new DataView(buffer);
+        const size = view.getUint32(26, true);
+        const decoder = new TextDecoder();
         this.json = JSON.parse(decoder.decode(buffer.slice(30, 30 + size)));
     }
 
     serialize(): ArrayBuffer {
-        let buffer = super.serialize();
-        let view = new DataView(buffer);
-        let jsonStr = JSON.stringify(this.json);
+        const buffer = super.serialize();
+        const view = new DataView(buffer);
+        const jsonStr = JSON.stringify(this.json);
         view.setUint32(26, jsonStr.length, true);
-        let encoder = new TextEncoder();
-        let encoded = encoder.encode(jsonStr);
+        const encoder = new TextEncoder();
+        const encoded = encoder.encode(jsonStr);
         for (let i = 0; i < encoded.length; ++i)
             view.setUint8(30 + i, encoded[i]);
         return buffer;
     }
 
     getSize() {
-        let encoder = new TextEncoder();
-        let encoded = encoder.encode(JSON.stringify(this.json));
+        const encoder = new TextEncoder();
+        const encoded = encoder.encode(JSON.stringify(this.json));
         return encoded.length + 4;
         // return JSON.stringify(this.json).length;
     }
@@ -295,7 +295,7 @@ class PcmChunkMessage extends BaseMessage {
 
     deserialize(buffer: ArrayBuffer) {
         super.deserialize(buffer);
-        let view = new DataView(buffer);
+        const view = new DataView(buffer);
         this.timestamp = new Tv(view.getInt32(26, true), view.getInt32(30, true));
         // this.payloadSize = view.getUint32(34, true);
         this.payload = buffer.slice(38);//, this.payloadSize + 38));// , this.payloadSize);
@@ -304,12 +304,12 @@ class PcmChunkMessage extends BaseMessage {
 
     readFrames(frames: number): ArrayBuffer {
         let frameCnt = frames;
-        let frameSize = this.sampleFormat.frameSize();
+        const frameSize = this.sampleFormat.frameSize();
         if (this.idx + frames > this.payloadSize() / frameSize)
             frameCnt = (this.payloadSize() / frameSize) - this.idx;
-        let begin = this.idx * frameSize;
+        const begin = this.idx * frameSize;
         this.idx += frameCnt;
-        let end = begin + frameCnt * frameSize;
+        const end = begin + frameCnt * frameSize;
         // console.log("readFrames: " + frames + ", result: " + frameCnt + ", begin: " + begin + ", end: " + end + ", payload: " + this.payload.byteLength);
         return this.payload.slice(begin, end);
     }
@@ -339,10 +339,10 @@ class PcmChunkMessage extends BaseMessage {
     }
 
     addPayload(buffer: ArrayBuffer) {
-        let payload = new ArrayBuffer(this.payload.byteLength + buffer.byteLength);
-        let view = new DataView(payload);
-        let viewOld = new DataView(this.payload);
-        let viewNew = new DataView(buffer);
+        const payload = new ArrayBuffer(this.payload.byteLength + buffer.byteLength);
+        const view = new DataView(payload);
+        const viewOld = new DataView(this.payload);
+        const viewNew = new DataView(buffer);
         for (let i = 0; i < viewOld.byteLength; ++i) {
             view.setInt8(i, viewOld.getInt8(i));
         }
@@ -361,7 +361,7 @@ class PcmChunkMessage extends BaseMessage {
 
 
 class AudioStream {
-    constructor(public timeProvider: TimeProvider, public sampleFormat: SampleFormat, public bufferMs: number) {
+    constructor(public _timeProvider: TimeProvider, public _sampleFormat: SampleFormat, public _bufferMs: number) {
     }
 
     chunks: Array<PcmChunkMessage> = new Array<PcmChunkMessage>();
@@ -380,9 +380,9 @@ class AudioStream {
         // console.debug("chunks: " + this.chunks.length + ", oldest: " + oldest.toFixed(2) + ", newest: " + newest.toFixed(2));
 
         while (this.chunks.length > 0) {
-            let age = this.timeProvider.serverNow() - this.chunks[0].timestamp.getMilliseconds();
+            const age = this._timeProvider.serverNow() - this.chunks[0].timestamp.getMilliseconds();
             // todo: consider buffer ms
-            if (age > 5000 + this.bufferMs) {
+            if (age > 5000 + this._bufferMs) {
                 this.chunks.shift();
                 console.log("Dropping old chunk: " + age.toFixed(2) + ", left: " + this.chunks.length);
             }
@@ -396,18 +396,18 @@ class AudioStream {
             this.chunk = this.chunks.shift()
         }
         // let age = this.timeProvider.serverTime(this.playTime * 1000) - startMs;
-        let frames = buffer.length;
+        const frames = buffer.length;
         // console.debug("getNextBuffer: " + frames + ", play time: " + playTimeMs.toFixed(2));
-        let left = new Float32Array(frames);
-        let right = new Float32Array(frames);
+        const left = new Float32Array(frames);
+        const right = new Float32Array(frames);
         let read = 0;
         let pos = 0;
         // let volume = this.muted ? 0 : this.volume;
-        let serverPlayTimeMs = this.timeProvider.serverTime(playTimeMs);
+        const serverPlayTimeMs = this._timeProvider.serverTime(playTimeMs);
         if (this.chunk) {
             let age = serverPlayTimeMs - this.chunk.startMs();// - 500;
-            let reqChunkDuration = frames / this.sampleFormat.msRate();
-            let secs = Math.floor(Date.now() / 1000);
+            const reqChunkDuration = frames / this._sampleFormat.msRate();
+            const secs = Math.floor(Date.now() / 1000);
             if (this.lastLog !== secs) {
                 this.lastLog = secs;
                 console.log("age: " + age.toFixed(2) + ", req: " + reqChunkDuration);
@@ -433,7 +433,7 @@ class AudioStream {
                         }
                         else if (age < 0) {
                             console.log("Playing silence " + -age.toFixed(2) + "ms");
-                            let silentFrames = Math.floor(-age * this.chunk.sampleFormat.msRate());
+                            const silentFrames = Math.floor(-age * this.chunk.sampleFormat.msRate());
                             left.fill(0, 0, silentFrames);
                             right.fill(0, 0, silentFrames);
                             read = silentFrames;
@@ -471,16 +471,16 @@ class AudioStream {
                     addFrames = Math.floor(age); // / 5);
                 }
                 // addFrames = -2;
-                let readFrames = frames + addFrames - read;
+                const readFrames = frames + addFrames - read;
                 if (addFrames !== 0)
                     everyN = Math.ceil((frames + addFrames - read) / (Math.abs(addFrames) + 1));
 
                 // addFrames = 0;
                 // console.debug("frames: " + frames + ", readFrames: " + readFrames + ", addFrames: " + addFrames + ", everyN: " + everyN);
                 while ((read < readFrames) && this.chunk) {
-                    let pcmChunk = this.chunk as PcmChunkMessage;
-                    let pcmBuffer = pcmChunk.readFrames(readFrames - read);
-                    let payload = new Int16Array(pcmBuffer);
+                    const pcmChunk = this.chunk as PcmChunkMessage;
+                    const pcmBuffer = pcmChunk.readFrames(readFrames - read);
+                    const payload = new Int16Array(pcmBuffer);
                     // console.debug("readFrames: " + (frames - read) + ", read: " + pcmBuffer.byteLength + ", payload: " + payload.length);
                     // read += (pcmBuffer.byteLength / this.sampleFormat.frameSize());
                     for (let i = 0; i < payload.length; i += 2) {
@@ -564,7 +564,7 @@ class TimeProvider {
         } else {
             if (this.diffBuffer.push((c2s - s2c) / 2) > 100)
                 this.diffBuffer.shift();
-            let sorted = [...this.diffBuffer];
+            const sorted = [...this.diffBuffer];
             sorted.sort()
             this.diff = sorted[Math.floor(sorted.length / 2)];
         }
@@ -578,7 +578,7 @@ class TimeProvider {
         } else {
             const ctx = this.ctx as IAudioContextPatched;
             // Use the more accurate getOutputTimestamp if available, fallback to ctx.currentTime otherwise.
-            const contextTime = !!ctx.getOutputTimestamp ? ctx.getOutputTimestamp().contextTime : undefined;
+            const contextTime = ctx.getOutputTimestamp ? ctx.getOutputTimestamp().contextTime : undefined;
             return (contextTime !== undefined ? contextTime : ctx.currentTime) * 1000;
         }
     }
@@ -644,8 +644,8 @@ class Decoder {
 
 class OpusDecoder extends Decoder {
     setHeader(buffer: ArrayBuffer): SampleFormat | null {
-        let view = new DataView(buffer);
-        let ID_OPUS = 0x4F505553;
+        const view = new DataView(buffer);
+        const ID_OPUS = 0x4F505553;
         if (buffer.byteLength < 12) {
             console.error("Opus header too small: " + buffer.byteLength);
             return null;
@@ -654,7 +654,7 @@ class OpusDecoder extends Decoder {
             return null;
         }
 
-        let format = new SampleFormat();
+        const format = new SampleFormat();
         format.rate = view.getUint32(4, true);
         format.bits = view.getUint16(8, true);
         format.channels = view.getUint16(10, true);
@@ -673,7 +673,7 @@ class FlacDecoder extends Decoder {
         super();
         this.decoder = Flac.create_libflac_decoder(true);
         if (this.decoder) {
-            let init_status = Flac.init_decoder_stream(this.decoder, this.read_callback_fn.bind(this), this.write_callback_fn.bind(this), this.error_callback_fn.bind(this), this.metadata_callback_fn.bind(this), false);
+            const init_status = Flac.init_decoder_stream(this.decoder, this.read_callback_fn.bind(this), this.write_callback_fn.bind(this), this.error_callback_fn.bind(this), this.metadata_callback_fn.bind(this), false);
             console.log("Flac init: " + init_status);
             Flac.setOptions(this.decoder, { analyseSubframes: true, analyseResiduals: true });
         }
@@ -700,7 +700,7 @@ class FlacDecoder extends Decoder {
         }
         // console.log("Pcm payload: " + this.pcmChunk!.payloadSize());
         if (this.cacheInfo.cachedBlocks > 0) {
-            let diffMs = this.cacheInfo.cachedBlocks / this.sampleFormat.msRate();
+            const diffMs = this.cacheInfo.cachedBlocks / this.sampleFormat.msRate();
             // console.log("Cached: " + this.cacheInfo.cachedBlocks + ", " + diffMs + "ms");
             this.pcmChunk!.timestamp.setMilliseconds(this.pcmChunk!.timestamp.getMilliseconds() - diffMs);
         }
@@ -711,14 +711,14 @@ class FlacDecoder extends Decoder {
         // console.log('  decode read callback, buffer bytes max=', bufferSize);
         if (this.header) {
             console.log("  header: " + this.header.byteLength);
-            let data = new Uint8Array(this.header);
+            const data = new Uint8Array(this.header);
             this.header = null;
             return { buffer: data, readDataLength: data.byteLength, error: false };
         } else if (this.flacChunk) {
             // console.log("  flacChunk: " + this.flacChunk.byteLength);
             // a fresh read => next call to write will not be from cached data
             this.cacheInfo.isCachedChunk = false;
-            let data = new Uint8Array(this.flacChunk.slice(0, Math.min(bufferSize, this.flacChunk.byteLength)));
+            const data = new Uint8Array(this.flacChunk.slice(0, Math.min(bufferSize, this.flacChunk.byteLength)));
             this.flacChunk = this.flacChunk.slice(data.byteLength);
             return { buffer: data, readDataLength: data.byteLength, error: false };
         }
@@ -731,10 +731,10 @@ class FlacDecoder extends Decoder {
             // there was no call to read, so it's some cached data
             this.cacheInfo.cachedBlocks += frameInfo.blocksize;
         }
-        let payload = new ArrayBuffer((frameInfo.bitsPerSample / 8) * frameInfo.channels * frameInfo.blocksize);
-        let view = new DataView(payload);
+        const payload = new ArrayBuffer((frameInfo.bitsPerSample / 8) * frameInfo.channels * frameInfo.blocksize);
+        const view = new DataView(payload);
         for (let channel: number = 0; channel < frameInfo.channels; ++channel) {
-            let channelData = new DataView(data[channel].buffer, 0, data[channel].buffer.byteLength);
+            const channelData = new DataView(data[channel].buffer, 0, data[channel].buffer.byteLength);
             // console.log("channelData: " + channelData.byteLength + ", blocksize: " + frameInfo.blocksize);
             for (let i: number = 0; i < frameInfo.blocksize; ++i) {
                 view.setInt16(2 * (frameInfo.channels * i + channel), channelData.getInt16(2 * i, true), true);
@@ -784,7 +784,7 @@ class PlayBuffer {
         this.onended = (_playBuffer: PlayBuffer) => { };
     }
 
-    public onended: (playBuffer: PlayBuffer) => void
+    public onended: (_playBuffer: PlayBuffer) => void
 
     start() {
         this.source.onended = () => {
@@ -802,8 +802,8 @@ class PlayBuffer {
 
 class PcmDecoder extends Decoder {
     setHeader(buffer: ArrayBuffer): SampleFormat | null {
-        let sampleFormat = new SampleFormat();
-        let view = new DataView(buffer);
+        const sampleFormat = new SampleFormat();
+        const view = new DataView(buffer);
         sampleFormat.channels = view.getUint16(22, true);
         sampleFormat.rate = view.getUint32(24, true);
         sampleFormat.bits = view.getUint16(34, true);
@@ -885,10 +885,10 @@ class SnapStream {
     }
 
     private onMessage(msg: MessageEvent) {
-        let view = new DataView(msg.data);
-        let type = view.getUint16(0, true);
+        const view = new DataView(msg.data);
+        const type = view.getUint16(0, true);
         if (type === 1) {
-            let codec = new CodecMessage(msg.data);
+            const codec = new CodecMessage(msg.data);
             console.log("Codec: " + codec.codec);
             if (codec.codec === "flac") {
                 this.decoder = new FlacDecoder();
@@ -932,9 +932,9 @@ class SnapStream {
                 }
             }
         } else if (type === 2) {
-            let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat as SampleFormat);
+            const pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat as SampleFormat);
             if (this.decoder) {
-                let decoded = this.decoder.decode(pcmChunk);
+                const decoded = this.decoder.decode(pcmChunk);
                 if (decoded) {
                     this.stream!.addChunk(decoded);
                 }
@@ -946,7 +946,7 @@ class SnapStream {
             console.log("ServerSettings bufferMs: " + this.serverSettings.bufferMs + ", latency: " + this.serverSettings.latency + ", volume: " + this.serverSettings.volumePercent + ", muted: " + this.serverSettings.muted);
         } else if (type === 4) {
             if (this.timeProvider) {
-                let time = new TimeMessage(msg.data);
+                const time = new TimeMessage(msg.data);
                 this.timeProvider.setDiff(time.latency.getMilliseconds(), this.timeProvider.now() - time.sent.getMilliseconds());
             }
             // console.log("Time sec: " + time.latency.sec + ", usec: " + time.latency.usec + ", diff: " + this.timeProvider.diff);
@@ -965,7 +965,7 @@ class SnapStream {
     }
 
     private syncTime() {
-        let t = new TimeMessage();
+        const t = new TimeMessage();
         t.latency.setMilliseconds(this.timeProvider.now());
         this.sendMessage(t);
         // console.log("prepareSource median: " + Math.round(this.median * 10) / 10);
@@ -977,7 +977,7 @@ class SnapStream {
         // }
         this.ctx.suspend();
         while (this.audioBuffers.length > 0) {
-            let buffer = this.audioBuffers.pop();
+            const buffer = this.audioBuffers.pop();
             buffer!.onended = () => { };
             buffer!.source.stop();
         }
@@ -1003,12 +1003,12 @@ class SnapStream {
     }
 
     public playNext() {
-        let buffer = this.freeBuffers.pop() || this.ctx!.createBuffer(this.sampleFormat!.channels, this.bufferFrameCount, this.sampleFormat!.rate);
-        let playTimeMs = (this.playTime + this.latency) * 1000 - this.bufferMs;
+        const buffer = this.freeBuffers.pop() || this.ctx!.createBuffer(this.sampleFormat!.channels, this.bufferFrameCount, this.sampleFormat!.rate);
+        const playTimeMs = (this.playTime + this.latency) * 1000 - this.bufferMs;
         this.stream!.getNextBuffer(buffer, playTimeMs);
 
-        let source = this.ctx!.createBufferSource();
-        let playBuffer = new PlayBuffer(buffer, this.playTime, source, this.gainNode!);
+        const source = this.ctx!.createBufferSource();
+        const playBuffer = new PlayBuffer(buffer, this.playTime, source, this.gainNode!);
         this.audioBuffers.push(playBuffer);
         playBuffer.num = ++this.bufferNum;
         playBuffer.onended = (buffer: PlayBuffer) => {
