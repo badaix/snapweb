@@ -8,7 +8,7 @@ mobile devices, with the look and feel of
 
 1. Add your snapserver host as a local environment var
     ```bash
-    echo 'REACT_APP_SNAPSERVER_HOST = localhost:1780' > .env.local
+    echo 'VITE_APP_SNAPSERVER_HOST = localhost:1780' > .env.local
     ```
 1. Install dependencies
     ```bash
@@ -16,14 +16,14 @@ mobile devices, with the look and feel of
     ```
 1. Run local web server and watcher
     ```bash
-    npm start
+    npm run dev
     ```
 
 ## Build for production
 
 1. Install dependencies: `npm ci`
 1. Build: `npm run build`
-1. Copy the created `build` directory to some path on your snapserver host and
+1. Copy the created `dest` directory to some path on your snapserver host and
    let the `[http] doc_root` in your `snapserver.conf` point to it
 1. Restart `snapserver` and navigate with a browser to
    `http://<snapserver host>:1780`

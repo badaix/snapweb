@@ -47,7 +47,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: snapweb_raw_${{env.SHA_SHORT}}
-        path: build
+        path: dist
         compression-level: 9
 
     - name: Create changelog
