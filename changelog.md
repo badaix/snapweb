@@ -4,7 +4,13 @@
 
 ### Features
 
+- Show client name in Client settings
+- Snapweb be installed as PWA
+
 ### Bugfixes
+
+- Fix several ESLint issues
+- Fix Chrome DevTools issues
 
 ### General
 

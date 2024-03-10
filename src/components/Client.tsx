@@ -145,6 +145,13 @@ export default function Client(props: ClientProps) {
             variant="standard"
           />
           <TextField
+            margin="dense" id="client" label="Client" type="text" fullWidth variant="standard"
+            value={props.client.snapclient.name + " " + props.client.snapclient.version}
+            InputProps={{
+              readOnly: true,
+            }}
+          />
+          <TextField
             margin="dense" id="mac" label="MAC" type="text" fullWidth variant="standard"
             value={props.client.host.mac}
             InputProps={{
@@ -175,13 +182,6 @@ export default function Client(props: ClientProps) {
           <TextField
             margin="dense" id="os" label="OS" type="text" fullWidth variant="standard"
             value={props.client.host.os}
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          <TextField
-            margin="dense" id="version" label="Version" type="text" fullWidth variant="standard"
-            value={props.client.snapclient.version}
             InputProps={{
               readOnly: true,
             }}
