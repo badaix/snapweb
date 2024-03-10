@@ -259,10 +259,10 @@ export default function Group(props: GroupProps) {
 
               <FormControl variant="standard">
                 <Select
-                  id="stream"
+                  id="streamselect"
                   value={props.group.stream_id}
-                  label="Stream"
-                  inputProps={{ 'aria-label': 'Stream' }}
+                  label="Active stream"
+                  inputProps={{ 'aria-label': 'Active stream' }}
                   onChange={(event) => {
                     const stream: string = event.target.value;
                     setStreamId(stream);

@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
+import './main.css';
 import { config } from "./config";
 import SnapWeb from './components/SnapWeb';
 import { SnapControl } from './snapcontrol';
