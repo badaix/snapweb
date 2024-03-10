@@ -262,6 +262,7 @@ export default function Group(props: GroupProps) {
                   id="stream"
                   value={props.group.stream_id}
                   label="Stream"
+                  inputProps={{ 'aria-label': 'Stream' }}
                   onChange={(event) => {
                     const stream: string = event.target.value;
                     setStreamId(stream);
