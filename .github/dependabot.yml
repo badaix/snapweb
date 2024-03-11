@@ -10,9 +10,10 @@ updates:
   target-branch: develop
   versioning-strategy: increase
   groups:
-    dependencies:
-      patterns:
-      - "*"
+    npm-version-updates:
+      applies-to: version-updates
+    npm-security-updates:
+      applies-to: security-updates
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
