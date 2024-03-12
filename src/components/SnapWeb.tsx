@@ -113,6 +113,10 @@ export default function SnapWeb(props: SnapWebProps) {
   }
 
   function updateMediaSession() {
+    // https://developers.google.com/web/updates/2017/02/media-session
+    // https://github.com/googlechrome/samples/tree/gh-pages/media-session
+    // https://googlechrome.github.io/samples/media-session/audio.html
+    // https://developer.mozilla.org/en-US/docs/Web/API/MediaSession/setActionHandler#seekto
     console.debug('updateMediaSession');
     if (!snapstreamRef.current)
       return;
@@ -147,17 +151,20 @@ export default function SnapWeb(props: SnapWebProps) {
       if (properties.playbackStatus !== undefined) {
         if (properties.playbackStatus === "playing") {
           console.debug('updateMediaSession: playing');
-          audioRef.current.play();
+          if (audioRef.current.paused)
+            audioRef.current.play();
           play_state = "playing";
         }
         else if (properties.playbackStatus === "paused") {
           console.debug('updateMediaSession: paused');
-          audioRef.current.pause();
+          if (!audioRef.current.paused)
+            audioRef.current.pause();
           play_state = "paused";
         }
         else if (properties.playbackStatus === "stopped") {
           console.debug('updateMediaSession: stopped');
-          audioRef.current.pause();
+          if (!audioRef.current.paused)
+            audioRef.current.pause();
           play_state = "none";
         }
       }

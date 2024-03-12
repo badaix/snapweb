@@ -5,7 +5,7 @@
 ### Features
 
 - Show client name in Client settings
-- Snapweb be installed as PWA
+- PWA ready
 
 ### Bugfixes
 
@@ -14,7 +14,7 @@
 
 ### General
 
-- Switch from Create React App (deprecated) to Vite
+- Switch from the deprecated Create React App (CRA) to Vite
 
 _Johannes Pohl <snapweb@badaix.de>  Sat, 24 Feb 2024 00:13:37 +0200_
 
