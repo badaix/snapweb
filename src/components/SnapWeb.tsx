@@ -151,20 +151,17 @@ export default function SnapWeb(props: SnapWebProps) {
       if (properties.playbackStatus !== undefined) {
         if (properties.playbackStatus === "playing") {
           console.debug('updateMediaSession: playing');
-          if (audioRef.current.paused)
-            audioRef.current.play();
+          audioRef.current.play();
           play_state = "playing";
         }
         else if (properties.playbackStatus === "paused") {
           console.debug('updateMediaSession: paused');
-          if (!audioRef.current.paused)
-            audioRef.current.pause();
+          audioRef.current.pause();
           play_state = "paused";
         }
         else if (properties.playbackStatus === "stopped") {
           console.debug('updateMediaSession: stopped');
-          if (!audioRef.current.paused)
-            audioRef.current.pause();
+          audioRef.current.pause();
           play_state = "none";
         }
       }
