@@ -216,7 +216,7 @@ export default function Group(props: GroupProps) {
     return clients;
   }
 
-  console.debug("Render Group " + props.group.id);
+  // console.debug("Render Group " + props.group.id);
   const groupClients = [];
 
   for (const client of getClients()) {

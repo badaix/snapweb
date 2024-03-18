@@ -249,29 +249,60 @@ namespace Snapcast {
     }
 }
 
-interface OnChange { (_server: Snapcast.Server): void }
+// interface OnChange { (_server: Snapcast.Server): void }
 // interface OnStreamChange { (id: string): void };
 
 class SnapControl {
 
-    constructor(baseUrl: string) {
+    constructor() {
+        this.onChange = null;
+        this.onConnectionChanged = null;
         this.server = new Snapcast.Server();
-        this.baseUrl = baseUrl;
         this.msg_id = 0;
         this.status_req_id = -1;
-        this.connect();
+        this.timer = null;
     }
 
-    private connect() {
-        this.connection = new WebSocket(this.baseUrl + '/jsonrpc');
-        this.connection.onmessage = (msg: MessageEvent) => this.onMessage(msg.data);
-        this.connection.onopen = () => { this.status_req_id = this.sendRequest('Server.GetStatus'); };
-        this.connection.onerror = (ev: Event) => { console.error('error:', ev); };
-        this.connection.onclose = () => {
-            console.info('connection lost, reconnecting in 1s');
-            setTimeout(() => this.connect(), 1000);
-        };
+    public connect(baseUrl: string) {
+        this.disconnect();
+        try {
+            this.connection = new WebSocket(baseUrl + '/jsonrpc');
+            this.connection.onmessage = (msg: MessageEvent) => this.onMessage(msg.data);
+            this.connection.onopen = () => {
+                this.status_req_id = this.sendRequest('Server.GetStatus');
+                if (this.onConnectionChanged)
+                    this.onConnectionChanged(this, true);
+            };
+            this.connection.onerror = (ev: Event) => { console.error('error:', ev); };
+            this.connection.onclose = () => {
+                if (this.onConnectionChanged)
+                    this.onConnectionChanged(this, false, 'Connection lost, trying to reconnect.');
+                console.info('connection lost, reconnecting in 1s');
+                this.timer = setTimeout(() => this.connect(baseUrl), 1000);
+            };
+        } catch (e) {
+            console.info('Exception while connecting: "' + e + '", reconnecting in 1s');
+            if (this.onConnectionChanged)
+                this.onConnectionChanged(this, false, 'Exception while connecting: "' + e + '", trying to reconnect.');
+            this.timer = setTimeout(() => this.connect(baseUrl), 1000);
+        }
     }
+
+    public disconnect() {
+        if (this.timer)
+            clearTimeout(this.timer);
+        if (this.connection) {
+            this.connection.onclose = () => { };
+            if (this.connection.readyState === WebSocket.OPEN) {
+                this.connection.close();
+            }
+        }
+        if (this.onConnectionChanged)
+            this.onConnectionChanged(this, false);
+    }
+
+    onChange: ((_this: SnapControl, _server: Snapcast.Server) => any) | null;
+    onConnectionChanged: ((_this: SnapControl, _connected: boolean, _error?: string) => any) | null;
 
     private onNotification(notification: any): boolean {
         let stream!: Snapcast.Stream;
@@ -486,21 +517,21 @@ class SnapControl {
         if (refresh) {
             if (this.onChange) {
                 console.debug("onChange");
-                this.onChange(this.server);
+                this.onChange(this, this.server);
             } else {
                 console.debug("no onChange");
             }
         }
     }
 
-    public onChange?: OnChange;
+    // public onChange?: OnChange;
     // public onStreamChange?: OnStreamChange;
 
-    baseUrl: string;
     connection!: WebSocket;
     server: Snapcast.Server;
     msg_id: number;
     status_req_id: number;
+    timer: ReturnType<typeof setTimeout> | null;
 }
 
 

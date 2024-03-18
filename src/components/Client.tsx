@@ -90,7 +90,7 @@ export default function Client(props: ClientProps) {
   if (!props.client.connected)
     menuitems.push(<MenuItem key='Menu-Delete' onClick={() => { props.onDelete(); setAnchorEl(null); setOpen(false); }}>Delete</MenuItem>);
 
-  console.debug("Render Client " + props.client.host.name + ", id: " + props.client.id);
+  // console.debug("Render Client " + props.client.host.name + ", id: " + props.client.id);
 
   return (
     <Box sx={{ opacity: props.client.connected ? 1.0 : 0.5 }} >

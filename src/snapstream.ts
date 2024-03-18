@@ -1,4 +1,5 @@
 import Flac from 'libflacjs/dist/libflac.js'
+import { getPersistentValue } from './config.ts'
 import { AudioContext, IAudioBuffer, IAudioContext, IAudioBufferSourceNode, IGainNode } from 'standardized-audio-context'
 
 
@@ -13,39 +14,6 @@ declare global {
 interface IAudioContextPatched extends IAudioContext {
     readonly getOutputTimestamp?: () => AudioTimestamp;
     readonly outputLatency: number;
-}
-
-function setCookie(key: string, value: string, exdays: number = -1) {
-    const d = new Date();
-    if (exdays < 0)
-        exdays = 10 * 365;
-    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-    const expires = "expires=" + d.toUTCString();
-    document.cookie = key + "=" + value + ";" + expires + ";sameSite=Strict;path=/";
-}
-
-
-function getPersistentValue(key: string, defaultValue: string = ""): string {
-    if (window.localStorage) {
-        const value = window.localStorage.getItem(key);
-        if (value !== null) {
-            return value;
-        }
-        window.localStorage.setItem(key, defaultValue);
-        return defaultValue;
-    }
-    // Fallback to cookies if localStorage is not available.
-    const name = key + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const ca = decodedCookie.split(';');
-    for (let c of ca) {
-        c = c.trimLeft();
-        if (c.indexOf(name) === 0) {
-            return c.substring(name.length, c.length);
-        }
-    }
-    setCookie(key, defaultValue);
-    return defaultValue;
 }
 
 function getChromeVersion(): number | null {
