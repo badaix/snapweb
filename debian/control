@@ -2,7 +2,7 @@ Source: snapweb
 Section: sound
 Priority: optional
 Maintainer: Johannes Pohl <snapweb@badaix.de>
-Build-Depends: debhelper-compat (= 13)
+Build-Depends: debhelper (>= 10~)
 Standards-Version: 4.5.1
 Homepage: https://github.com/badaix/snapweb
 Vcs-Git: https://github.com/badaix/snapweb.git
