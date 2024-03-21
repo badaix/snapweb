@@ -1,9 +1,11 @@
 # Snapweb changelog
 
-## Version 0.7.0
+## Version 0.7.0-beta.1
 
 ### Features
 
+- Configurable Snapserver host
+- Apply dark or light theme depending on the system theme
 - Show client name in Client settings
 - PWA ready
 
@@ -16,7 +18,7 @@
 
 - Switch from the deprecated Create React App (CRA) to Vite
 
-_Johannes Pohl <snapweb@badaix.de>  Sat, 24 Feb 2024 00:13:37 +0200_
+_Johannes Pohl <snapweb@badaix.de>  Thu, 21 Mar 2024 00:13:37 +0200_
 
 ## Version 0.6.0
 
