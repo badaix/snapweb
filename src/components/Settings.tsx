@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, TextField, DialogTitle, MenuItem, Select, SelectChangeEvent, InputLabel, FormControl, FormControlLabel, Checkbox } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, TextField, DialogTitle, MenuItem, Select, SelectChangeEvent, InputLabel, FormControl, FormControlLabel, Checkbox, Box } from '@mui/material';
 import { useState } from 'react';
 import { config, Theme } from '../config.ts';
 
@@ -26,6 +26,7 @@ export default function SettingsDialog(props: { open: boolean, onClose: (_apply:
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setServerurl(event.target.value as string) }}
             value={serverurl}
           />
+          <Box sx={{ py: 1 }} />
           <FormControl variant="standard" fullWidth sx={{ minWidth: 100 }}>
             <InputLabel id="theme-label">Theme</InputLabel>
             <Select
@@ -40,7 +41,8 @@ export default function SettingsDialog(props: { open: boolean, onClose: (_apply:
               <MenuItem value={Theme.Dark}>{Theme.Dark}</MenuItem>
             </Select>
           </FormControl>
-          <FormControlLabel sx={{ minWidth: 100, mt: 1 }} control={<Checkbox checked={showOffline} onChange={(_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => setShowOffline(checked)} />} label="Show offline clients" />
+          <Box sx={{ py: 1 }} />
+          <FormControlLabel control={<Checkbox checked={showOffline} onChange={(_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => setShowOffline(checked)} />} label="Show offline clients" />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => { handleClose(false) }}>Cancel</Button>

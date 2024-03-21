@@ -284,19 +284,19 @@ export default function SnapWeb() {
       <Box
         // sx={{ width: 250 }}
         role="presentation"
-        sx={{ mt: 1}}
+        sx={{ mt: 1 }}
       // onClick={toggleDrawer(anchor, false)}
       // onKeyDown={toggleDrawer(anchor, false)}
       >
-        <ListItem key="settings" disablePadding>
-          <ListItemButton onClick={() => { setSettingsOpen(true); setDrawerOpen(false); }}>
-            <ListItemText primary="Settings..." />
-          </ListItemButton>
-        </ListItem>
         <List>
           <ListItem key="about" disablePadding>
             <ListItemButton onClick={() => { setAboutOpen(true); setDrawerOpen(false); }}>
               <ListItemText primary="About..." />
+            </ListItemButton>
+          </ListItem>
+          <ListItem key="settings" disablePadding>
+            <ListItemButton onClick={() => { setSettingsOpen(true); setDrawerOpen(false); }}>
+              <ListItemText primary="Settings..." />
             </ListItemButton>
           </ListItem>
         </List>
