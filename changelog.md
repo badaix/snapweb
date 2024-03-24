@@ -13,10 +13,12 @@
 
 - Fix several ESLint issues
 - Fix Chrome DevTools issues
+- Fix Debian package compatibility for prior Bullseye (Issue #73)
 
 ### General
 
 - Switch from the deprecated Create React App (CRA) to Vite
+- Disable spell checking in text fields
 
 _Johannes Pohl <snapweb@badaix.de>  Thu, 21 Mar 2024 00:13:37 +0200_
 

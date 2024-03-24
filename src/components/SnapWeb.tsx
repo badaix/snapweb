@@ -39,6 +39,14 @@ const lightTheme = createTheme({
     h5: {
       fontWeight: 300,
     }
+  },
+  components: {
+    MuiTextField: {
+      defaultProps:
+      {
+        spellCheck: false
+      }
+    }
   }
 });
 
@@ -67,6 +75,14 @@ const darkTheme = createTheme({
     },
     h5: {
       fontWeight: 300,
+    }
+  },
+  components: {
+    MuiTextField: {
+      defaultProps:
+      {
+        spellCheck: false
+      }
     }
   }
 });
