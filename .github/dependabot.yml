@@ -14,6 +14,9 @@ updates:
       applies-to: version-updates
     npm-security-updates:
       applies-to: security-updates
+  ignore:
+    - dependency-name: "eslint"
+      update-types: ["version-update:semver-major"]
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
