@@ -23,7 +23,7 @@ mobile devices, with the look and feel of
 
 1. Install dependencies: `npm ci`
 1. Build: `npm run build`
-1. Copy the created `dest` directory to some path on your snapserver host and
+1. Copy the created `dist` directory to some path on your snapserver host and
    let the `[http] doc_root` in your `snapserver.conf` point to it
 1. Restart `snapserver` and navigate with a browser to
    `http://<snapserver host>:1780`
