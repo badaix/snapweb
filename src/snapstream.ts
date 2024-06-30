@@ -448,13 +448,18 @@ class AudioStream {
                 while ((read < readFrames) && this.chunk) {
                     const pcmChunk = this.chunk as PcmChunkMessage;
                     const pcmBuffer = pcmChunk.readFrames(readFrames - read);
-                    const payload = new Int16Array(pcmBuffer);
+                    const normalize: number = 2 ** pcmChunk.sampleFormat.bits;
+                    let payload: any;
+                    if (pcmChunk.sampleFormat.bits >= 24)
+                        payload = new Int32Array(pcmBuffer);
+                    else
+                        payload = new Int16Array(pcmBuffer);
                     // console.debug("readFrames: " + (frames - read) + ", read: " + pcmBuffer.byteLength + ", payload: " + payload.length);
                     // read += (pcmBuffer.byteLength / this.sampleFormat.frameSize());
                     for (let i = 0; i < payload.length; i += 2) {
                         read++;
-                        left[pos] = (payload[i] / 32768); // * volume;
-                        right[pos] = (payload[i + 1] / 32768); // * volume;
+                        left[pos] = (payload[i] / normalize);
+                        right[pos] = (payload[i + 1] / normalize);
                         if ((everyN !== 0) && (read % everyN === 0)) {
                             if (addFrames > 0) {
                                 pos--;
@@ -661,9 +666,11 @@ class FlacDecoder extends Decoder {
         this.pcmChunk!.clearPayload();
         this.cacheInfo = { cachedBlocks: 0, isCachedChunk: true };
         // console.log("Flac len: " + this.flacChunk.byteLength);
-        while (this.flacChunk.byteLength && Flac.FLAC__stream_decoder_process_single(this.decoder)) {
-            Flac.FLAC__stream_decoder_get_state(this.decoder);
-            // let state = Flac.FLAC__stream_decoder_get_state(this.decoder);
+        while (this.flacChunk.byteLength > 0) {
+            if (!Flac.FLAC__stream_decoder_process_single(this.decoder)) {
+                return null;
+            }
+            // const state = Flac.FLAC__stream_decoder_get_state(this.decoder);
             // console.log("State: " + state);
         }
         // console.log("Pcm payload: " + this.pcmChunk!.payloadSize());
@@ -694,18 +701,24 @@ class FlacDecoder extends Decoder {
     }
 
     write_callback_fn(data: Array<Uint8Array>, frameInfo: Flac.BlockMetadata) {
-        // console.log("  write frame metadata: " + frameInfo + ", len: " + data.length);
+        // console.log("  write frame metadata blocksize: " + frameInfo.blocksize + ", channels: " + frameInfo.channels + ", len: " + data.length);
         if (this.cacheInfo.isCachedChunk) {
             // there was no call to read, so it's some cached data
             this.cacheInfo.cachedBlocks += frameInfo.blocksize;
         }
-        const payload = new ArrayBuffer((frameInfo.bitsPerSample / 8) * frameInfo.channels * frameInfo.blocksize);
+        const payload = new ArrayBuffer(this.sampleFormat.frameSize() * frameInfo.blocksize);
         const view = new DataView(payload);
         for (let channel: number = 0; channel < frameInfo.channels; ++channel) {
             const channelData = new DataView(data[channel].buffer, 0, data[channel].buffer.byteLength);
             // console.log("channelData: " + channelData.byteLength + ", blocksize: " + frameInfo.blocksize);
+            const sample_size = this.sampleFormat.sampleSize()
             for (let i: number = 0; i < frameInfo.blocksize; ++i) {
-                view.setInt16(2 * (frameInfo.channels * i + channel), channelData.getInt16(2 * i, true), true);
+                const write_idx = sample_size * (frameInfo.channels * i + channel);
+                const read_idx = sample_size * i;
+                if (sample_size == 4)
+                    view.setInt32(write_idx, channelData.getInt32(read_idx, true), true);
+                else
+                    view.setInt16(write_idx, channelData.getInt16(read_idx, true), true);
             }
         }
         this.pcmChunk!.addPayload(payload);
@@ -871,8 +884,8 @@ class SnapStream {
             if (this.decoder) {
                 this.sampleFormat = this.decoder.setHeader(codec.payload)!;
                 console.log("Sampleformat: " + this.sampleFormat.toString());
-                if ((this.sampleFormat.channels !== 2) || (this.sampleFormat.bits !== 16)) {
-                    alert("Stream must be stereo with 16 bit depth, actual format: " + this.sampleFormat.toString());
+                if ((this.sampleFormat.channels !== 2) || (this.sampleFormat.bits < 16)) {
+                    alert("Stream must be stereo with 16, 24 or 32 bit depth, actual format: " + this.sampleFormat.toString());
                 } else {
                     if (this.bufferDurationMs !== 0) {
                         this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
