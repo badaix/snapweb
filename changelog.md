@@ -1,5 +1,18 @@
 # Snapweb changelog
 
+## Version 0.8.0
+
+### Features
+
+- Support 24 and 32 bit samples
+- Build with relative base URL (PR #84)
+
+### Bugfixes
+
+### General
+
+_Johannes Pohl <snapweb@badaix.de>  Thu, 21 Mar 2024 00:13:37 +0200_
+
 ## Version 0.7.0
 
 ### Features
