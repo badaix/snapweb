@@ -1,6 +1,6 @@
 # Snapweb changelog
 
-## Version 0.8.0
+## Version 0.7.50
 
 ### Features
 
