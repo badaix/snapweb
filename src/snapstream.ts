@@ -16,6 +16,15 @@ interface IAudioContextPatched extends IAudioContext {
     readonly outputLatency: number;
 }
 
+class AudioContextPatched extends AudioContext implements IAudioContextPatched {
+    get outputLatency(): number {
+        if (this._nativeAudioContext!.outputLatency !== undefined) {
+            return this._nativeAudioContext.outputLatency;
+        }
+        return 0;
+    }
+}
+
 function getChromeVersion(): number | null {
     const raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
     return raw ? parseInt(raw[2]) : null;
@@ -824,7 +833,7 @@ class SnapStream {
                 options = undefined;
             }
 
-            this.ctx = new AudioContext(options) as IAudioContextPatched;
+            this.ctx = new AudioContextPatched(options);
             this.gainNode = this.ctx.createGain();
             this.gainNode.connect(this.ctx.destination);
         } else {
