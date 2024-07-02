@@ -825,7 +825,7 @@ class SnapStream {
     private setupAudioContext(): boolean {
         if (AudioContext) {
             let options: AudioContextOptions | undefined;
-            options = { latencyHint: "playback", sampleRate: this.sampleFormat ? this.sampleFormat.rate : undefined };
+            options = { latencyHint: "interactive", sampleRate: this.sampleFormat ? this.sampleFormat.rate : undefined };
 
             const chromeVersion = getChromeVersion();
             if ((chromeVersion !== null && chromeVersion < 55) || !window.AudioContext) {
