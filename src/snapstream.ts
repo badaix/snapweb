@@ -18,8 +18,9 @@ interface IAudioContextPatched extends IAudioContext {
 
 class AudioContextPatched extends AudioContext implements IAudioContextPatched {
     get outputLatency(): number {
-        if (this._nativeAudioContext!.outputLatency !== undefined) {
-            return this._nativeAudioContext.outputLatency;
+        const ctx = (<any>this)._nativeAudioContext;
+        if (ctx && ctx.outputLatency !== undefined) {
+            return ctx.outputLatency;
         }
         return 0;
     }
