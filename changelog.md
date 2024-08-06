@@ -1,6 +1,6 @@
 # Snapweb changelog
 
-## Version 0.7.50
+## Version 0.8.0
 
 ### Features
 
@@ -11,7 +11,9 @@
 
 ### General
 
-_Johannes Pohl <snapweb@badaix.de>  Thu, 21 Mar 2024 00:13:37 +0200_
+- Improve audio latency (PR #93)
+
+_Johannes Pohl <snapweb@badaix.de>  Tue, 06 Aug 2024 00:13:37 +0200_
 
 ## Version 0.7.0
 
