@@ -245,14 +245,19 @@ export default function Group(props: GroupProps) {
         flexGrow: 1
       }}>
         {/* <Stack spacing={2} direction="column" alignItems="center"> */}
-        <Stack spacing={0} direction="column" alignItems="left">
+        <Stack spacing={1} direction="column" alignItems="left">
           <Grid
             container
             direction="row"
             justifyContent="space-between"
             alignItems="center"
           >
-            <Stack direction="row" justifyContent="center" alignItems="center" >
+            <Stack
+              sx={{ gap: 1 }}
+              direction="row"
+              justifyContent="center"
+              alignItems="center"
+            >
               <IconButton aria-label="Options" onClick={(event) => { handleSettingsClicked(event); }}>
                 <SettingsIcon />
               </IconButton>
@@ -263,13 +268,22 @@ export default function Group(props: GroupProps) {
                   value={props.group.stream_id}
                   label="Active stream"
                   inputProps={{ 'aria-label': 'Active stream' }}
+                  sx={{ minWidth: 120, p: 1 }}
                   onChange={(event) => {
                     const stream: string = event.target.value;
                     setStreamId(stream);
                     props.snapcontrol.setStream(props.group.id, stream);
                   }}
                 >
-                  {props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
+                  {props.server.streams.map(stream => (
+                    <MenuItem
+                      key={stream.id}
+                      value={stream.id}
+                      sx={{ p: 2 }}
+                    >
+                      {stream.id}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Stack>

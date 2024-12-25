@@ -93,10 +93,10 @@ export default function Client(props: ClientProps) {
   // console.debug("Render Client " + props.client.host.name + ", id: " + props.client.id);
 
   return (
-    <Box sx={{ opacity: props.client.connected ? 1.0 : 0.5 }} >
+    <Box margin={1} sx={{ opacity: props.client.connected ? 1.0 : 0.5 }} >
       <Grid container spacing={2} justifyContent="center" alignItems="center" >
         <Grid item xs={true}>
-          <Stack spacing={-1} direction="column">
+          <Stack spacing={1} direction="column">
             {/* item style={{ flexGrow: "1" }}> */}
             <Typography variant="subtitle1" align='left' gutterBottom>
               {props.client.config.name === "" ? props.client.host.name : props.client.config.name}
