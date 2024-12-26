@@ -114,22 +114,12 @@ export default function Client(props: ClientProps) {
 
   return (
     <Box margin={1} sx={{ opacity: props.client.connected ? 1.0 : 0.5 }} >
-      <Grid container spacing={2} justifyContent="center" alignItems="center" >
-        <Grid item xs={true}>
-          <Stack spacing={1} direction="column">
-            {/* item style={{ flexGrow: "1" }}> */}
-            <Typography variant="subtitle1" align='left' gutterBottom>
-              {props.client.config.name === "" ? props.client.host.name : props.client.config.name}
-            </Typography>
-            <Stack spacing={2} direction="row" alignItems="center">
-              <IconButton aria-label="Mute" onClick={() => { handleMuteClicked() }}>
-                {props.client.config.volume.muted ? <VolumeOffIcon fontSize="large" /> : <VolumeUpIcon fontSize="large" />}
-              </IconButton>
-              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="medium" key={"slider-" + props.client.id} value={props.client.config.volume.percent} onChange={(_, value) => { handleVolumeChange(value as number) }} />
-            </Stack>
-          </Stack>
-        </Grid>
-        <Grid item>
+      <Stack spacing={1} direction="column">
+        {/* item style={{ flexGrow: "1" }}> */}
+        <Stack spacing={2} direction="row" alignItems="center" justifyContent="space-between">
+          <Typography variant="subtitle1" align='left' gutterBottom>
+            {props.client.config.name === "" ? props.client.host.name : props.client.config.name}
+          </Typography>
           <IconButton aria-label="Options" onClick={(event) => { handleOptionsClicked(event); }}>
             <MoreVertIcon fontSize="large" />
           </IconButton>
@@ -144,8 +134,14 @@ export default function Client(props: ClientProps) {
           >
             {menuitems}
           </Menu>
-        </Grid>
-      </Grid>
+        </Stack>
+        <Stack spacing={2} direction="row" alignItems="center">
+          <IconButton sx={{ p:0 }} aria-label="Mute" onClick={() => { handleMuteClicked() }}>
+            {props.client.config.volume.muted ? <VolumeOffIcon fontSize="large" /> : <VolumeUpIcon fontSize="large" />}
+          </IconButton>
+          <Slider aria-label="Volume" color="secondary" min={0} max={100} size="medium" key={"slider-" + props.client.id} value={props.client.config.volume.percent} onChange={(_, value) => { handleVolumeChange(value as number) }} />
+        </Stack>
+      </Stack>
 
       <Dialog open={detailsOpen} onClose={() => { handleDetailsClose(false) }}>
         <DialogTitle>Client settings</DialogTitle>
