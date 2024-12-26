@@ -6,32 +6,22 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { Theme, config } from "../config";
 import { SnapControl, Snapcast } from '../snapcontrol';
 import { SnapStream } from '../snapstream';
-import { AppBar, Box, Drawer, List, ListItem, ListItemButton, ListItemText, Toolbar, Typography, IconButton, Snackbar, Alert, Button } from '@mui/material';
+import { AppBar, Box, Drawer, List, ListItem, ListItemButton, ListItemText, Toolbar, Typography, IconButton, Snackbar, Alert, Button, Divider } from '@mui/material';
 import { PlayArrow as PlayArrowIcon, Stop as StopIcon, Menu as MenuIcon } from '@mui/icons-material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { createTheme, CssVarsThemeOptions, ThemeOptions, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import silence from '../assets/10-seconds-of-silence.mp3';
 import snapcast512 from '../assets/snapcast-512.png';
 
+const appTitle = import.meta.env.VITE_APP_TITLE || "Snapcast";
 
-const lightTheme = createTheme({
-  palette: {
-    primary: {
-      light: '#757ce8',
-      main: '#607d8b',
-      dark: '#002884',
-      contrastText: '#fff',
-    },
-    secondary: {
-      light: '#ff7961',
-      main: '#f44336',
-      dark: '#ba000d',
-      contrastText: '#000',
-    },
-  },
+type CreateThemeOptions = Omit<ThemeOptions, 'components'> & Pick<CssVarsThemeOptions, 'defaultColorScheme' | 'colorSchemes' | 'components'> & {
+  cssVariables?: boolean | Pick<CssVarsThemeOptions, 'colorSchemeSelector' | 'rootSelector' | 'disableCssColorScheme' | 'cssVarPrefix' | 'shouldSkipGeneratingVar'>;}
+
+const theme: CreateThemeOptions = {
   typography: {
     subtitle1: {
-      fontSize: 17,
+      fontSize: 20,
     },
     body1: {
       fontWeight: 500,
@@ -46,11 +36,45 @@ const lightTheme = createTheme({
       {
         spellCheck: false
       }
+    },
+    MuiButton: {
+      defaultProps: {
+        variant: "contained",
+      }
+    },
+    MuiSelect: {
+      defaultProps: {
+        slotProps: { input: { sx: { py: 1 } } }
+      }
+    },
+    MuiMenuItem: {
+      defaultProps: {
+        sx: { fontSize:"large", py: 2 }
+      }
     }
   }
+};
+
+const lightTheme = createTheme({
+  ...theme,
+  palette: {
+    primary: {
+      light: '#757ce8',
+      main: '#607d8b',
+      dark: '#002884',
+      contrastText: '#fff',
+    },
+    secondary: {
+      light: '#ff7961',
+      main: '#f44336',
+      dark: '#ba000d',
+      contrastText: '#000',
+    },
+  },
 });
 
 const darkTheme = createTheme({
+  ...theme,
   palette: {
     mode: 'dark',
     primary: {
@@ -66,25 +90,6 @@ const darkTheme = createTheme({
       contrastText: '#000',
     },
   },
-  typography: {
-    subtitle1: {
-      fontSize: 17,
-    },
-    body1: {
-      fontWeight: 500,
-    },
-    h5: {
-      fontWeight: 300,
-    }
-  },
-  components: {
-    MuiTextField: {
-      defaultProps:
-      {
-        spellCheck: false
-      }
-    }
-  }
 });
 
 
@@ -305,12 +310,13 @@ export default function SnapWeb() {
       // onKeyDown={toggleDrawer(anchor, false)}
       >
         <List>
-          <ListItem key="about" disablePadding>
+          <ListItem key="about">
             <ListItemButton onClick={() => { setAboutOpen(true); setDrawerOpen(false); }}>
               <ListItemText primary="About..." />
             </ListItemButton>
           </ListItem>
-          <ListItem key="settings" disablePadding>
+          <Divider variant='middle' />
+          <ListItem key="settings" sx={{ fontSize: "large" }}>
             <ListItemButton onClick={() => { setSettingsOpen(true); setDrawerOpen(false); }}>
               <ListItemText primary="Settings..." />
             </ListItemButton>
@@ -356,10 +362,10 @@ export default function SnapWeb() {
               sx={{ mr: 2 }}
               onClick={(_) => { setDrawerOpen(true); }}
             >
-              <MenuIcon />
+              <MenuIcon fontSize="large" />
             </IconButton>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Snapcast
+              {appTitle}
             </Typography>
             {isConnected ?
               <IconButton

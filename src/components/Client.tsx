@@ -86,9 +86,29 @@ export default function Client(props: ClientProps) {
   }
 
   const menuitems = [];
-  menuitems.push(<MenuItem key='Menu-Details' onClick={() => { handleDetailsClicked() }}>Details</MenuItem>);
+  menuitems.push(
+    <MenuItem
+      key='Menu-Details'
+      onClick={() => handleDetailsClicked()}
+      sx={{ minWidth: "12rem", fontSize: "large" }}
+    >
+      Details
+    </MenuItem>
+  );
   if (!props.client.connected)
-    menuitems.push(<MenuItem key='Menu-Delete' onClick={() => { props.onDelete(); setAnchorEl(null); setOpen(false); }}>Delete</MenuItem>);
+    menuitems.push(
+      <MenuItem
+        key='Menu-Delete'
+        onClick={() => {
+          props.onDelete();
+          setAnchorEl(null);
+          setOpen(false);
+        }}
+        sx={{ minWidth: "12rem", fontSize: "large" }}
+      >
+        Delete
+      </MenuItem>
+    );
 
   // console.debug("Render Client " + props.client.host.name + ", id: " + props.client.id);
 
@@ -103,15 +123,15 @@ export default function Client(props: ClientProps) {
             </Typography>
             <Stack spacing={2} direction="row" alignItems="center">
               <IconButton aria-label="Mute" onClick={() => { handleMuteClicked() }}>
-                {props.client.config.volume.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+                {props.client.config.volume.muted ? <VolumeOffIcon fontSize="large" /> : <VolumeUpIcon fontSize="large" />}
               </IconButton>
-              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + props.client.id} value={props.client.config.volume.percent} onChange={(_, value) => { handleVolumeChange(value as number) }} />
+              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="medium" key={"slider-" + props.client.id} value={props.client.config.volume.percent} onChange={(_, value) => { handleVolumeChange(value as number) }} />
             </Stack>
           </Stack>
         </Grid>
         <Grid item>
           <IconButton aria-label="Options" onClick={(event) => { handleOptionsClicked(event); }}>
-            <MoreVertIcon />
+            <MoreVertIcon fontSize="large" />
           </IconButton>
           <Menu
             id="basic-menu"
@@ -188,8 +208,8 @@ export default function Client(props: ClientProps) {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { handleDetailsClose(false) }}>Cancel</Button>
-          <Button onClick={() => { handleDetailsClose(true) }}>OK</Button>
+          <Button sx={{ minWidth: "8rem" }} onClick={() => { handleDetailsClose(false) }}>Cancel</Button>
+          <Button sx={{ minWidth: "7rem" }} onClick={() => { handleDetailsClose(true) }}>OK</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -45,8 +45,8 @@ export default function SettingsDialog(props: { open: boolean, onClose: (_apply:
           <FormControlLabel control={<Checkbox checked={showOffline} onChange={(_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => setShowOffline(checked)} />} label="Show offline clients" />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { handleClose(false) }}>Cancel</Button>
-          <Button onClick={() => { handleClose(true) }}>OK</Button>
+          <Button sx={{ minWidth: "8rem" }} onClick={() => { handleClose(false) }}>Cancel</Button>
+          <Button sx={{ minWidth: "7rem" }} onClick={() => { handleClose(true) }}>OK</Button>
         </DialogActions>
       </Dialog>
     </div>
