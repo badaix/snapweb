@@ -317,7 +317,7 @@ export default function Group(props: GroupProps) {
                   sx={{
                     // Resize for mobile to fit long song titles
                     '@media (max-width:600px)': {
-                      fontSize: '3.5vw',
+                      fontSize: '4vw',
                     },
                   }}
                   variant="subtitle1"
@@ -329,7 +329,7 @@ export default function Group(props: GroupProps) {
                   noWrap
                   sx={{
                     '@media (max-width:600px)': {
-                      fontSize: '3vw',
+                      fontSize: '3.5vw',
                     },
                   }}
                   variant="body1"
