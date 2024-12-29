@@ -312,10 +312,29 @@ export default function Group(props: GroupProps) {
                 alt={title + " cover"}
               />
               <Stack spacing={0} direction="column" justifyContent="center" sx={{ flexGrow: 1, overflow: 'hidden' }}>
-                <Typography noWrap variant="subtitle1" align="left">
+                <Typography
+                  noWrap
+                  sx={{
+                    // Resize for mobile to fit long song titles
+                    '@media (max-width:600px)': {
+                      fontSize: '3.5vw',
+                    },
+                  }}
+                  variant="subtitle1"
+                  align="left"
+                >
                   {title}
                 </Typography>
-                <Typography noWrap variant="body1" align="left">
+                <Typography
+                  noWrap
+                  sx={{
+                    '@media (max-width:600px)': {
+                      fontSize: '3vw',
+                    },
+                  }}
+                  variant="body1"
+                  align="left"
+                >
                   {artist}
                 </Typography>
               </Stack>
