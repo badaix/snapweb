@@ -362,7 +362,7 @@ export default function SnapWeb() {
               sx={{ mr: 2 }}
               onClick={(_) => { setDrawerOpen(true); }}
             >
-              <MenuIcon fontSize="large" />
+              <MenuIcon sx={{ fontSize: "large" }} />
             </IconButton>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               {appTitle}
@@ -376,7 +376,7 @@ export default function SnapWeb() {
                 sx={{ mr: 2 }}
                 onClick={(_) => { setIsPlaying(!isPlaying); }}
               >
-                {isPlaying ? <StopIcon fontSize="large" /> : <PlayArrowIcon fontSize="large" />}
+                {isPlaying ? <StopIcon sx={{ fontSize: "large" }} /> : <PlayArrowIcon sx={{ fontSize: "large" }} />}
               </IconButton> : <IconButton></IconButton>}
           </Toolbar>
         </AppBar>
