@@ -21,18 +21,18 @@
     "standardized-audio-context": "^25.3.77"
   },
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
-    "@types/react": "^19.0.2",
+    "@eslint/js": "^9.18.0",
+    "@types/react": "^19.0.4",
     "@types/react-dom": "^19.0.2",
     "@types/node": "^22.10.5",
     "@vite-pwa/assets-generator": "^0.2.6",
     "@vitejs/plugin-react-swc": "^3.7.2",
-    "eslint": "^9.17.0",
+    "eslint": "^9.18.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.19.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.19.1",
     "vite": "^6.0.7",
     "vite-plugin-pwa": "^0.21.1"
   }
