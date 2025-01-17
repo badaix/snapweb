@@ -245,16 +245,21 @@ export default function Group(props: GroupProps) {
         flexGrow: 1
       }}>
         {/* <Stack spacing={2} direction="column" alignItems="center"> */}
-        <Stack spacing={0} direction="column" alignItems="left">
+        <Stack spacing={1} direction="column" alignItems="left">
           <Grid
             container
             direction="row"
             justifyContent="space-between"
             alignItems="center"
           >
-            <Stack direction="row" justifyContent="center" alignItems="center" >
+            <Stack
+              sx={{ gap: 1 }}
+              direction="row"
+              justifyContent="center"
+              alignItems="center"
+            >
               <IconButton aria-label="Options" onClick={(event) => { handleSettingsClicked(event); }}>
-                <SettingsIcon />
+                <SettingsIcon fontSize="large" />
               </IconButton>
 
               <FormControl variant="standard">
@@ -263,13 +268,22 @@ export default function Group(props: GroupProps) {
                   value={props.group.stream_id}
                   label="Active stream"
                   inputProps={{ 'aria-label': 'Active stream' }}
+                  sx={{ minWidth: "12rem" }}
                   onChange={(event) => {
                     const stream: string = event.target.value;
                     setStreamId(stream);
                     props.snapcontrol.setStream(props.group.id, stream);
                   }}
                 >
-                  {props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
+                  {props.server.streams.map(stream => (
+                    <MenuItem
+                      key={stream.id}
+                      value={stream.id}
+                      sx={{ minWidth: "12rem", fontSize: "large", p: 2 }}
+                    >
+                      {stream.id}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Stack>
@@ -298,21 +312,40 @@ export default function Group(props: GroupProps) {
                 alt={title + " cover"}
               />
               <Stack spacing={0} direction="column" justifyContent="center" sx={{ flexGrow: 1, overflow: 'hidden' }}>
-                <Typography noWrap variant="subtitle1" align="left">
+                <Typography
+                  noWrap
+                  sx={{
+                    // Resize for mobile to fit long song titles
+                    '@media (max-width:600px)': {
+                      fontSize: '4vw',
+                    },
+                  }}
+                  variant="subtitle1"
+                  align="left"
+                >
                   {title}
                 </Typography>
-                <Typography noWrap variant="body1" align="left">
+                <Typography
+                  noWrap
+                  sx={{
+                    '@media (max-width:600px)': {
+                      fontSize: '3.5vw',
+                    },
+                  }}
+                  variant="body1"
+                  align="left"
+                >
                   {artist}
                 </Typography>
               </Stack>
             </Stack>
           }
           {groupClients.length > 1 &&
-            <Stack spacing={2} direction="row" alignItems="center">
+            <Stack spacing={2} py={1} direction="row" alignItems="center">
               <IconButton aria-label="Mute" onClick={() => { handleMuteClicked() }}>
-                {props.group.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+                {props.group.muted ? <VolumeOffIcon fontSize="large" /> : <VolumeUpIcon fontSize="large" />}
               </IconButton>
-              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + props.group.id} value={volume} onChange={(_, value) => { handleVolumeChange(value as number) }} onChangeCommitted={(_, value) => { handleVolumeChangeCommitted(value as number) }} />
+              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="medium" key={"slider-" + props.group.id} value={volume} onChange={(_, value) => { handleVolumeChange(value as number) }} onChangeCommitted={(_, value) => { handleVolumeChangeCommitted(value as number) }} />
             </Stack>
           }
           {groupClients.length === 1 &&
@@ -328,16 +361,16 @@ export default function Group(props: GroupProps) {
       </Card >
 
       <Dialog fullWidth open={settingsOpen} onClose={() => { handleSettingsClose(false) }}>
-        <DialogTitle>Group settings</DialogTitle>
+        <DialogTitle>Group Settings</DialogTitle>
         <DialogContent>
           <Divider textAlign="left">Stream</Divider>
           <TextField
             // label="Stream" 
-            margin="dense" id="stream" select fullWidth variant="standard"
+            id="stream" select fullWidth variant="standard"
             value={streamId}
             onChange={(event) => { console.log('SetStream: ' + event.target.value); setStreamId(event.target.value) }}
           >
-            {props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
+            {props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id} sx={{ fontSize: "large", p: 2 }}>{stream.id}</MenuItem>)}
           </TextField>
           <Divider textAlign="left">Clients</Divider>
           <FormGroup>
@@ -345,8 +378,8 @@ export default function Group(props: GroupProps) {
           </FormGroup>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { handleSettingsClose(false) }}>Cancel</Button>
-          <Button onClick={() => { handleSettingsClose(true) }}>OK</Button>
+          <Button sx={{ minWidth: "8rem" }} onClick={() => { handleSettingsClose(false) }}>Cancel</Button>
+          <Button sx={{ minWidth: "7rem" }} onClick={() => { handleSettingsClose(true) }}>OK</Button>
         </DialogActions>
       </Dialog>
       {snackbar()}
