@@ -1,8 +1,10 @@
 import Flac from 'libflacjs/dist/libflac.js'
+import { OpusDecoder as WasmOpusDecoder } from 'opus-decoder'
 import { getPersistentValue } from './config.ts'
 import { AudioContext, IAudioBuffer, IAudioContext, IAudioBufferSourceNode, IGainNode } from 'standardized-audio-context'
+import { Logger, LogLevel } from './snapstreamLogger'
 
-
+const LOGLEVEL = LogLevel.INFO
 declare global {
     // declare window.webkitAudioContext for the ts compiler
     interface Window {
@@ -339,16 +341,26 @@ class PcmChunkMessage extends BaseMessage {
 
 
 class AudioStream {
+    private logger: Logger;
+
     constructor(public _timeProvider: TimeProvider, public _sampleFormat: SampleFormat, public _bufferMs: number) {
+        this.logger = new Logger('AudioStream', LOGLEVEL);
     }
 
     chunks: Array<PcmChunkMessage> = new Array<PcmChunkMessage>();
 
     setVolume(percent: number, muted: boolean) {
-        // let base = 10;
-        this.volume = percent / 100; // (Math.pow(base, percent / 100) - 1) / (base - 1);
-        console.log("setVolume: " + percent + " => " + this.volume + ", muted: " + this.muted);
-        this.muted = muted;
+      // let base = 10;
+      this.volume = percent / 100; // (Math.pow(base, percent / 100) - 1) / (base - 1);
+      this.logger.debug(
+        "setVolume:",
+        percent,
+        "=>",
+        this.volume,
+        "muted:",
+        muted
+      );
+      this.muted = muted;
     }
 
     addChunk(chunk: PcmChunkMessage) {
@@ -362,7 +374,7 @@ class AudioStream {
             // todo: consider buffer ms
             if (age > 5000 + this._bufferMs) {
                 this.chunks.shift();
-                console.log("Dropping old chunk: " + age.toFixed(2) + ", left: " + this.chunks.length);
+                this.logger.debug("Dropping old chunk:", age.toFixed(2), "left:", this.chunks.length);
             }
             else
                 break;
@@ -383,22 +395,22 @@ class AudioStream {
         // let volume = this.muted ? 0 : this.volume;
         const serverPlayTimeMs = this._timeProvider.serverTime(playTimeMs);
         if (this.chunk) {
-            let age = serverPlayTimeMs - this.chunk.startMs();// - 500;
+            let age = serverPlayTimeMs - this.chunk.startMs();
             const reqChunkDuration = frames / this._sampleFormat.msRate();
             const secs = Math.floor(Date.now() / 1000);
             if (this.lastLog !== secs) {
                 this.lastLog = secs;
-                console.log("age: " + age.toFixed(2) + ", req: " + reqChunkDuration);
+                this.logger.debugRaw("age:", age.toFixed(2), "req:", reqChunkDuration);
             }
             if (age < -reqChunkDuration) {
-                console.log("age: " + age.toFixed(2) + " < req: " + reqChunkDuration * -1 + ", chunk.startMs: " + this.chunk.startMs().toFixed(2) + ", timestamp: " + this.chunk.timestamp.getMilliseconds().toFixed(2));
-                console.log("Chunk too young, returning silence");
+                this.logger.debug("age:", age.toFixed(2), "<", reqChunkDuration * -1, "chunk.startMs:", this.chunk.startMs().toFixed(2), "timestamp:", this.chunk.timestamp.getMilliseconds().toFixed(2));
+                this.logger.debug("Chunk too young, returning silence");
             } else {
                 if (Math.abs(age) > 5) {
                     // We are 5ms apart, do a hard sync, i.e. don't play faster/slower,
                     // but seek to the desired position instead
                     while (this.chunk && age > this.chunk.duration()) {
-                        console.log("Chunk too old, dropping (age: " + age.toFixed(2) + " > " + this.chunk.duration().toFixed(2) + ")");
+                        this.logger.debug("Chunk too old, dropping (age:", age.toFixed(2), ">", this.chunk.duration().toFixed(2), ")");
                         this.chunk = this.chunks.shift();
                         if (!this.chunk)
                             break;
@@ -406,11 +418,11 @@ class AudioStream {
                     }
                     if (this.chunk) {
                         if (age > 0) {
-                            console.log("Fast forwarding " + age.toFixed(2) + "ms");
+                            this.logger.debug("Fast forwarding", age.toFixed(2) + "ms");
                             this.chunk.readFrames(Math.floor(age * this.chunk.sampleFormat.msRate()));
                         }
                         else if (age < 0) {
-                            console.log("Playing silence " + -age.toFixed(2) + "ms");
+                            this.logger.debug("Playing silence", (-age).toFixed(2) + "ms");
                             const silentFrames = Math.floor(-age * this.chunk.sampleFormat.msRate());
                             left.fill(0, 0, silentFrames);
                             right.fill(0, 0, silentFrames);
@@ -444,9 +456,9 @@ class AudioStream {
                 let addFrames = 0;
                 let everyN = 0;
                 if (age > 0.1) {
-                    addFrames = Math.ceil(age); // / 5);
+                    addFrames = Math.ceil(age);
                 } else if (age < -0.1) {
-                    addFrames = Math.floor(age); // / 5);
+                    addFrames = Math.floor(age);
                 }
                 // addFrames = -2;
                 const readFrames = frames + addFrames - read;
@@ -464,7 +476,7 @@ class AudioStream {
                         payload = new Int32Array(pcmBuffer);
                     else
                         payload = new Int16Array(pcmBuffer);
-                    // console.debug("readFrames: " + (frames - read) + ", read: " + pcmBuffer.byteLength + ", payload: " + payload.length);
+                    // this.logger.debug("readFrames: " + (frames - read) + ", read: " + pcmBuffer.byteLength + ", payload: " + payload.length);
                     // read += (pcmBuffer.byteLength / this.sampleFormat.frameSize());
                     for (let i = 0; i < payload.length; i += 2) {
                         read++;
@@ -477,7 +489,7 @@ class AudioStream {
                                 left[pos + 1] = left[pos];
                                 right[pos + 1] = right[pos];
                                 pos++;
-                                // console.log("Add: " + pos);
+                                this.logger.debug("Add: " + pos);
                             }
                         }
                         pos++;
@@ -487,14 +499,14 @@ class AudioStream {
                     }
                 }
                 if (addFrames !== 0)
-                    console.debug("Pos: " + pos + ", frames: " + frames + ", add: " + addFrames + ", everyN: " + everyN);
+                    this.logger.debugRaw("Pos:", pos, "frames:", frames, "add:", addFrames, "everyN:", everyN);
                 if (read === readFrames)
                     read = frames;
             }
         }
 
         if (read < frames) {
-            console.log("Failed to get chunk, read: " + read + "/" + frames + ", chunks left: " + this.chunks.length);
+            this.logger.debug("Failed to get chunk, read:", read + "/" + frames, "chunks left:", this.chunks.length);
             left.fill(0, pos);
             right.fill(0, pos);
         }
@@ -525,7 +537,10 @@ class AudioStream {
 
 
 class TimeProvider {
+    private logger: Logger;
+
     constructor(ctx?: IAudioContextPatched) {
+        this.logger = new Logger('TimeProvider', LOGLEVEL);
         if (ctx) {
             this.setAudioContext(ctx);
         }
@@ -551,8 +566,7 @@ class TimeProvider {
             sorted.sort()
             this.diff = sorted[Math.floor(sorted.length / 2)];
         }
-        // console.debug("c2s: " + c2s.toFixed(2) + ", s2c: " + s2c.toFixed(2) + ", diff: " + this.diff.toFixed(2) + ", now: " + this.now().toFixed(2) + ", server.now: " + this.serverNow().toFixed(2) + ", win.now: " + window.performance.now().toFixed(2));
-        // console.log("now: " + this.now() + "\t" + this.now() + "\t" + this.now());
+        this.logger.debugRaw("c2s:", c2s.toFixed(2), "s2c:", s2c.toFixed(2), "diff:", this.diff.toFixed(2), "now:", this.now().toFixed(2), "server.now:", this.serverNow().toFixed(2), "win.now:", window.performance.now().toFixed(2));
     }
 
     now() {
@@ -619,45 +633,100 @@ class Decoder {
         return new SampleFormat();
     }
 
-    decode(_chunk: PcmChunkMessage): PcmChunkMessage | null {
+    decode(_chunk: PcmChunkMessage): Promise<PcmChunkMessage | null> | PcmChunkMessage | null {
         return null;
     }
 }
 
 
 class OpusDecoder extends Decoder {
+    private logger: Logger;
+
+    constructor() {
+        super();
+        this.logger = new Logger('OpusDecoder', LOGLEVEL);
+        this.sampleFormat = new SampleFormat();
+        this.decoder = null;
+    }
+
+    async initDecoder() {
+        if (!this.decoder) {
+            this.decoder = new WasmOpusDecoder();
+            await this.decoder.ready;
+            await this.decoder.reset();
+        }
+    }
+
     setHeader(buffer: ArrayBuffer): SampleFormat | null {
         const view = new DataView(buffer);
         const ID_OPUS = 0x4F505553;
         if (buffer.byteLength < 12) {
-            console.error("Opus header too small: " + buffer.byteLength);
+            this.logger.error("Opus header too small:", buffer.byteLength);
             return null;
         } else if (view.getUint32(0, true) !== ID_OPUS) {
-            console.error("Opus header too small: " + buffer.byteLength);
+            this.logger.error("Invalid Opus header magic");
             return null;
         }
 
-        const format = new SampleFormat();
-        format.rate = view.getUint32(4, true);
-        format.bits = view.getUint16(8, true);
-        format.channels = view.getUint16(10, true);
-        console.log("Opus samplerate: " + format.toString());
-        return format;
+        this.sampleFormat.rate = view.getUint32(4, true);
+        this.sampleFormat.bits = view.getUint16(8, true);
+        this.sampleFormat.channels = view.getUint16(10, true);
+        
+        this.initDecoder()
+            .catch(err => this.logger.error("Failed to initialize Opus decoder:", err));
+            
+        this.logger.info("Opus sampleformat:", this.sampleFormat.toString());
+        return this.sampleFormat;
     }
 
-    decode(_chunk: PcmChunkMessage): PcmChunkMessage | null {
-        return null;
+    async decode(chunk: PcmChunkMessage): Promise<PcmChunkMessage | null> {
+        if (!this.decoder) {
+            this.logger.error("Opus decoder not initialized");
+            return null;
+        }
+
+        try {
+            const decoded = await this.decoder.decodeFrame(new Uint8Array(chunk.payload));
+            
+            const bytesPerSample = this.sampleFormat.sampleSize();
+            const buffer = new ArrayBuffer(decoded.channelData[0].length * bytesPerSample * this.sampleFormat.channels);
+            const view = new DataView(buffer);
+
+            for (let i = 0; i < decoded.channelData[0].length; i++) {
+                for (let channel = 0; channel < this.sampleFormat.channels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, decoded.channelData[channel][i])) * ((1 << (this.sampleFormat.bits - 1)) - 1);
+                    if (bytesPerSample === 4) {
+                        view.setInt32((i * this.sampleFormat.channels + channel) * 4, sample, true);
+                    } else {
+                        view.setInt16((i * this.sampleFormat.channels + channel) * 2, sample, true);
+                    }
+                }
+            }
+            
+            chunk.clearPayload();
+            chunk.addPayload(buffer);
+            return chunk;
+        } catch (err) {
+            this.logger.error("Failed to decode Opus frame:", err);
+            return null;
+        }
     }
+
+    private decoder: WasmOpusDecoder | null;
+    private sampleFormat: SampleFormat;
 }
 
 
 class FlacDecoder extends Decoder {
+    private logger: Logger;
+
     constructor() {
         super();
+        this.logger = new Logger('FlacDecoder', LOGLEVEL);
         this.decoder = Flac.create_libflac_decoder(true);
         if (this.decoder) {
             const init_status = Flac.init_decoder_stream(this.decoder, this.read_callback_fn.bind(this), this.write_callback_fn.bind(this), this.error_callback_fn.bind(this), this.metadata_callback_fn.bind(this), false);
-            console.log("Flac init: " + init_status);
+            this.logger.info("Init status:", init_status);
             Flac.setOptions(this.decoder, { analyseSubframes: true, analyseResiduals: true });
         }
         this.sampleFormat = new SampleFormat();
@@ -666,42 +735,44 @@ class FlacDecoder extends Decoder {
 
         // Flac.setOptions(this.decoder, {analyseSubframes: analyse_frames, analyseResiduals: analyse_residuals});
         // flac_ok &= init_status == 0;
-        // console.log("flac init     : " + flac_ok);//DEBUG
+        // this.logger.debug("flac init     : " + flac_ok);
     }
 
     decode(chunk: PcmChunkMessage): PcmChunkMessage | null {
-        // console.log("Flac decode: " + chunk.payload.byteLength);
+        this.logger.debug("Decoding chunk, payload size:", chunk.payload.byteLength);
         this.flacChunk = chunk.payload.slice(0);
         this.pcmChunk = chunk;
         this.pcmChunk!.clearPayload();
         this.cacheInfo = { cachedBlocks: 0, isCachedChunk: true };
-        // console.log("Flac len: " + this.flacChunk.byteLength);
+        this.logger.debug("Flac chunk length:", this.flacChunk.byteLength);
+        
         while (this.flacChunk.byteLength > 0) {
             if (!Flac.FLAC__stream_decoder_process_single(this.decoder)) {
+                this.logger.error("Failed to process FLAC frame");
                 return null;
             }
-            // const state = Flac.FLAC__stream_decoder_get_state(this.decoder);
-            // console.log("State: " + state);
+            const state = Flac.FLAC__stream_decoder_get_state(this.decoder);
+            this.logger.debug("Decoder state:", state);
         }
-        // console.log("Pcm payload: " + this.pcmChunk!.payloadSize());
+        
+        this.logger.debug("PCM payload size:", this.pcmChunk!.payloadSize());
         if (this.cacheInfo.cachedBlocks > 0) {
             const diffMs = this.cacheInfo.cachedBlocks / this.sampleFormat.msRate();
-            // console.log("Cached: " + this.cacheInfo.cachedBlocks + ", " + diffMs + "ms");
+            this.logger.debug("Cached blocks:", this.cacheInfo.cachedBlocks, "duration:", diffMs + "ms");
             this.pcmChunk!.timestamp.setMilliseconds(this.pcmChunk!.timestamp.getMilliseconds() - diffMs);
         }
         return this.pcmChunk!;
     }
 
     read_callback_fn(bufferSize: number): Flac.ReadResult | Flac.CompletedReadResult {
-        // console.log('  decode read callback, buffer bytes max=', bufferSize);
+        this.logger.debug('Read callback, buffer bytes max:', bufferSize);
         if (this.header) {
-            console.log("  header: " + this.header.byteLength);
+            this.logger.debug("Reading header, size:", this.header.byteLength);
             const data = new Uint8Array(this.header);
             this.header = null;
             return { buffer: data, readDataLength: data.byteLength, error: false };
         } else if (this.flacChunk) {
-            // console.log("  flacChunk: " + this.flacChunk.byteLength);
-            // a fresh read => next call to write will not be from cached data
+            this.logger.debug("Reading flac chunk:", this.flacChunk.byteLength);
             this.cacheInfo.isCachedChunk = false;
             const data = new Uint8Array(this.flacChunk.slice(0, Math.min(bufferSize, this.flacChunk.byteLength)));
             this.flacChunk = this.flacChunk.slice(data.byteLength);
@@ -711,7 +782,7 @@ class FlacDecoder extends Decoder {
     }
 
     write_callback_fn(data: Array<Uint8Array>, frameInfo: Flac.BlockMetadata) {
-        // console.log("  write frame metadata blocksize: " + frameInfo.blocksize + ", channels: " + frameInfo.channels + ", len: " + data.length);
+        this.logger.debug("Writing frame metadata blocksize:", frameInfo.blocksize, "channels:", frameInfo.channels, "data length:", data.length);
         if (this.cacheInfo.isCachedChunk) {
             // there was no call to read, so it's some cached data
             this.cacheInfo.cachedBlocks += frameInfo.blocksize;
@@ -720,7 +791,7 @@ class FlacDecoder extends Decoder {
         const view = new DataView(payload);
         for (let channel: number = 0; channel < frameInfo.channels; ++channel) {
             const channelData = new DataView(data[channel].buffer, 0, data[channel].buffer.byteLength);
-            // console.log("channelData: " + channelData.byteLength + ", blocksize: " + frameInfo.blocksize);
+            this.logger.debug("Channel data size:", channelData.byteLength, "blocksize:", frameInfo.blocksize);
             const sample_size = this.sampleFormat.sampleSize()
             for (let i: number = 0; i < frameInfo.blocksize; ++i) {
                 const write_idx = sample_size * (frameInfo.channels * i + channel);
@@ -732,25 +803,25 @@ class FlacDecoder extends Decoder {
             }
         }
         this.pcmChunk!.addPayload(payload);
-        // console.log("write: " + payload.byteLength + ", len: " + this.pcmChunk!.payloadSize());
+        this.logger.debug("Write complete, payload size:", payload.byteLength, "total size:", this.pcmChunk!.payloadSize());
     }
 
     /** @memberOf decode */
     metadata_callback_fn(data: any) {
-        console.info('meta data: ', data);
-        // let view = new DataView(data);
+        this.logger.info('Metadata:', data);
         this.sampleFormat.rate = data.sampleRate;
         this.sampleFormat.channels = data.channels;
         this.sampleFormat.bits = data.bitsPerSample;
-        console.log("metadata_callback_fn, sampleformat: " + this.sampleFormat.toString());
+        this.logger.debug("Sample format:", this.sampleFormat.toString());
     }
 
     /** @memberOf decode */
     error_callback_fn(err: any, errMsg: any) {
-        console.error('decode error callback', err, errMsg);
+        this.logger.error('Error:', err, errMsg);
     }
 
     setHeader(buffer: ArrayBuffer): SampleFormat | null {
+        this.logger.debug("Setting header, size:", buffer.byteLength);
         this.header = buffer.slice(0);
         Flac.FLAC__stream_decoder_process_until_end_of_metadata(this.decoder);
         return this.sampleFormat;
@@ -808,9 +879,12 @@ class PcmDecoder extends Decoder {
 
 
 class SnapStream {
+    private logger: Logger;
+
     constructor(baseUrl: string) {
         this.baseUrl = baseUrl;
         this.timeProvider = new TimeProvider();
+        this.logger = new Logger('SnapStream', LOGLEVEL);
 
         if (this.setupAudioContext()) {
             this.connect();
@@ -854,7 +928,7 @@ class SnapStream {
         this.streamsocket.onmessage = (ev) => this.onMessage(ev);
 
         this.streamsocket.onopen = () => {
-            console.log("on open");
+            this.logger.info("WebSocket connection opened");
             const hello = new HelloMessage();
 
             hello.mac = "00:00:00:00:00:00";
@@ -867,33 +941,33 @@ class SnapStream {
             this.syncTime();
             this.syncHandle = window.setInterval(() => this.syncTime(), 1000);
         }
-        this.streamsocket.onerror = (ev) => { console.error('error:', ev); };
+        this.streamsocket.onerror = (ev) => { this.logger.error('WebSocket error:', ev); };
         this.streamsocket.onclose = () => {
             window.clearInterval(this.syncHandle);
-            console.info('connection lost, reconnecting in 1s');
+            this.logger.info('Connection lost, reconnecting in 1s');
             setTimeout(() => this.connect(), 1000);
         }
     }
 
-    private onMessage(msg: MessageEvent) {
+    private async onMessage(msg: MessageEvent) {
         const view = new DataView(msg.data);
         const type = view.getUint16(0, true);
         if (type === 1) {
             const codec = new CodecMessage(msg.data);
-            console.log("Codec: " + codec.codec);
+            this.logger.info("Codec:", codec.codec);
             if (codec.codec === "flac") {
                 this.decoder = new FlacDecoder();
             } else if (codec.codec === "pcm") {
                 this.decoder = new PcmDecoder();
             } else if (codec.codec === "opus") {
                 this.decoder = new OpusDecoder();
-                alert("Codec not supported: " + codec.codec);
             } else {
                 alert("Codec not supported: " + codec.codec);
+                return;
             }
             if (this.decoder) {
                 this.sampleFormat = this.decoder.setHeader(codec.payload)!;
-                console.log("Sampleformat: " + this.sampleFormat.toString());
+                this.logger.info("Sampleformat:", this.sampleFormat.toString());
                 if ((this.sampleFormat.channels !== 2) || (this.sampleFormat.bits < 16)) {
                     alert("Stream must be stereo with 16, 24 or 32 bit depth, actual format: " + this.sampleFormat.toString());
                 } else {
@@ -904,9 +978,7 @@ class SnapStream {
                     // NOTE (curiousercreative): this breaks iOS audio output on v15.7.5 at least
                     if (window.AudioContext) {
                         if (this.sampleFormat.rate !== this.ctx.sampleRate.valueOf()) {
-                            console.log("Stream samplerate != audio context samplerate (" + this.sampleFormat.rate + " != " + this.ctx.sampleRate.valueOf() + "), switching audio context to " + this.sampleFormat.rate + " Hz")
-                            // we are not using webkitAudioContext, so it's safe to setup a new AudioContext with the new samplerate
-                            // since this code is not triggered by direct user input, we cannt create a webkitAudioContext here
+                            this.logger.info("Stream samplerate != audio context samplerate (" + this.sampleFormat.rate + " != " + this.ctx.sampleRate.valueOf() + "), switching audio context to " + this.sampleFormat.rate + " Hz")
                             this.stopAudio();
                             this.setupAudioContext();
                         }
@@ -918,14 +990,14 @@ class SnapStream {
                     // this.timeProvider = new TimeProvider(this.ctx);
                     this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
                     this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx!.outputLatency : 0)
-                    console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx!.outputLatency + ", latency: " + this.latency);
+                    this.logger.debug("Base latency:", this.ctx.baseLatency, "output latency:", this.ctx!.outputLatency, "latency:", this.latency);
                     this.play();
                 }
             }
         } else if (type === 2) {
             const pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat as SampleFormat);
             if (this.decoder) {
-                const decoded = this.decoder.decode(pcmChunk);
+                const decoded = await Promise.resolve(this.decoder.decode(pcmChunk));
                 if (decoded) {
                     this.stream!.addChunk(decoded);
                 }
@@ -934,15 +1006,14 @@ class SnapStream {
             this.serverSettings = new ServerSettingsMessage(msg.data);
             this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
             this.bufferMs = this.serverSettings.bufferMs - this.serverSettings.latency;
-            console.log("ServerSettings bufferMs: " + this.serverSettings.bufferMs + ", latency: " + this.serverSettings.latency + ", volume: " + this.serverSettings.volumePercent + ", muted: " + this.serverSettings.muted);
+            this.logger.debug("ServerSettings bufferMs:", this.serverSettings.bufferMs, "latency:", this.serverSettings.latency, "volume:", this.serverSettings.volumePercent, "muted:", this.serverSettings.muted);
         } else if (type === 4) {
             if (this.timeProvider) {
                 const time = new TimeMessage(msg.data);
                 this.timeProvider.setDiff(time.latency.getMilliseconds(), this.timeProvider.now() - time.sent.getMilliseconds());
             }
-            // console.log("Time sec: " + time.latency.sec + ", usec: " + time.latency.usec + ", diff: " + this.timeProvider.diff);
         } else {
-            console.info("Message not handled, type: " + type);
+            this.logger.info("Message not handled, type:", type);
         }
     }
 
@@ -959,7 +1030,7 @@ class SnapStream {
         const t = new TimeMessage();
         t.latency.setMilliseconds(this.timeProvider.now());
         this.sendMessage(t);
-        // console.log("prepareSource median: " + Math.round(this.median * 10) / 10);
+        // this.logger.debugRaw("prepareSource median: " + Math.round(this.median * 10) / 10);
     }
 
     private stopAudio() {
@@ -1005,7 +1076,7 @@ class SnapStream {
         playBuffer.onended = (buffer: PlayBuffer) => {
             // let diff = this.timeProvider.nowSec() - buffer.playTime;
             this.freeBuffers.push(this.audioBuffers.splice(this.audioBuffers.indexOf(buffer), 1)[0].buffer);
-            // console.debug("PlayBuffer " + playBuffer.num + " ended after: " + (diff * 1000) + ", in flight: " + this.audioBuffers.length);
+            // this.logger.debug("PlayBuffer " + playBuffer.num + " ended after: " + (diff * 1000) + ", in flight: " + this.audioBuffers.length);
             this.playNext();
         }
         playBuffer.start();
@@ -1016,16 +1087,15 @@ class SnapStream {
     streamsocket!: WebSocket;
     playTime: number = 0;
     msgId: number = 0;
-    bufferDurationMs: number = 80; // 0;
-    bufferFrameCount: number = 3844; // 9600; // 2400;//8192;
+    bufferDurationMs: number = 80;
+    bufferFrameCount: number = 3844;
     syncHandle: number = -1;
-    // ageBuffer: Array<number>;
     audioBuffers: Array<PlayBuffer> = new Array<PlayBuffer>();
     freeBuffers: Array<AudioBuffer> = new Array<AudioBuffer>();
 
     timeProvider: TimeProvider;
     stream: AudioStream | undefined;
-    ctx!: IAudioContextPatched; // | undefined;
+    ctx!: IAudioContextPatched;
     gainNode!: IGainNode<IAudioContext>;
     serverSettings: ServerSettingsMessage | undefined;
     decoder: Decoder | undefined;
