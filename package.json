@@ -16,15 +16,16 @@
     "@mui/icons-material": "^6.4.6",
     "@mui/material": "^6.4.6",
     "libflacjs": "^5.4.0",
+    "opus-decoder": "^0.7.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "standardized-audio-context": "^25.3.77"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@types/node": "^22.13.8",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
-    "@types/node": "^22.13.8",
     "@vite-pwa/assets-generator": "^0.2.6",
     "@vitejs/plugin-react-swc": "^3.8.0",
     "eslint": "^9.21.0",
