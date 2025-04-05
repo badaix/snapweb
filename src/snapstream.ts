@@ -1,6 +1,7 @@
 import Flac from 'libflacjs/dist/libflac.js'
 import { getPersistentValue } from './config.ts'
 import { AudioContext, IAudioBuffer, IAudioContext, IAudioBufferSourceNode, IGainNode } from 'standardized-audio-context'
+import { OpusDecoder as WasmOpusDecoder } from "opus-decoder";
 
 
 declare global {
@@ -619,33 +620,7 @@ class Decoder {
         return new SampleFormat();
     }
 
-    decode(_chunk: PcmChunkMessage): PcmChunkMessage | null {
-        return null;
-    }
-}
-
-
-class OpusDecoder extends Decoder {
-    setHeader(buffer: ArrayBuffer): SampleFormat | null {
-        const view = new DataView(buffer);
-        const ID_OPUS = 0x4F505553;
-        if (buffer.byteLength < 12) {
-            console.error("Opus header too small: " + buffer.byteLength);
-            return null;
-        } else if (view.getUint32(0, true) !== ID_OPUS) {
-            console.error("Opus header too small: " + buffer.byteLength);
-            return null;
-        }
-
-        const format = new SampleFormat();
-        format.rate = view.getUint32(4, true);
-        format.bits = view.getUint16(8, true);
-        format.channels = view.getUint16(10, true);
-        console.log("Opus samplerate: " + format.toString());
-        return format;
-    }
-
-    decode(_chunk: PcmChunkMessage): PcmChunkMessage | null {
+    decode(_chunk: PcmChunkMessage): PcmChunkMessage | null | Promise<PcmChunkMessage | null> {
         return null;
     }
 }
@@ -763,6 +738,81 @@ class FlacDecoder extends Decoder {
     pcmChunk?: PcmChunkMessage;
 
     cacheInfo: { isCachedChunk: boolean, cachedBlocks: number } = { isCachedChunk: false, cachedBlocks: 0 };
+}
+
+class OpusDecoder extends Decoder {
+
+    constructor() {
+        super();
+        this.sampleFormat = new SampleFormat();
+        this.decoder = null;
+    }
+
+    async initDecoder() {
+        if (!this.decoder) {
+            this.decoder = new WasmOpusDecoder();
+            await this.decoder.ready;
+            await this.decoder.reset();
+        }
+    }
+
+    setHeader(buffer: ArrayBuffer): SampleFormat | null {
+        const view = new DataView(buffer);
+        const ID_OPUS = 0x4F505553;
+        if (buffer.byteLength < 12) {
+            console.error("Opus header too small:", buffer.byteLength);
+            return null;
+        } else if (view.getUint32(0, true) !== ID_OPUS) {
+            console.error("Invalid Opus header magic");
+            return null;
+        }
+
+        this.sampleFormat.rate = view.getUint32(4, true);
+        this.sampleFormat.bits = view.getUint16(8, true);
+        this.sampleFormat.channels = view.getUint16(10, true);
+        
+        this.initDecoder()
+            .catch(err => console.error("Failed to initialize Opus decoder:", err));
+            
+        console.log("Opus sampleformat:", this.sampleFormat.toString());
+        return this.sampleFormat;
+    }
+
+    async decode(chunk: PcmChunkMessage): Promise<PcmChunkMessage | null> {
+        if (!this.decoder) {
+            console.error("Opus decoder not initialized");
+            return null;
+        }
+
+        try {
+            const decoded = await this.decoder.decodeFrame(new Uint8Array(chunk.payload));
+            
+            const bytesPerSample = this.sampleFormat.sampleSize();
+            const buffer = new ArrayBuffer(decoded.channelData[0].length * bytesPerSample * this.sampleFormat.channels);
+            const view = new DataView(buffer);
+
+            for (let i = 0; i < decoded.channelData[0].length; i++) {
+                for (let channel = 0; channel < this.sampleFormat.channels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, decoded.channelData[channel][i])) * ((1 << (this.sampleFormat.bits - 1)) - 1);
+                    if (bytesPerSample === 4) {
+                        view.setInt32((i * this.sampleFormat.channels + channel) * 4, sample, true);
+                    } else {
+                        view.setInt16((i * this.sampleFormat.channels + channel) * 2, sample, true);
+                    }
+                }
+            }
+            
+            chunk.clearPayload();
+            chunk.addPayload(buffer);
+            return chunk;
+        } catch (err) {
+            console.error("Failed to decode Opus frame:", err);
+            return null;
+        }
+    }
+
+    private decoder: WasmOpusDecoder | null;
+    private sampleFormat: SampleFormat;
 }
 
 class PlayBuffer {
@@ -887,7 +937,6 @@ class SnapStream {
                 this.decoder = new PcmDecoder();
             } else if (codec.codec === "opus") {
                 this.decoder = new OpusDecoder();
-                alert("Codec not supported: " + codec.codec);
             } else {
                 alert("Codec not supported: " + codec.codec);
             }
@@ -925,10 +974,14 @@ class SnapStream {
         } else if (type === 2) {
             const pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat as SampleFormat);
             if (this.decoder) {
-                const decoded = this.decoder.decode(pcmChunk);
-                if (decoded) {
-                    this.stream!.addChunk(decoded);
-                }
+                const decodedPromise = this.decoder.decode(pcmChunk);
+                Promise.resolve(decodedPromise).then(decoded => {
+                    if (decoded) {
+                        this.stream!.addChunk(decoded);
+                    }
+                }).catch(err => {
+                    console.error("Error decoding chunk:", err);
+                });
             }
         } else if (type === 3) {
             this.serverSettings = new ServerSettingsMessage(msg.data);
