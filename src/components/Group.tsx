@@ -252,7 +252,7 @@ export default function Group(props: GroupProps) {
             justifyContent="space-between"
             alignItems="center"
           >
-            <Stack direction="row" justifyContent="center" alignItems="center" >
+            <Stack direction="row" justifyContent="center" alignItems="center" gap="1rem">
               <IconButton aria-label="Options" onClick={(event) => { handleSettingsClicked(event); }}>
                 <SettingsIcon />
               </IconButton>
@@ -272,6 +272,10 @@ export default function Group(props: GroupProps) {
                   {props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
                 </Select>
               </FormControl>
+
+              <Typography noWrap variant="subtitle1">
+                {props.group.name}
+              </Typography>
             </Stack>
 
             {stream?.properties.canControl &&
