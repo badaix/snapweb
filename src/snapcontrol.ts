@@ -292,7 +292,7 @@ class SnapControl {
     }
 
     private getReconnectDelay() {
-        return 1.2 ** this.reconnection_attempts++ - 1;
+        return Math.min(1.1 ** this.reconnection_attempts++ - 1, 1);
     }
 
     public disconnect() {
