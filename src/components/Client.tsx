@@ -95,7 +95,7 @@ export default function Client(props: ClientProps) {
   return (
     <Box sx={{ opacity: props.client.connected ? 1.0 : 0.5 }} >
       <Grid container spacing={2} justifyContent="center" alignItems="center" >
-        <Grid item xs={true}>
+        <Grid size="grow">
           <Stack spacing={-1} direction="column">
             {/* item style={{ flexGrow: "1" }}> */}
             <Typography variant="subtitle1" align='left' gutterBottom>
@@ -109,7 +109,7 @@ export default function Client(props: ClientProps) {
             </Stack>
           </Stack>
         </Grid>
-        <Grid item>
+        <Grid>
           <IconButton aria-label="Options" onClick={(event) => { handleOptionsClicked(event); }}>
             <MoreVertIcon />
           </IconButton>
@@ -118,15 +118,16 @@ export default function Client(props: ClientProps) {
             anchorEl={anchorEl}
             open={open}
             onClose={() => { handleMenuClose() }}
-            MenuListProps={{
-              'aria-labelledby': 'basic-button',
+            slotProps={{
+              list: {
+                'aria-labelledby': 'basic-button',
+              }
             }}
           >
             {menuitems}
           </Menu>
         </Grid>
       </Grid>
-
       <Dialog open={detailsOpen} onClose={() => { handleDetailsClose(false) }}>
         <DialogTitle>Client settings</DialogTitle>
         <DialogContent>
@@ -139,51 +140,65 @@ export default function Client(props: ClientProps) {
             margin="dense" id="latency" label="Latency" type="number" fullWidth
             value={tmpLatency}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => { handleLatencyChange(Number(event.target.value) || 0) }}
-            InputProps={{
-              endAdornment: <InputAdornment position="end">ms</InputAdornment>,
-            }}
             variant="standard"
+            slotProps={{
+              input: {
+                endAdornment: <InputAdornment position="end">ms</InputAdornment>,
+              }
+            }}
           />
           <TextField
             margin="dense" id="client" label="Client" type="text" fullWidth variant="standard"
             value={props.client.snapclient.name + " " + props.client.snapclient.version}
-            InputProps={{
-              readOnly: true,
+            slotProps={{
+              input: {
+                readOnly: true,
+              }
             }}
           />
           <TextField
             margin="dense" id="mac" label="MAC" type="text" fullWidth variant="standard"
             value={props.client.host.mac}
-            InputProps={{
-              readOnly: true,
+            slotProps={{
+              input: {
+                readOnly: true,
+              }
             }}
           />
           <TextField
             margin="dense" id="id" label="ID" type="text" fullWidth variant="standard"
             value={props.client.id}
-            InputProps={{
-              readOnly: true,
+            slotProps={{
+              input: {
+                readOnly: true,
+              }
             }}
           />
           <TextField
             margin="dense" id="ip" label="IP" type="text" fullWidth variant="standard"
             value={props.client.host.ip}
-            InputProps={{
-              readOnly: true,
+            slotProps={{
+              input: {
+                readOnly: true,
+              }
             }}
           />
           <TextField
             margin="dense" id="host" label="Host" type="text" fullWidth variant="standard"
             value={props.client.host.name}
-            InputProps={{
-              readOnly: true,
+            slotProps={{
+              input: {
+                readOnly: true,
+              }
             }}
           />
           <TextField
             margin="dense" id="os" label="OS" type="text" fullWidth variant="standard"
             value={props.client.host.os}
-            InputProps={{
-              readOnly: true,
+            slotProps={{
+              input: {
+                readOnly: true,
+              }
             }}
           />
         </DialogContent>
