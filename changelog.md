@@ -1,5 +1,23 @@
 # Snapweb changelog
 
+## Version 0.9.0
+
+### Features
+
+- Add opus support (Issue #8, PR #129)
+
+### Bugfixes
+
+### General
+
+- Update packages, fix deprecations
+
+### Contributors
+
+- @chicco-carone
+
+_Johannes Pohl <snapweb@badaix.de>  Tue, 30 Dec 2025 00:13:37 +0200_
+
 ## Version 0.8.0
 
 ### Features
@@ -12,6 +30,11 @@
 ### General
 
 - Improve audio latency (PR #93)
+
+### Contributors
+
+- @mawe42
+- @mgoltzsche
 
 _Johannes Pohl <snapweb@badaix.de>  Tue, 06 Aug 2024 00:13:37 +0200_
 
@@ -55,6 +78,10 @@ _Johannes Pohl <snapweb@badaix.de>  Thu, 21 Mar 2024 00:13:37 +0200_
 ### General
 
 - Rewrite of the GUI with React
+
+### Contributors
+
+- @curiousercreative 
 
 _Johannes Pohl <snapweb@badaix.de>  Sat, 24 Feb 2024 00:13:37 +0200_
 
