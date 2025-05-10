@@ -108,7 +108,7 @@ export default function Client(props: ClientProps) {
               <IconButton aria-label="Mute" onClick={() => { handleMuteClicked() }}>
                 {props.client.config.volume.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
               </IconButton>
-              <Slider aria-label="Volume" color="secondary" min={0} max={maxVolume ?? 100} size="small" key={"slider-" + props.client.id} value={props.client.config.volume.percent} onChange={(_, value) => { handleVolumeChange(value as number) }} />
+              <Slider aria-label="Volume" color="secondary" valueLabelDisplay="auto" min={0} max={maxVolume ?? 100} size="small" key={"slider-" + props.client.id} value={props.client.config.volume.percent} onChange={(_, value) => { handleVolumeChange(value as number) }} />
             </Stack>
           </Stack>
         </Grid>
