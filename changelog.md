@@ -6,8 +6,6 @@
 
 - Add opus support (Issue #8, PR #129)
 
-### Bugfixes
-
 ### General
 
 - Update packages, fix deprecations
@@ -16,7 +14,7 @@
 
 - @chicco-carone
 
-_Johannes Pohl <snapweb@badaix.de>  Tue, 30 Dec 2025 00:13:37 +0200_
+_Johannes Pohl <snapweb@badaix.de>  Sat, 07 Jun 2025 00:13:37 +0200_
 
 ## Version 0.8.0
 
