@@ -32,6 +32,7 @@ export default function Group(props: GroupProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [clients, setClients] = useState<GroupClient[]>([]);
   const [streamId, setStreamId] = useState("");
+  const [groupName, setGroupName] = useState("");
   const [deletedClients, setDeletedClients] = useState<Snapcast.Client[]>([]);
   const [volume, setVolume] = useState(0);
   const groupVolumeChange = useRef<GroupVolumeChange>({ volumeEntered: true, client_volumes: new Map<string, number>(), group_volume: 0 });
@@ -66,6 +67,7 @@ export default function Group(props: GroupProps) {
     setSettingsOpen(true);
     setClients(clients);
     setStreamId(props.group.stream_id)
+    setGroupName(props.group.name);
   }
 
   function handleSettingsClose(apply: boolean) {
@@ -89,6 +91,9 @@ export default function Group(props: GroupProps) {
 
       if (props.group.stream_id !== streamId)
         props.snapcontrol.setStream(props.group.id, streamId);
+
+      if(props.group.name !== groupName)
+        props.snapcontrol.setGroupName(props.group.id, groupName);
     }
     setSettingsOpen(false);
   }
@@ -252,7 +257,7 @@ export default function Group(props: GroupProps) {
             justifyContent="space-between"
             alignItems="center"
           >
-            <Stack direction="row" justifyContent="center" alignItems="center" >
+            <Stack direction="row" justifyContent="center" alignItems="center" gap="1rem">
               <IconButton aria-label="Options" onClick={(event) => { handleSettingsClicked(event); }}>
                 <SettingsIcon />
               </IconButton>
@@ -272,6 +277,10 @@ export default function Group(props: GroupProps) {
                   {props.server.streams.map(stream => <MenuItem key={stream.id} value={stream.id}>{stream.id}</MenuItem>)}
                 </Select>
               </FormControl>
+
+              <Typography noWrap variant="subtitle1">
+                {props.group.name}
+              </Typography>
             </Stack>
 
             {stream?.properties.canControl &&
@@ -330,6 +339,12 @@ export default function Group(props: GroupProps) {
       <Dialog fullWidth open={settingsOpen} onClose={() => { handleSettingsClose(false) }}>
         <DialogTitle>Group settings</DialogTitle>
         <DialogContent>
+          <Divider textAlign="left">Name</Divider>
+          <TextField
+            margin="dense" id="group-name" fullWidth variant="standard"
+            value={groupName}
+            onChange={(event) => setGroupName(event.target.value) }
+          />
           <Divider textAlign="left">Stream</Divider>
           <TextField
             // label="Stream" 
