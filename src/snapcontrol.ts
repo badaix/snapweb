@@ -261,6 +261,7 @@ class SnapControl {
         this.msg_id = 0;
         this.status_req_id = -1;
         this.timer = null;
+        this.reconnection_attempts = 0;
     }
 
     public connect(baseUrl: string) {
@@ -269,6 +270,7 @@ class SnapControl {
             this.connection = new WebSocket(baseUrl + '/jsonrpc');
             this.connection.onmessage = (msg: MessageEvent) => this.onMessage(msg.data);
             this.connection.onopen = () => {
+                this.reconnection_attempts = 0;
                 this.status_req_id = this.sendRequest('Server.GetStatus');
                 if (this.onConnectionChanged)
                     this.onConnectionChanged(this, true);
@@ -277,15 +279,20 @@ class SnapControl {
             this.connection.onclose = () => {
                 if (this.onConnectionChanged)
                     this.onConnectionChanged(this, false, 'Connection lost, trying to reconnect.');
-                console.info('connection lost, reconnecting in 1s');
-                this.timer = setTimeout(() => this.connect(baseUrl), 1000);
+                const reconnectionDelay = this.getReconnectDelay();
+                this.timer = setTimeout(() => this.connect(baseUrl), reconnectionDelay * 1000);
             };
         } catch (e) {
-            console.info('Exception while connecting: "' + e + '", reconnecting in 1s');
+            const reconnectionDelay = this.getReconnectDelay();
+            console.info('Exception while connecting: "' + e + '", reconnecting in ' + reconnectionDelay + 's');
             if (this.onConnectionChanged)
                 this.onConnectionChanged(this, false, 'Exception while connecting: "' + e + '", trying to reconnect.');
-            this.timer = setTimeout(() => this.connect(baseUrl), 1000);
+            this.timer = setTimeout(() => this.connect(baseUrl), reconnectionDelay * 1000);
         }
+    }
+
+    private getReconnectDelay() {
+        return Math.min(1.1 ** this.reconnection_attempts++ - 1, 1);
     }
 
     public disconnect() {
@@ -298,6 +305,7 @@ class SnapControl {
             }
         }
         if (this.onConnectionChanged)
+          
             this.onConnectionChanged(this, false);
     }
 
@@ -532,6 +540,7 @@ class SnapControl {
     msg_id: number;
     status_req_id: number;
     timer: ReturnType<typeof setTimeout> | null;
+    reconnection_attempts: number
 }
 
 
