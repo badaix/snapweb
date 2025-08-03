@@ -1,5 +1,21 @@
 # Snapweb changelog
 
+## Version 0.9.1
+
+### Bugfixes
+
+- Fix About dialog
+
+### General
+
+- Update packages
+
+### Contributors
+
+- @badaix
+
+_Johannes Pohl <snapweb@badaix.de>  Sun, 03 Aug 2025 00:13:37 +0200_
+
 ## Version 0.9.0
 
 ### Features
@@ -13,6 +29,7 @@
 ### Contributors
 
 - @chicco-carone
+- @badaix
 
 _Johannes Pohl <snapweb@badaix.de>  Sat, 07 Jun 2025 00:13:37 +0200_
 
