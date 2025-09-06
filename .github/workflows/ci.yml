@@ -23,7 +23,7 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
 
     - name: Setup node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v5
       with:
         node-version: 22
 
