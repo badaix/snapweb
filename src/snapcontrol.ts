@@ -338,6 +338,9 @@ class SnapControl {
                 stream = this.getStream(notification.params.id);
                 stream.properties.fromJson(notification.params.properties);
                 return true;
+            case 'Group.OnNameChanged':
+                this.getGroup(notification.params.id).name = notification.params.name;
+                return true;
             default:
                 return false;
         }
@@ -386,6 +389,10 @@ class SnapControl {
     public getStreamFromClient(client_id: string): Snapcast.Stream {
         const group: Snapcast.Group = this.getGroupFromClient(client_id);
         return this.getStream(group.stream_id);
+    }
+
+    public setGroupName(group_id: string, name: string) {
+        this.sendRequest('Group.SetName', { id: group_id, name: name });
     }
 
     // public getMyStreamId(): string {
