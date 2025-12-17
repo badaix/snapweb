@@ -4,6 +4,7 @@ import { SnapControl, Snapcast } from '../snapcontrol';
 import { Box, Button, Grid, InputAdornment, Menu, MenuItem, Slider, Stack, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { VolumeUp as VolumeUpIcon, VolumeOff as VolumeOffIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { getPersistentValue, setPersistentValue } from '../config';
 
 
 type ClientProps = {
@@ -22,11 +23,13 @@ export default function Client(props: ClientProps) {
   const [name, setName] = useState(props.client.config.name);
   const [tmpLatency, setTmpLatency] = useState(props.client.config.latency);
   const [latency, setLatency] = useState(props.client.config.latency);
+  const persistantMaxVolumeKey = `${props.client.id}-maxVolume`;
+  const [maxVolume, setMaxVolume] = useState(Number(getPersistentValue(persistantMaxVolumeKey, "100") ?? 100));
 
   function handleVolumeChange(value: number) {
     console.debug("handleVolumeChange: " + value);
     props.client.config.volume.percent = value;
-    props.snapcontrol.setVolume(props.client.id, value, false);
+    props.snapcontrol.setVolume(props.client.id, value, maxVolume, false);
     // setState({});
     props.onVolumeChange();
   }
@@ -105,7 +108,7 @@ export default function Client(props: ClientProps) {
               <IconButton aria-label="Mute" onClick={() => { handleMuteClicked() }}>
                 {props.client.config.volume.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
               </IconButton>
-              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + props.client.id} value={props.client.config.volume.percent} onChange={(_, value) => { handleVolumeChange(value as number) }} />
+              <Slider aria-label="Volume" color="secondary" valueLabelDisplay="auto" min={0} max={maxVolume ?? 100} size="small" key={"slider-" + props.client.id} value={props.client.config.volume.percent} onChange={(_, value) => { handleVolumeChange(value as number) }} />
             </Stack>
           </Stack>
         </Grid>
@@ -146,6 +149,11 @@ export default function Client(props: ClientProps) {
                 endAdornment: <InputAdornment position="end">ms</InputAdornment>,
               }
             }}
+          />
+          <TextField
+            margin="dense" id="maxVolume" label="Max volume" type="number" fullWidth variant="standard"
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setPersistentValue(persistantMaxVolumeKey, event.target.value); setMaxVolume(Number(event.target.value)) }}
+            value={maxVolume}
           />
           <TextField
             margin="dense" id="client" label="Client" type="text" fullWidth variant="standard"

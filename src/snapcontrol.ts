@@ -406,8 +406,8 @@ class SnapControl {
         return stream;
     }
 
-    public setVolume(client_id: string, percent: number, mute?: boolean) {
-        percent = Math.max(0, Math.min(100, percent));
+    public setVolume(client_id: string, percent: number, max?: number, mute?: boolean) {
+        percent = Math.max(0, Math.min(max ?? 100, percent));
         const client = this.getClient(client_id);
         client.config.volume.percent = percent;
         if (mute !== undefined)
