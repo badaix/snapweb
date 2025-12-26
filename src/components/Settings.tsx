@@ -6,12 +6,14 @@ export default function SettingsDialog(props: { open: boolean, onClose: (_apply:
   const [serverurl, setServerurl] = useState(config.baseUrl);
   const [theme, setTheme] = useState(config.theme);
   const [showOffline, setShowOffline] = useState(config.showOffline);
+  const [autoPlay, setAutoPlay] = useState(config.autoPlay);
 
   function handleClose(apply: boolean) {
     if (apply) {
       config.baseUrl = serverurl;
       config.theme = theme;
       config.showOffline = showOffline;
+      config.autoPlay = autoPlay;
     }
     props.onClose(apply);
   }
@@ -43,6 +45,7 @@ export default function SettingsDialog(props: { open: boolean, onClose: (_apply:
           </FormControl>
           <Box sx={{ py: 1 }} />
           <FormControlLabel control={<Checkbox checked={showOffline} onChange={(_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => setShowOffline(checked)} />} label="Show offline clients" />
+          <FormControlLabel control={<Checkbox checked={autoPlay} onChange={(_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => setAutoPlay(checked)} />} label="Autoplay on connect" />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => { handleClose(false) }}>Cancel</Button>

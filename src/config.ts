@@ -3,7 +3,8 @@ const host = import.meta.env.VITE_APP_SNAPSERVER_HOST || window.location.host;
 const keys = {
   snapserver_host: "snapserver.host",
   theme: "theme",
-  showoffline: "showoffline"
+  showoffline: "showoffline",
+  autoPlay: "autoPlay"
 }
 
 enum Theme {
@@ -48,6 +49,12 @@ const config = {
   },
   set showOffline(value: boolean) {
     setPersistentValue(keys.showoffline, String(value));
+  },
+  get autoPlay() {
+    return getPersistentValue(keys.autoPlay, String(false)) === String(true);
+  },
+  set autoPlay(value: boolean) {
+    setPersistentValue(keys.autoPlay, String(value));
   }
 };
 

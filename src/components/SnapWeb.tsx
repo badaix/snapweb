@@ -93,6 +93,8 @@ export default function SnapWeb() {
   const [server, setServer] = useState(new Snapcast.Server());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showOffline, setShowOffline] = useState(config.showOffline);
+  const [autoPlay, setAutoPlay] = useState(config.autoPlay);
+  const [autoplaySuccess, setAutoplaySuccess] = useState(true);
   const [theme, setTheme] = useState(config.theme);
   const [serverUrl, setServerUrl] = useState(config.baseUrl);
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -134,6 +136,25 @@ export default function SnapWeb() {
     updateMediaSession();
   }
 
+  function shouldAutoplay(): boolean {
+    return (autoPlay || (document.location.hash.match(/autoplay/) !== null));
+  }
+
+  function isAutoplaySupported(): string {
+    if ("getAutoplayPolicy" in navigator) {
+      try {
+        const policy = (navigator as any).getAutoplayPolicy("mediaelement");
+        return policy;
+      } catch (error) {
+        console.warn("getAutoplayPolicy failed:", error);
+      }
+    }
+
+    return "unknown"
+  };
+
+  const autoplayPolicy = isAutoplaySupported()
+
   snapControlRef.current.onChange = (_control: SnapControl, server: Snapcast.Server) => handleChange(server);
   snapControlRef.current.onConnectionChanged = (_control: SnapControl, connected: boolean, error?: string) => {
     console.log("Connection state changed: " + connected + ", error: " + error);
@@ -144,6 +165,18 @@ export default function SnapWeb() {
         setConnectError(error);
     }
     setConnected(connected);
+    if (shouldAutoplay()) {
+      if (autoplayPolicy === "allowed") {
+        console.debug("autoplayPolicy:", autoplayPolicy)
+        setIsPlaying(true);
+      } else if (autoplayPolicy === "unknown") {
+        console.warn("autoplayPolicy unknown, attempting autoplay anyway")
+        setIsPlaying(true);
+      } else {
+        console.warn("autoplayPolicy:", autoplayPolicy)
+        setAutoplaySuccess(false)
+      }
+    }
   };
 
 
@@ -277,9 +310,22 @@ export default function SnapWeb() {
       console.debug("isPlaying changed to true");
       audioRef.current.src = silence;
       audioRef.current.loop = true;
-      audioRef.current.play().then(() => {
-        snapstreamRef.current = new SnapStream(config.baseUrl);
-      });
+      audioRef.current.play().then(
+        () => {
+          setAutoplaySuccess(true)
+          snapstreamRef.current = new SnapStream(config.baseUrl);
+        },
+        (error) => {
+          setAutoplaySuccess(false)
+          if (snapstreamRef.current)
+            snapstreamRef.current.stop();
+          snapstreamRef.current = null;
+          audioRef.current.pause();
+          audioRef.current.src = '';
+          setIsPlaying(false)
+          console.error("Playing failed, likely due to disallowed autoplay:", error)
+        }
+      );
       //   updateMediaSession();
       // });
     } else {
@@ -322,6 +368,19 @@ export default function SnapWeb() {
 
   function snackbar() {
     if (isConnected) {
+      if (shouldAutoplay() && !autoplaySuccess) {
+        return (
+          <Snackbar
+            open
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            key='autoplay-error'
+            onClose={(_, reason: string) => { if (reason !== 'clickaway') { console.log("Snackbar - onClose") } }}>
+            <Alert onClose={(_) => { console.log("Snackbar - alert onClose") }} severity="error" sx={{ width: '100%' }}>
+              {"Autoplay failed with policy: " + autoplayPolicy}
+            </Alert>
+          </Snackbar >
+        )
+      }
       return (null);
     }
     return (
@@ -370,7 +429,7 @@ export default function SnapWeb() {
                 sx={{ mr: 2 }}
                 onClick={(_) => { setIsPlaying(!isPlaying); }}
               >
-                {isPlaying ? <StopIcon fontSize="large" /> : <PlayArrowIcon fontSize="large" />}
+                {isPlaying && autoplaySuccess ? <StopIcon fontSize="large" /> : <PlayArrowIcon fontSize="large" />}
               </IconButton> : <IconButton></IconButton>}
           </Toolbar>
         </AppBar>
@@ -381,7 +440,7 @@ export default function SnapWeb() {
         >
           {list()}
         </Drawer>
-        <Server server={server} snapcontrol={snapControlRef.current} showOffline={showOffline} />
+        <Server server={server} snapcontrol={snapControlRef.current} showOffline={showOffline} autoPlay={autoPlay} />
         {snackbar()}
         <AboutDialog open={aboutOpen} onClose={() => { setAboutOpen(false); }} />
         <SettingsDialog open={settingsOpen} onClose={(apply: boolean) => {
@@ -391,6 +450,7 @@ export default function SnapWeb() {
             setServerUrl(config.baseUrl);
             setTheme(config.theme);
             setShowOffline(config.showOffline);
+            setAutoPlay(config.autoPlay);
           }
         }} />
       </div >

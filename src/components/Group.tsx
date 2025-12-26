@@ -19,6 +19,7 @@ type GroupProps = {
   group: Snapcast.Group;
   snapcontrol: SnapControl;
   showOffline: boolean;
+  autoPlay: boolean;
 };
 
 type GroupVolumeChange = {

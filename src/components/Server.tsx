@@ -7,13 +7,14 @@ type ServerProps = {
   server: Snapcast.Server;
   snapcontrol: SnapControl;
   showOffline: boolean;
+  autoPlay: boolean;
 };
 
 export default function Server(props: ServerProps) {
   console.log("Render Server");
   return (
     <Box sx={{ m: 1.5 }} >
-      {props.server.groups.map(group => <Group group={group} key={group.id} server={props.server} snapcontrol={props.snapcontrol} showOffline={props.showOffline} />)}
+      {props.server.groups.map(group => <Group group={group} key={group.id} server={props.server} snapcontrol={props.snapcontrol} showOffline={props.showOffline} autoPlay={props.autoPlay} />)}
     </Box>
   );
 }
