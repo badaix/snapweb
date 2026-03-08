@@ -1,8 +1,10 @@
-import Flac from 'libflacjs/dist/libflac.js'
 import { getPersistentValue } from './config.ts'
 import { AudioContext, IAudioBuffer, IAudioContext, IAudioBufferSourceNode, IGainNode } from 'standardized-audio-context'
-import { OpusDecoder as WasmOpusDecoder } from "opus-decoder";
 
+// decoders
+import type { FLACDecoderWebWorker, FLACDecodedAudio } from "@wasm-audio-decoders/flac";
+import type { OggVorbisDecoderWebWorker, OggVorbisDecodedAudio } from "@wasm-audio-decoders/ogg-vorbis";
+import type { OpusDecoderWebWorker, OpusDecoderSampleRate, OpusDecodedAudio } from "opus-decoder";
 
 declare global {
     // declare window.webkitAudioContext for the ts compiler
@@ -616,204 +618,17 @@ class SampleFormat {
 
 
 class Decoder {
-    setHeader(_buffer: ArrayBuffer): SampleFormat | null {
-        return new SampleFormat();
-    }
+    setHeader(_buffer: ArrayBuffer) {}
+
+    free() {}
 
     decode(_chunk: PcmChunkMessage): PcmChunkMessage | null | Promise<PcmChunkMessage | null> {
         return null;
     }
+
+    sampleFormat: SampleFormat | null = null;
 }
 
-
-class FlacDecoder extends Decoder {
-    constructor() {
-        super();
-        this.decoder = Flac.create_libflac_decoder(true);
-        if (this.decoder) {
-            const init_status = Flac.init_decoder_stream(this.decoder, this.read_callback_fn.bind(this), this.write_callback_fn.bind(this), this.error_callback_fn.bind(this), this.metadata_callback_fn.bind(this), false);
-            console.log("Flac init: " + init_status);
-            Flac.setOptions(this.decoder, { analyseSubframes: true, analyseResiduals: true });
-        }
-        this.sampleFormat = new SampleFormat();
-        this.flacChunk = new ArrayBuffer(0);
-        // this.pcmChunk  = new PcmChunkMessage();
-
-        // Flac.setOptions(this.decoder, {analyseSubframes: analyse_frames, analyseResiduals: analyse_residuals});
-        // flac_ok &= init_status == 0;
-        // console.log("flac init     : " + flac_ok);//DEBUG
-    }
-
-    decode(chunk: PcmChunkMessage): PcmChunkMessage | null {
-        // console.log("Flac decode: " + chunk.payload.byteLength);
-        this.flacChunk = chunk.payload.slice(0);
-        this.pcmChunk = chunk;
-        this.pcmChunk!.clearPayload();
-        this.cacheInfo = { cachedBlocks: 0, isCachedChunk: true };
-        // console.log("Flac len: " + this.flacChunk.byteLength);
-        while (this.flacChunk.byteLength > 0) {
-            if (!Flac.FLAC__stream_decoder_process_single(this.decoder)) {
-                return null;
-            }
-            // const state = Flac.FLAC__stream_decoder_get_state(this.decoder);
-            // console.log("State: " + state);
-        }
-        // console.log("Pcm payload: " + this.pcmChunk!.payloadSize());
-        if (this.cacheInfo.cachedBlocks > 0) {
-            const diffMs = this.cacheInfo.cachedBlocks / this.sampleFormat.msRate();
-            // console.log("Cached: " + this.cacheInfo.cachedBlocks + ", " + diffMs + "ms");
-            this.pcmChunk!.timestamp.setMilliseconds(this.pcmChunk!.timestamp.getMilliseconds() - diffMs);
-        }
-        return this.pcmChunk!;
-    }
-
-    read_callback_fn(bufferSize: number): Flac.ReadResult | Flac.CompletedReadResult {
-        // console.log('  decode read callback, buffer bytes max=', bufferSize);
-        if (this.header) {
-            console.log("  header: " + this.header.byteLength);
-            const data = new Uint8Array(this.header);
-            this.header = null;
-            return { buffer: data, readDataLength: data.byteLength, error: false };
-        } else if (this.flacChunk) {
-            // console.log("  flacChunk: " + this.flacChunk.byteLength);
-            // a fresh read => next call to write will not be from cached data
-            this.cacheInfo.isCachedChunk = false;
-            const data = new Uint8Array(this.flacChunk.slice(0, Math.min(bufferSize, this.flacChunk.byteLength)));
-            this.flacChunk = this.flacChunk.slice(data.byteLength);
-            return { buffer: data, readDataLength: data.byteLength, error: false };
-        }
-        return { buffer: new Uint8Array(0), readDataLength: 0, error: false };
-    }
-
-    write_callback_fn(data: Array<Uint8Array>, frameInfo: Flac.BlockMetadata) {
-        // console.log("  write frame metadata blocksize: " + frameInfo.blocksize + ", channels: " + frameInfo.channels + ", len: " + data.length);
-        if (this.cacheInfo.isCachedChunk) {
-            // there was no call to read, so it's some cached data
-            this.cacheInfo.cachedBlocks += frameInfo.blocksize;
-        }
-        const payload = new ArrayBuffer(this.sampleFormat.frameSize() * frameInfo.blocksize);
-        const view = new DataView(payload);
-        for (let channel: number = 0; channel < frameInfo.channels; ++channel) {
-            const channelData = new DataView(data[channel].buffer, 0, data[channel].buffer.byteLength);
-            // console.log("channelData: " + channelData.byteLength + ", blocksize: " + frameInfo.blocksize);
-            const sample_size = this.sampleFormat.sampleSize()
-            for (let i: number = 0; i < frameInfo.blocksize; ++i) {
-                const write_idx = sample_size * (frameInfo.channels * i + channel);
-                const read_idx = sample_size * i;
-                if (sample_size == 4)
-                    view.setInt32(write_idx, channelData.getInt32(read_idx, true), true);
-                else
-                    view.setInt16(write_idx, channelData.getInt16(read_idx, true), true);
-            }
-        }
-        this.pcmChunk!.addPayload(payload);
-        // console.log("write: " + payload.byteLength + ", len: " + this.pcmChunk!.payloadSize());
-    }
-
-    /** @memberOf decode */
-    metadata_callback_fn(data: any) {
-        console.info('meta data: ', data);
-        // let view = new DataView(data);
-        this.sampleFormat.rate = data.sampleRate;
-        this.sampleFormat.channels = data.channels;
-        this.sampleFormat.bits = data.bitsPerSample;
-        console.log("metadata_callback_fn, sampleformat: " + this.sampleFormat.toString());
-    }
-
-    /** @memberOf decode */
-    error_callback_fn(err: any, errMsg: any) {
-        console.error('decode error callback', err, errMsg);
-    }
-
-    setHeader(buffer: ArrayBuffer): SampleFormat | null {
-        this.header = buffer.slice(0);
-        Flac.FLAC__stream_decoder_process_until_end_of_metadata(this.decoder);
-        return this.sampleFormat;
-    }
-
-    sampleFormat: SampleFormat;
-    decoder: number;
-    header: ArrayBuffer | null = null;
-    flacChunk: ArrayBuffer;
-    pcmChunk?: PcmChunkMessage;
-
-    cacheInfo: { isCachedChunk: boolean, cachedBlocks: number } = { isCachedChunk: false, cachedBlocks: 0 };
-}
-
-class OpusDecoder extends Decoder {
-
-    constructor() {
-        super();
-        this.sampleFormat = new SampleFormat();
-        this.decoder = null;
-    }
-
-    async initDecoder() {
-        if (!this.decoder) {
-            this.decoder = new WasmOpusDecoder();
-            await this.decoder.ready;
-            await this.decoder.reset();
-        }
-    }
-
-    setHeader(buffer: ArrayBuffer): SampleFormat | null {
-        const view = new DataView(buffer);
-        const ID_OPUS = 0x4F505553;
-        if (buffer.byteLength < 12) {
-            console.error("Opus header too small:", buffer.byteLength);
-            return null;
-        } else if (view.getUint32(0, true) !== ID_OPUS) {
-            console.error("Invalid Opus header magic");
-            return null;
-        }
-
-        this.sampleFormat.rate = view.getUint32(4, true);
-        this.sampleFormat.bits = view.getUint16(8, true);
-        this.sampleFormat.channels = view.getUint16(10, true);
-
-        this.initDecoder()
-            .catch(err => console.error("Failed to initialize Opus decoder:", err));
-
-        console.log("Opus sampleformat:", this.sampleFormat.toString());
-        return this.sampleFormat;
-    }
-
-    async decode(chunk: PcmChunkMessage): Promise<PcmChunkMessage | null> {
-        if (!this.decoder) {
-            console.error("Opus decoder not initialized");
-            return null;
-        }
-
-        try {
-            const decoded = await this.decoder.decodeFrame(new Uint8Array(chunk.payload));
-
-            const bytesPerSample = this.sampleFormat.sampleSize();
-            const buffer = new ArrayBuffer(decoded.channelData[0].length * bytesPerSample * this.sampleFormat.channels);
-            const view = new DataView(buffer);
-
-            for (let i = 0; i < decoded.channelData[0].length; i++) {
-                for (let channel = 0; channel < this.sampleFormat.channels; channel++) {
-                    const sample = Math.max(-1, Math.min(1, decoded.channelData[channel][i])) * ((1 << (this.sampleFormat.bits - 1)) - 1);
-                    if (bytesPerSample === 4) {
-                        view.setInt32((i * this.sampleFormat.channels + channel) * 4, sample, true);
-                    } else {
-                        view.setInt16((i * this.sampleFormat.channels + channel) * 2, sample, true);
-                    }
-                }
-            }
-
-            chunk.clearPayload();
-            chunk.addPayload(buffer);
-            return chunk;
-        } catch (err) {
-            console.error("Failed to decode Opus frame:", err);
-            return null;
-        }
-    }
-
-    private decoder: WasmOpusDecoder | null;
-    private sampleFormat: SampleFormat;
-}
 
 class PlayBuffer {
     constructor(buffer: IAudioBuffer, playTime: number, source: IAudioBufferSourceNode<IAudioContext>, destination: IGainNode<IAudioContext>) {
@@ -842,13 +657,12 @@ class PlayBuffer {
 
 
 class PcmDecoder extends Decoder {
-    setHeader(buffer: ArrayBuffer): SampleFormat | null {
-        const sampleFormat = new SampleFormat();
+    setHeader(buffer: ArrayBuffer) {
+        this.sampleFormat = new SampleFormat();
         const view = new DataView(buffer);
-        sampleFormat.channels = view.getUint16(22, true);
-        sampleFormat.rate = view.getUint32(24, true);
-        sampleFormat.bits = view.getUint16(34, true);
-        return sampleFormat;
+        this.sampleFormat.channels = view.getUint16(22, true);
+        this.sampleFormat.rate = view.getUint32(24, true);
+        this.sampleFormat.bits = view.getUint16(34, true);
     }
 
     decode(chunk: PcmChunkMessage): PcmChunkMessage | null {
@@ -856,6 +670,149 @@ class PcmDecoder extends Decoder {
     }
 }
 
+class WasmAudioDecoder extends Decoder {
+    constructor(codec: string) {
+        super()
+        this.codec = codec;
+    }
+
+    free() {
+        if (this.decoder) {
+            // set boolean flag to prevent any new instances of this decoder from being created
+            this.decoderFreed = true
+            const decoder = this.decoder
+            // this needs to be called when we are done with this decoder so the WASM memory can be freed
+            decoder.ready.then(() => decoder.free());
+        }
+    }
+
+    private async useOpusDecoder(opusHeaderInfo: ArrayBuffer): Promise<void> {
+        const view = new DataView(opusHeaderInfo);
+        const ID_OPUS = 0x4F505553;
+        if (opusHeaderInfo.byteLength < 12) {
+            console.error("Opus header too small:", opusHeaderInfo.byteLength);
+            return;
+        } else if (view.getUint32(0, true) !== ID_OPUS) {
+            console.error("Invalid Opus header magic");
+            return;
+        }
+
+        this.sampleFormat = new SampleFormat()
+        this.sampleFormat.rate = view.getUint32(4, true);
+        this.sampleFormat.bits = view.getUint16(8, true);
+        this.sampleFormat.channels = view.getUint16(10, true);
+
+        console.log("Opus sampleformat:", this.sampleFormat.toString());
+
+        const { OpusDecoderWebWorker } = await import("opus-decoder");
+        if (this.decoderFreed) return;
+
+        const decoder = new OpusDecoderWebWorker({
+            sampleRate: this.sampleFormat!.rate as OpusDecoderSampleRate,
+            channels: this.sampleFormat!.channels
+        })
+        await decoder.ready;
+
+        this.decoder = decoder;
+        this.decoderFunction = (payload: ArrayBuffer) => (this.decoder as OpusDecoderWebWorker<OpusDecoderSampleRate>).decodeFrame(new Uint8Array(payload));
+    }
+
+    private async useFlacDecoder(): Promise<void> {
+        const { FLACDecoderWebWorker } = await import("@wasm-audio-decoders/flac");
+        if (this.decoderFreed) return;
+
+        const decoder = new FLACDecoderWebWorker();
+        await decoder.ready;
+
+        this.decoder = decoder;
+        this.decoderFunction = (payload: ArrayBuffer) => (this.decoder as FLACDecoderWebWorker).decode(new Uint8Array(payload));
+    }
+
+    private async useOggVorbisDecoder(setupPackets: ArrayBuffer): Promise<void> {
+        const { OggVorbisDecoderWebWorker } = await import("@wasm-audio-decoders/ogg-vorbis");
+        if (this.decoderFreed) return;
+
+        const decoder = new OggVorbisDecoderWebWorker();
+        await decoder.ready;
+
+        // load the ogg vorbis setup packets
+        await decoder.decode(new Uint8Array(setupPackets))
+
+        this.decoder = decoder;
+        this.decoderFunction = (payload: ArrayBuffer) => (this.decoder as OggVorbisDecoderWebWorker).decode(new Uint8Array(payload));
+    }
+
+    setHeader(buffer: ArrayBuffer) {
+        switch (this.codec) {
+            case "opus": {
+                this.useOpusDecoder(buffer);
+                break;
+            }
+            case "flac": {
+                this.useFlacDecoder();
+                break;
+            }
+            case "ogg": {
+                this.useOggVorbisDecoder(buffer);
+                break;
+            }
+            default: {
+                throw new Error("Unsupported `webaudio` playback codec: " + this.codec);
+            }
+        }
+    }
+
+    async decode(chunk: PcmChunkMessage): Promise<PcmChunkMessage | null> {
+        if (this.decoderFunction) {
+            const decoded = await this.decoderFunction(chunk.payload);
+
+            if (this.sampleFormat == null) {
+                if (decoded.samplesDecoded !== 0) {
+                    // update the sample format once it can be determined from the decoded audio
+                    this.sampleFormat = new SampleFormat();
+                    this.sampleFormat.bits = 32
+                    this.sampleFormat.channels = decoded.channelData.length
+                    this.sampleFormat.rate = decoded.sampleRate
+                } else {
+                    console.log("Determining sample rate and channel count, playback will start shortly.")
+                    return null;
+                }
+            }
+
+            const bytesPerSample = this.sampleFormat.sampleSize();
+            const buffer = new ArrayBuffer(decoded.channelData[0].length * bytesPerSample * this.sampleFormat.channels);
+            const view = new DataView(buffer);
+
+            for (let i = 0; i < decoded.channelData[0].length; i++) {
+                for (let channel = 0; channel < this.sampleFormat.channels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, decoded.channelData[channel][i])) * ((1 << (this.sampleFormat.bits - 1)) - 1);
+                    if (bytesPerSample === 4) {
+                        view.setInt32((i * this.sampleFormat.channels + channel) * 4, sample, true);
+                    } else {
+                        view.setInt16((i * this.sampleFormat.channels + channel) * 2, sample, true);
+                    }
+                }
+            }
+
+            chunk.sampleFormat = this.sampleFormat;
+            chunk.clearPayload();
+            chunk.addPayload(buffer);
+            return chunk;
+        }
+
+        console.log("Audio decoder still initializing, playback will start shortly.")
+        return null;
+    }
+
+    private codec: string;
+    private decoder: 
+        FLACDecoderWebWorker | 
+        OpusDecoderWebWorker<OpusDecoderSampleRate> | 
+        OggVorbisDecoderWebWorker | 
+        undefined;
+    private decoderFreed: boolean = false;
+    private decoderFunction: ((_: ArrayBuffer) => Promise<FLACDecodedAudio | OggVorbisDecodedAudio | OpusDecodedAudio<OpusDecoderSampleRate>>) | undefined;
+}
 
 class SnapStream {
     constructor(baseUrl: string) {
@@ -925,50 +882,64 @@ class SnapStream {
         }
     }
 
-    private onMessage(msg: MessageEvent) {
+    private setSampleFormat(sampleFormat: SampleFormat) {
+        this.sampleFormat = sampleFormat;
+
+        console.log("Sampleformat: " + this.sampleFormat.toString());
+        if ((this.sampleFormat.channels !== 2) || (this.sampleFormat.bits < 16)) {
+            alert("Stream must be stereo with 16, 24 or 32 bit depth, actual format: " + this.sampleFormat.toString());
+        } else {
+            if (this.bufferDurationMs !== 0) {
+                this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
+            }
+
+            // NOTE (curiousercreative): this breaks iOS audio output on v15.7.5 at least
+            if (window.AudioContext) {
+                if (this.sampleFormat.rate !== this.ctx.sampleRate.valueOf()) {
+                    console.log("Stream samplerate != audio context samplerate (" + this.sampleFormat.rate + " != " + this.ctx.sampleRate.valueOf() + "), switching audio context to " + this.sampleFormat.rate + " Hz")
+                    // we are not using webkitAudioContext, so it's safe to setup a new AudioContext with the new samplerate
+                    // since this code is not triggered by direct user input, we cannt create a webkitAudioContext here
+                    this.stopAudio();
+                    this.setupAudioContext();
+                }
+            }
+
+            this.ctx.resume();
+            this.timeProvider.setAudioContext(this.ctx);
+            this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
+            // this.timeProvider = new TimeProvider(this.ctx);
+            this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
+            this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx!.outputLatency : 0)
+            console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx!.outputLatency + ", latency: " + this.latency);
+            this.play();
+        }
+    }
+
+    private async onMessage(msg: MessageEvent) {
         const view = new DataView(msg.data);
         const type = view.getUint16(0, true);
         if (type === 1) {
             const codec = new CodecMessage(msg.data);
             console.log("Codec: " + codec.codec);
-            if (codec.codec === "flac") {
-                this.decoder = new FlacDecoder();
-            } else if (codec.codec === "pcm") {
+            this.decoder?.free();
+            if (codec.codec == "pcm") {
                 this.decoder = new PcmDecoder();
-            } else if (codec.codec === "opus") {
-                this.decoder = new OpusDecoder();
+                this.decoder.setHeader(codec.payload);
+                this.setSampleFormat(this.decoder.sampleFormat!);
             } else {
-                alert("Codec not supported: " + codec.codec);
-            }
-            if (this.decoder) {
-                this.sampleFormat = this.decoder.setHeader(codec.payload)!;
-                console.log("Sampleformat: " + this.sampleFormat.toString());
-                if ((this.sampleFormat.channels !== 2) || (this.sampleFormat.bits < 16)) {
-                    alert("Stream must be stereo with 16, 24 or 32 bit depth, actual format: " + this.sampleFormat.toString());
-                } else {
-                    if (this.bufferDurationMs !== 0) {
-                        this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
+                try {
+                    this.decoder = new WasmAudioDecoder(codec.codec);
+                    this.decoder.setHeader(codec.payload);
+                    if (this.decoder.sampleFormat != null) {
+                        this.setSampleFormat(this.decoder.sampleFormat!);
                     }
-
-                    // NOTE (curiousercreative): this breaks iOS audio output on v15.7.5 at least
-                    if (window.AudioContext) {
-                        if (this.sampleFormat.rate !== this.ctx.sampleRate.valueOf()) {
-                            console.log("Stream samplerate != audio context samplerate (" + this.sampleFormat.rate + " != " + this.ctx.sampleRate.valueOf() + "), switching audio context to " + this.sampleFormat.rate + " Hz")
-                            // we are not using webkitAudioContext, so it's safe to setup a new AudioContext with the new samplerate
-                            // since this code is not triggered by direct user input, we cannt create a webkitAudioContext here
-                            this.stopAudio();
-                            this.setupAudioContext();
-                        }
+                } catch (e: any) {
+                    if (e?.message?.includes("Unsupported `webaudio` playback codec: ")) {
+                        console.error(e)
+                        alert("Codec not supported: " + codec.codec)
+                    } else {
+                        throw e;
                     }
-
-                    this.ctx.resume();
-                    this.timeProvider.setAudioContext(this.ctx);
-                    this.gainNode.gain.value = this.serverSettings!.muted ? 0 : this.serverSettings!.volumePercent / 100;
-                    // this.timeProvider = new TimeProvider(this.ctx);
-                    this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
-                    this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx!.outputLatency : 0)
-                    console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx!.outputLatency + ", latency: " + this.latency);
-                    this.play();
                 }
             }
         } else if (type === 2) {
@@ -977,6 +948,11 @@ class SnapStream {
                 const decodedPromise = this.decoder.decode(pcmChunk);
                 Promise.resolve(decodedPromise).then(decoded => {
                     if (decoded) {
+                        if (this.sampleFormat == null) {
+                            // sample format for flac and vorbis are known after decoding starts
+                            this.setSampleFormat(this.decoder!.sampleFormat!);
+                        }
+
                         this.stream!.addChunk(decoded);
                     }
                 }).catch(err => {
@@ -1033,6 +1009,7 @@ class SnapStream {
     public stop() {
         window.clearInterval(this.syncHandle);
         this.stopAudio();
+        this.decoder?.free();
         if (this.streamsocket.readyState === WebSocket.OPEN || this.streamsocket.readyState === WebSocket.CONNECTING) {
             this.streamsocket.onclose = () => { };
             this.streamsocket.close();
@@ -1082,7 +1059,7 @@ class SnapStream {
     gainNode!: IGainNode<IAudioContext>;
     serverSettings: ServerSettingsMessage | undefined;
     decoder: Decoder | undefined;
-    sampleFormat: SampleFormat | undefined;
+    sampleFormat: SampleFormat | null = null;
 
     // median: number = 0;
     audioBufferCount: number = 3;
