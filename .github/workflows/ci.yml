@@ -46,27 +46,27 @@ jobs:
         echo VITE_APP_GITREV=\"${{ github.sha }}\" >> .env
         npm run build
 
-    - name: Archive raw artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: snapweb_raw_${{env.SHA_SHORT}}
-        path: dist
-        compression-level: 9
+    # - name: Archive raw artifacts
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: snapweb_raw_${{env.SHA_SHORT}}
+    #     path: dist
+    #     compression-level: 9
 
-    - name: Create changelog
-      run: |
-        $GITHUB_WORKSPACE/debian/changelog_md2deb.py $GITHUB_WORKSPACE/changelog.md > $GITHUB_WORKSPACE/debian/changelog
-        cat $GITHUB_WORKSPACE/debian/changelog
+    # - name: Create changelog
+    #   run: |
+    #     $GITHUB_WORKSPACE/debian/changelog_md2deb.py $GITHUB_WORKSPACE/changelog.md > $GITHUB_WORKSPACE/debian/changelog
+    #     cat $GITHUB_WORKSPACE/debian/changelog
 
-    - name: Create deb package
-      env:
-        GENERATE_SOURCEMAP: "false"
-      run: |
-        fakeroot make -f debian/rules clean
-        fakeroot make -f debian/rules binary
+    # - name: Create deb package
+    #   env:
+    #     GENERATE_SOURCEMAP: "false"
+    #   run: |
+    #     fakeroot make -f debian/rules clean
+    #     fakeroot make -f debian/rules binary
 
-    - name: Archive deb artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: snapweb_debian_package_${{env.SHA_SHORT}}
-        path: ${{env.PARENT_DIR}}/snapweb_*.deb
+    # - name: Archive deb artifacts
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: snapweb_debian_package_${{env.SHA_SHORT}}
+    #     path: ${{env.PARENT_DIR}}/snapweb_*.deb
