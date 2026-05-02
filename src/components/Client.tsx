@@ -19,6 +19,7 @@ export default function Client(props: ClientProps) {
   const [anchorEl, setAnchorEl] = useState<Element | null>(null);
   const [open, setOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [latencyHelperOpen, setLatencyHelperOpen] = useState(false);
   const [name, setName] = useState(props.client.config.name);
   const [tmpLatency, setTmpLatency] = useState(props.client.config.latency);
   const [latency, setLatency] = useState(props.client.config.latency);
@@ -79,14 +80,33 @@ export default function Client(props: ClientProps) {
     props.snapcontrol.setClientLatency(props.client.id, latency);
   }
 
+  function adjustLatency(delta: number) {
+    const newLatency = Math.max(0, tmpLatency + delta);
+    setTmpLatency(newLatency);
+    setLatency(newLatency);
+    props.snapcontrol.setClientLatency(props.client.id, newLatency);
+  }
+
   function handleMuteClicked() {
     console.debug("handleMuteClicked");
     props.snapcontrol.setVolume(props.client.id, props.client.config.volume.percent, !props.client.config.volume.muted);
     setUpdate(update + 1);
   }
 
+  function handleLatencyHelperClicked() {
+    console.debug("handleLatencyHelperClicked");
+    setAnchorEl(null);
+    setOpen(false);
+    setLatencyHelperOpen(true)
+  }
+
+  function handleLatencyHelperClose() {
+    setLatencyHelperOpen(false)
+  }
+
   const menuitems = [];
   menuitems.push(<MenuItem key='Menu-Details' onClick={() => { handleDetailsClicked() }}>Details</MenuItem>);
+  menuitems.push(<MenuItem key='Menu-Latency-Helper' onClick={() => { handleLatencyHelperClicked() }}>Latency helper</MenuItem>);
   if (!props.client.connected)
     menuitems.push(<MenuItem key='Menu-Delete' onClick={() => { props.onDelete(); setAnchorEl(null); setOpen(false); }}>Delete</MenuItem>);
 
@@ -205,6 +225,60 @@ export default function Client(props: ClientProps) {
         <DialogActions>
           <Button onClick={() => { handleDetailsClose(false) }}>Cancel</Button>
           <Button onClick={() => { handleDetailsClose(true) }}>OK</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={latencyHelperOpen} onClose={() => { handleLatencyHelperClose() }}>
+        <DialogTitle>Latency helper for {props.client.config.name === "" ? props.client.host.name : props.client.config.name}</DialogTitle>
+        <DialogContent>
+        <TextField
+          margin="dense" id="latency" label="Latency" type="number" fullWidth
+          value={tmpLatency}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setTmpLatency(Number(event.target.value) || 0) }}
+          onBlur={(event: React.FocusEvent<HTMLInputElement>) => { handleLatencyChange(Number(event.target.value) || 0) }}
+          variant="standard"
+          slotProps={{
+            input: {
+              endAdornment: <InputAdornment position="end">ms</InputAdornment>,
+            }
+          }}
+        />
+
+        <Stack direction="column" spacing={1} sx={{ mt: 1 }}>
+          {[
+            [100, -100],
+            [50, -50],
+            [10, -10],
+            [5, -5],
+            [1, -1],
+          ].map(([pos, neg]) => (
+            <Stack
+              key={pos}
+              direction="row"
+              spacing={1}
+              justifyContent="center"
+            >
+              <Button
+                size="small"
+                variant="outlined"
+                sx={{ width: 80 }}
+                onClick={() => adjustLatency(neg)}
+              >
+                {neg}ms
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                sx={{ width: 80 }}
+                onClick={() => adjustLatency(pos)}
+              >
+                +{pos}ms
+              </Button>
+            </Stack>
+          ))}
+        </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { handleLatencyHelperClose() }}>OK</Button>
         </DialogActions>
       </Dialog>
     </Box>
