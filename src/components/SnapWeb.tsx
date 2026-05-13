@@ -113,6 +113,11 @@ export default function SnapWeb() {
     setTheme(config.theme);
   });
 
+  // Set AudioSession type to playback to enable background playback on iOS
+  if ("audioSession" in navigator) {
+  	((navigator.audioSession as any).type as string) = "playback";
+  }
+
   useEffect(() => {
     console.debug("server updated");
   }, [server]);
