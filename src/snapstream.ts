@@ -176,10 +176,11 @@ class JsonMessage extends BaseMessage {
     serialize(): ArrayBuffer {
         const buffer = super.serialize();
         const view = new DataView(buffer);
-        const jsonStr = JSON.stringify(this.json);
-        view.setUint32(26, jsonStr.length, true);
         const encoder = new TextEncoder();
-        const encoded = encoder.encode(jsonStr);
+        const encoded = encoder.encode(JSON.stringify(this.json));
+        // size must be the UTF-8 byte length (matches getSize()), not the
+        // UTF-16 string length, otherwise non-ASCII payloads are truncated.
+        view.setUint32(26, encoded.length, true);
         for (let i = 0; i < encoded.length; ++i)
             view.setUint8(30 + i, encoded[i]);
         return buffer;
