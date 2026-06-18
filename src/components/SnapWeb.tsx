@@ -224,23 +224,17 @@ export default function SnapWeb() {
       mediaSession.setActionHandler('seekbackward', properties.canSeek ?
         (event: MediaSessionActionDetails) => {
           const offset: number = (event.seekOffset || defaultSkipTime) * -1;
-          if (properties.position !== undefined)
-            Math.max(properties.position! + offset, 0);
           snapControlRef.current.control(streamId, 'seek', { 'offset': offset })
         } : null);
 
       mediaSession.setActionHandler('seekforward', properties.canSeek ? (event: MediaSessionActionDetails) => {
         const offset: number = event.seekOffset || defaultSkipTime;
-        if ((metadata?.duration !== undefined) && (properties.position !== undefined))
-          Math.min(properties.position! + offset, metadata.duration!);
         snapControlRef.current.control(streamId, 'seek', { 'offset': offset })
       } : null);
 
       try {
         mediaSession.setActionHandler('seekto', properties.canSeek ? (event: MediaSessionActionDetails) => {
           const position: number = event.seekTime || 0;
-          if (metadata?.duration !== undefined)
-            Math.min(position, metadata.duration!);
           snapControlRef.current.control(streamId, 'setPosition', { 'position': position })
         } : null);
       } catch (error) {
