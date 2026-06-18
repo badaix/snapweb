@@ -459,7 +459,10 @@ class AudioStream {
                 while ((read < readFrames) && this.chunk) {
                     const pcmChunk = this.chunk as PcmChunkMessage;
                     const pcmBuffer = pcmChunk.readFrames(readFrames - read);
-                    const normalize: number = 2 ** pcmChunk.sampleFormat.bits;
+                    // Signed PCM peaks at 2^(bits-1) (e.g. 32767 for 16-bit), so
+                    // normalize to [-1, 1) by dividing by 2^(bits-1), not 2^bits
+                    // (the latter played everything ~6 dB too quiet).
+                    const normalize: number = 2 ** (pcmChunk.sampleFormat.bits - 1);
                     let payload: any;
                     if (pcmChunk.sampleFormat.bits >= 24)
                         payload = new Int32Array(pcmBuffer);
