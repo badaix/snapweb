@@ -33,6 +33,15 @@ function getChromeVersion(): number | null {
 }
 
 function uuidv4(): string {
+    // crypto.randomUUID is only available in secure contexts (https/localhost);
+    // fall back to a Math.random-based UUID when it's missing or throws.
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        try {
+            return crypto.randomUUID();
+        } catch {
+            /* fall through to the manual implementation */
+        }
+    }
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         const r = Math.random() * 16 | 0, v = c === 'x' ? r : ((r & 0x3) | 0x8);
         return v.toString(16);
