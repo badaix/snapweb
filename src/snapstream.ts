@@ -549,7 +549,7 @@ class TimeProvider {
             if (this.diffBuffer.push((c2s - s2c) / 2) > 100)
                 this.diffBuffer.shift();
             const sorted = [...this.diffBuffer];
-            sorted.sort()
+            sorted.sort((a, b) => a - b);
             this.diff = sorted[Math.floor(sorted.length / 2)];
         }
         // console.debug("c2s: " + c2s.toFixed(2) + ", s2c: " + s2c.toFixed(2) + ", diff: " + this.diff.toFixed(2) + ", now: " + this.now().toFixed(2) + ", server.now: " + this.serverNow().toFixed(2) + ", win.now: " + window.performance.now().toFixed(2));
