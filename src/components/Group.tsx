@@ -28,7 +28,7 @@ type GroupVolumeChange = {
 };
 
 export default function Group(props: GroupProps) {
-  const [update, setUpdate] = useState(0);
+  const [, setUpdate] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [clients, setClients] = useState<GroupClient[]>([]);
   const [streamId, setStreamId] = useState("");
@@ -100,7 +100,7 @@ export default function Group(props: GroupProps) {
     newclients[idx].inGroup = inGroup;
     setClients(newclients);
     // dummy update, since the array was just mutated
-    setUpdate(update + 1);
+    setUpdate(u => u + 1);
   }
 
   function handleClientDelete(client: Snapcast.Client) {
@@ -110,7 +110,7 @@ export default function Group(props: GroupProps) {
       newDeletedClients.push(client);
     setDeletedClients(newDeletedClients);
     // dummy update, since the array was just mutated
-    setUpdate(update + 1);
+    setUpdate(u => u + 1);
   }
 
   function handleClientVolumeChange(client: Snapcast.Client) {
@@ -128,14 +128,14 @@ export default function Group(props: GroupProps) {
       newDeletedClients.splice(newDeletedClients.indexOf(client), 1);
 
     setDeletedClients(newDeletedClients);
-    setUpdate(update + 1);
+    setUpdate(u => u + 1);
   }
 
   function handleMuteClicked() {
     console.debug("handleMuteClicked");
     props.group.muted = !props.group.muted;
     props.snapcontrol.muteGroup(props.group.id, props.group.muted);
-    setUpdate(update + 1);
+    setUpdate(u => u + 1);
   }
 
   function handleVolumeChange(value: number) {

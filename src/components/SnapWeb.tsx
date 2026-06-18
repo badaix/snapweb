@@ -89,7 +89,7 @@ const darkTheme = createTheme({
 
 
 export default function SnapWeb() {
-  const [update, setUpdate] = useState(0);
+  const [, setUpdate] = useState(0);
   const [server, setServer] = useState(new Snapcast.Server());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showOffline, setShowOffline] = useState(config.showOffline);
@@ -132,7 +132,7 @@ export default function SnapWeb() {
   function handleChange(snapserver: Snapcast.Server) {
     console.debug("Update: " + server.groups.length + " => " + snapserver.groups.length);
     setServer(snapserver);
-    setUpdate(update + 1);
+    setUpdate(u => u + 1);
     updateMediaSession();
   }
 

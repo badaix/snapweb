@@ -15,7 +15,7 @@ type ClientProps = {
 
 
 export default function Client(props: ClientProps) {
-  const [update, setUpdate] = useState(0);
+  const [, setUpdate] = useState(0);
   const [anchorEl, setAnchorEl] = useState<Element | null>(null);
   const [open, setOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -82,7 +82,7 @@ export default function Client(props: ClientProps) {
   function handleMuteClicked() {
     console.debug("handleMuteClicked");
     props.snapcontrol.setVolume(props.client.id, props.client.config.volume.percent, !props.client.config.volume.muted);
-    setUpdate(update + 1);
+    setUpdate(u => u + 1);
   }
 
   const menuitems = [];
