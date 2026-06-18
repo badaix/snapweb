@@ -108,10 +108,14 @@ export default function SnapWeb() {
   // server.fromJson(json);
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
-  // Update color theme when the prefered theme changes
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', _event => {
-    setTheme(config.theme);
-  });
+  // Update color theme when the preferred theme changes. Registered once via
+  // useEffect (registering in the render body leaked a listener per render).
+  useEffect(() => {
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => setTheme(config.theme);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     console.debug("server updated");
