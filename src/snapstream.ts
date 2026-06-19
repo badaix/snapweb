@@ -33,6 +33,15 @@ function getChromeVersion(): number | null {
 }
 
 function uuidv4(): string {
+    // crypto.randomUUID is only available in secure contexts (https/localhost);
+    // fall back to a Math.random-based UUID when it's missing or throws.
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        try {
+            return crypto.randomUUID();
+        } catch {
+            /* fall through to the manual implementation */
+        }
+    }
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         const r = Math.random() * 16 | 0, v = c === 'x' ? r : ((r & 0x3) | 0x8);
         return v.toString(16);
@@ -176,10 +185,11 @@ class JsonMessage extends BaseMessage {
     serialize(): ArrayBuffer {
         const buffer = super.serialize();
         const view = new DataView(buffer);
-        const jsonStr = JSON.stringify(this.json);
-        view.setUint32(26, jsonStr.length, true);
         const encoder = new TextEncoder();
-        const encoded = encoder.encode(jsonStr);
+        const encoded = encoder.encode(JSON.stringify(this.json));
+        // size must be the UTF-8 byte length (matches getSize()), not the
+        // UTF-16 string length, otherwise non-ASCII payloads are truncated.
+        view.setUint32(26, encoded.length, true);
         for (let i = 0; i < encoded.length; ++i)
             view.setUint8(30 + i, encoded[i]);
         return buffer;
@@ -459,7 +469,10 @@ class AudioStream {
                 while ((read < readFrames) && this.chunk) {
                     const pcmChunk = this.chunk as PcmChunkMessage;
                     const pcmBuffer = pcmChunk.readFrames(readFrames - read);
-                    const normalize: number = 2 ** pcmChunk.sampleFormat.bits;
+                    // Signed PCM peaks at 2^(bits-1) (e.g. 32767 for 16-bit), so
+                    // normalize to [-1, 1) by dividing by 2^(bits-1), not 2^bits
+                    // (the latter played everything ~6 dB too quiet).
+                    const normalize: number = 2 ** (pcmChunk.sampleFormat.bits - 1);
                     let payload: any;
                     if (pcmChunk.sampleFormat.bits >= 24)
                         payload = new Int32Array(pcmBuffer);
@@ -549,7 +562,7 @@ class TimeProvider {
             if (this.diffBuffer.push((c2s - s2c) / 2) > 100)
                 this.diffBuffer.shift();
             const sorted = [...this.diffBuffer];
-            sorted.sort()
+            sorted.sort((a, b) => a - b);
             this.diff = sorted[Math.floor(sorted.length / 2)];
         }
         // console.debug("c2s: " + c2s.toFixed(2) + ", s2c: " + s2c.toFixed(2) + ", diff: " + this.diff.toFixed(2) + ", now: " + this.now().toFixed(2) + ", server.now: " + this.serverNow().toFixed(2) + ", win.now: " + window.performance.now().toFixed(2));
