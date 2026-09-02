@@ -4,6 +4,7 @@ import { SnapControl, Snapcast } from '../snapcontrol';
 import { Box, Button, Grid, InputAdornment, Menu, MenuItem, Slider, Stack, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { VolumeUp as VolumeUpIcon, VolumeOff as VolumeOffIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { isSpuriousIOSSliderChange } from '../util';
 
 
 type ClientProps = {
@@ -23,7 +24,9 @@ export default function Client(props: ClientProps) {
   const [tmpLatency, setTmpLatency] = useState(props.client.config.latency);
   const [latency, setLatency] = useState(props.client.config.latency);
 
-  function handleVolumeChange(value: number) {
+  function handleVolumeChange(event: Event | React.SyntheticEvent, value: number) {
+    if (isSpuriousIOSSliderChange(event))
+      return;
     console.debug("handleVolumeChange: " + value);
     props.client.config.volume.percent = value;
     props.snapcontrol.setVolume(props.client.id, value, false);
@@ -105,7 +108,7 @@ export default function Client(props: ClientProps) {
               <IconButton aria-label="Mute" onClick={() => { handleMuteClicked() }}>
                 {props.client.config.volume.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
               </IconButton>
-              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + props.client.id} value={props.client.config.volume.percent} onChange={(_, value) => { handleVolumeChange(value as number) }} />
+              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + props.client.id} value={props.client.config.volume.percent} onChange={(event, value) => { handleVolumeChange(event, value as number) }} />
             </Stack>
           </Stack>
         </Grid>
