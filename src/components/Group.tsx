@@ -6,6 +6,7 @@ import { SnapControl, Snapcast } from '../snapcontrol';
 import { Alert, Box, Button, Card, CardMedia, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, Grid, MenuItem, Select, Slider, Snackbar, Stack, TextField, Typography, IconButton } from '@mui/material';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { VolumeUp as VolumeUpIcon, VolumeOff as VolumeOffIcon, PlayArrow as PlayArrowIcon, Pause as PauseIcon, SkipPrevious as SkipPreviousIcon, SkipNext as SkipNextIcon, Settings as SettingsIcon } from '@mui/icons-material';
+import { isSpuriousIOSSliderChange } from '../util';
 
 
 type GroupClient = {
@@ -138,7 +139,9 @@ export default function Group(props: GroupProps) {
     setUpdate(update + 1);
   }
 
-  function handleVolumeChange(value: number) {
+  function handleVolumeChange(event: Event | React.SyntheticEvent, value: number) {
+    if (isSpuriousIOSSliderChange(event))
+      return;
     console.debug("handleVolumeChange: " + value);
     if (groupVolumeChange.current.volumeEntered) {
       groupVolumeChange.current.client_volumes.clear();
@@ -312,7 +315,7 @@ export default function Group(props: GroupProps) {
               <IconButton aria-label="Mute" onClick={() => { handleMuteClicked() }}>
                 {props.group.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
               </IconButton>
-              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + props.group.id} value={volume} onChange={(_, value) => { handleVolumeChange(value as number) }} onChangeCommitted={(_, value) => { handleVolumeChangeCommitted(value as number) }} />
+              <Slider aria-label="Volume" color="secondary" min={0} max={100} size="small" key={"slider-" + props.group.id} value={volume} onChange={(event, value) => { handleVolumeChange(event, value as number) }} onChangeCommitted={(_, value) => { handleVolumeChangeCommitted(value as number) }} />
             </Stack>
           }
           {groupClients.length === 1 &&
